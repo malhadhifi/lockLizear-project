@@ -1,10 +1,19 @@
+// =============================================
+// Redux Store Configuration
+// إعداد Redux Store الرئيسي
+// =============================================
+
 import { configureStore } from '@reduxjs/toolkit';
 import rootReducer from './rootReducer';
 
-const store = configureStore({
+export const store = configureStore({
   reducer: rootReducer,
-  middleware: (getDefault) =>
-    getDefault({ serializableCheck: false }),
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ['auth/login/fulfilled'],
+      },
+    }),
   devTools: import.meta.env.DEV,
 });
 

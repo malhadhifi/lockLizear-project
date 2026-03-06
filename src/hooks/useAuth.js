@@ -1,20 +1,31 @@
-import { useSelector } from 'react-redux';
+// =============================================
+// useAuth Hook
+// بيانات المستخدم المسجّل وحالة المصادقة
+// =============================================
+
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { logout } from '@/features/auth/store/authSlice';
-import ROUTES from '@/constants/routes';
+import { logout } from '../features/auth/store/authSlice';
+import ROUTES from '../constants/routes';
 
 export const useAuth = () => {
-  const { user, token, role, loading } = useSelector((s) => s.auth);
-  const dispatch  = useDispatch();
-  const navigate  = useNavigate();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { user, token, role, loading, isAuthenticated } = useSelector(state => state.auth);
 
   const handleLogout = () => {
     dispatch(logout());
     navigate(ROUTES.LOGIN);
   };
 
-  return { user, token, role, loading, isAuthenticated: !!token, handleLogout };
+  return {
+    user,
+    token,
+    role,
+    loading,
+    isAuthenticated,
+    logout: handleLogout,
+  };
 };
 
 export default useAuth;

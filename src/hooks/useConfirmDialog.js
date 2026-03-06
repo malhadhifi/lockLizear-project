@@ -1,20 +1,38 @@
-import { useState, useCallback } from 'react';
+// =============================================
+// useConfirmDialog Hook
+// تأكيد الحذف أو الإلغاء قبل التنفيذ
+// =============================================
+
+import { useState } from 'react';
 
 export const useConfirmDialog = () => {
-  const [isOpen,  setIsOpen]  = useState(false);
-  const [config,  setConfig]  = useState({});
-  const [resolve, setResolve] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [config, setConfig] = useState({
+    title: 'Confirm Action',
+    message: 'Are you sure you want to proceed?',
+    confirmLabel: 'Confirm',
+    cancelLabel: 'Cancel',
+    variant: 'danger',
+    onConfirm: null,
+  });
 
-  const confirm = useCallback((cfg = {}) => {
-    setConfig(cfg);
+  const openDialog = (options) => {
+    setConfig({ ...config, ...options });
     setIsOpen(true);
-    return new Promise((res) => setResolve(() => res));
-  }, []);
+  };
 
-  const onConfirm = () => { setIsOpen(false); resolve && resolve(true); };
-  const onCancel  = () => { setIsOpen(false); resolve && resolve(false); };
+  const closeDialog = () => setIsOpen(false);
 
-  return { isOpen, config, confirm, onConfirm, onCancel };
+  const confirm = (options) => {
+    return new Promise((resolve) => {
+      openDialog({
+        ...options,
+        onConfirm: () => { closeDialog(); resolve(true); },
+      });
+    });
+  };
+
+  return { isOpen, config, openDialog, closeDialog, confirm };
 };
 
 export default useConfirmDialog;

@@ -1,21 +1,28 @@
-import { useCallback } from 'react';
-import { exportCSV, formatDataForExport } from '@/utils/exportCSV';
-import useToast from './useToast';
+// =============================================
+// useExport Hook
+// تصدير البيانات لـ CSV
+// =============================================
 
-export const useExport = (columns, filename = 'export.csv') => {
-  const toast = useToast();
+import { useState } from 'react';
+import { exportToCSV } from '../utils/exportCSV';
 
-  const exportData = useCallback((data) => {
+export const useExport = () => {
+  const [isExporting, setIsExporting] = useState(false);
+
+  const exportData = async (data, filename, transformer) => {
+    if (!data || data.length === 0) return;
+    setIsExporting(true);
     try {
-      const formatted = formatDataForExport(data, columns);
-      exportCSV(formatted, filename);
-      toast.success('Export successful');
-    } catch {
-      toast.error('Export failed');
+      const finalData = transformer ? data.map(transformer) : data;
+      exportToCSV(finalData, filename);
+    } catch (error) {
+      console.error('Export error:', error);
+    } finally {
+      setIsExporting(false);
     }
-  }, [columns, filename]);
+  };
 
-  return { exportData };
+  return { exportData, isExporting };
 };
 
 export default useExport;

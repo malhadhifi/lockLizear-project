@@ -1,29 +1,45 @@
+// =============================================
+// Axios API Instance + Interceptors
+// إعداد Axios مع التوكن وإعادة التوجيه
+// =============================================
+
 import axios from 'axios';
-import appConfig from '@/config/app.config';
+import { APP_CONFIG } from '../config/app.config';
 
 const api = axios.create({
-  baseURL: appConfig.apiBaseUrl,
-  headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-  timeout: 30000,
+  baseURL: APP_CONFIG.API_BASE_URL,
+  timeout: APP_CONFIG.API_TIMEOUT,
+  headers: {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  },
 });
 
-// Request interceptor: attach token
+// Request Interceptor — إضافة التوكن لكل طلب
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem(appConfig.tokenKey);
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+    const token = localStorage.getItem('drm_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response interceptor: handle 401
+// Response Interceptor — معالجة الأخطاء العامة
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem(appConfig.tokenKey);
+    const status = error.response?.status;
+    if (status === 401) {
+      // Token expired — clear and redirect
+      localStorage.removeItem('drm_token');
+      localStorage.removeItem('drm_user');
       window.location.href = '/login';
+    }
+    if (status === 403) {
+      console.error('Access Forbidden: You do not have permission.');
     }
     return Promise.reject(error);
   }

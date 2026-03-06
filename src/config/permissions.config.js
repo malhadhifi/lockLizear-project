@@ -1,46 +1,77 @@
+// =============================================
+// Permissions Configuration
+// تعريف الصلاحيات لكل دور
+// =============================================
+
 import { ROLES } from './roles.config';
 
 export const PERMISSIONS = {
   // Users
-  VIEW_USERS:    'view_users',
-  CREATE_USER:   'create_user',
-  EDIT_USER:     'edit_user',
-  DELETE_USER:   'delete_user',
-  IMPORT_USERS:  'import_users',
-  EXPORT_USERS:  'export_users',
+  USERS_VIEW: 'users.view',
+  USERS_CREATE: 'users.create',
+  USERS_UPDATE: 'users.update',
+  USERS_DELETE: 'users.delete',
+  USERS_SUSPEND: 'users.suspend',
+  USERS_IMPORT: 'users.import',
+  USERS_EXPORT: 'users.export',
   // Documents
-  VIEW_DOCS:     'view_documents',
-  CREATE_DOC:    'create_document',
-  EDIT_DOC:      'edit_document',
-  DELETE_DOC:    'delete_document',
+  DOCUMENTS_VIEW: 'documents.view',
+  DOCUMENTS_CREATE: 'documents.create',
+  DOCUMENTS_UPDATE: 'documents.update',
+  DOCUMENTS_DELETE: 'documents.delete',
+  DOCUMENTS_UPLOAD: 'documents.upload',
   // Publications
-  VIEW_PUBS:     'view_publications',
-  CREATE_PUB:    'create_publication',
-  EDIT_PUB:      'edit_publication',
-  DELETE_PUB:    'delete_publication',
+  PUBLICATIONS_VIEW: 'publications.view',
+  PUBLICATIONS_CREATE: 'publications.create',
+  PUBLICATIONS_UPDATE: 'publications.update',
+  PUBLICATIONS_DELETE: 'publications.delete',
   // Access
-  MANAGE_ACCESS: 'manage_access',
+  ACCESS_MANAGE: 'access.manage',
+  ACCESS_VIEW: 'access.view',
+  // Devices
+  DEVICES_VIEW: 'devices.view',
+  DEVICES_REVOKE: 'devices.revoke',
+  // Emails
+  EMAILS_VIEW: 'emails.view',
+  EMAILS_SEND: 'emails.send',
+  EMAILS_RESEND: 'emails.resend',
+  // Admins
+  ADMINS_VIEW: 'admins.view',
+  ADMINS_CREATE: 'admins.create',
+  ADMINS_UPDATE: 'admins.update',
+  ADMINS_DELETE: 'admins.delete',
   // Reports
-  VIEW_REPORTS:  'view_reports',
-  EXPORT_REPORTS:'export_reports',
+  REPORTS_VIEW: 'reports.view',
+  REPORTS_EXPORT: 'reports.export',
+  LOGS_VIEW: 'logs.view',
   // Settings
-  VIEW_SETTINGS: 'view_settings',
-  EDIT_SETTINGS: 'edit_settings',
-  // Sub Admins
-  MANAGE_ADMINS: 'manage_admins',
+  SETTINGS_VIEW: 'settings.view',
+  SETTINGS_UPDATE: 'settings.update',
 };
 
 export const ROLE_PERMISSIONS = {
   [ROLES.SUPER_ADMIN]: Object.values(PERMISSIONS),
   [ROLES.PUBLISHER]: [
-    PERMISSIONS.VIEW_USERS, PERMISSIONS.CREATE_USER, PERMISSIONS.EDIT_USER,
-    PERMISSIONS.VIEW_DOCS, PERMISSIONS.CREATE_DOC, PERMISSIONS.EDIT_DOC,
-    PERMISSIONS.VIEW_PUBS, PERMISSIONS.CREATE_PUB, PERMISSIONS.EDIT_PUB,
-    PERMISSIONS.MANAGE_ACCESS, PERMISSIONS.VIEW_REPORTS,
+    PERMISSIONS.USERS_VIEW, PERMISSIONS.USERS_CREATE, PERMISSIONS.USERS_UPDATE,
+    PERMISSIONS.USERS_SUSPEND, PERMISSIONS.USERS_IMPORT, PERMISSIONS.USERS_EXPORT,
+    PERMISSIONS.DOCUMENTS_VIEW, PERMISSIONS.DOCUMENTS_CREATE, PERMISSIONS.DOCUMENTS_UPDATE,
+    PERMISSIONS.DOCUMENTS_DELETE, PERMISSIONS.DOCUMENTS_UPLOAD,
+    PERMISSIONS.PUBLICATIONS_VIEW, PERMISSIONS.PUBLICATIONS_CREATE,
+    PERMISSIONS.PUBLICATIONS_UPDATE, PERMISSIONS.PUBLICATIONS_DELETE,
+    PERMISSIONS.ACCESS_MANAGE, PERMISSIONS.ACCESS_VIEW,
+    PERMISSIONS.DEVICES_VIEW, PERMISSIONS.DEVICES_REVOKE,
+    PERMISSIONS.EMAILS_VIEW, PERMISSIONS.EMAILS_SEND, PERMISSIONS.EMAILS_RESEND,
+    PERMISSIONS.REPORTS_VIEW, PERMISSIONS.REPORTS_EXPORT, PERMISSIONS.LOGS_VIEW,
   ],
   [ROLES.SUB_ADMIN]: [
-    PERMISSIONS.VIEW_USERS, PERMISSIONS.VIEW_DOCS, PERMISSIONS.VIEW_PUBS,
-    PERMISSIONS.MANAGE_ACCESS, PERMISSIONS.VIEW_REPORTS,
+    PERMISSIONS.USERS_VIEW, PERMISSIONS.USERS_UPDATE,
+    PERMISSIONS.DOCUMENTS_VIEW, PERMISSIONS.DOCUMENTS_UPDATE,
+    PERMISSIONS.PUBLICATIONS_VIEW, PERMISSIONS.ACCESS_VIEW,
+    PERMISSIONS.DEVICES_VIEW, PERMISSIONS.REPORTS_VIEW,
+  ],
+  [ROLES.MODERATOR]: [
+    PERMISSIONS.USERS_VIEW, PERMISSIONS.DOCUMENTS_VIEW,
+    PERMISSIONS.PUBLICATIONS_VIEW, PERMISSIONS.REPORTS_VIEW, PERMISSIONS.LOGS_VIEW,
   ],
 };
 

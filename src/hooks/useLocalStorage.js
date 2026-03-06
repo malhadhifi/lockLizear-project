@@ -1,3 +1,8 @@
+// =============================================
+// useLocalStorage Hook
+// التخزين المحلي
+// =============================================
+
 import { useState } from 'react';
 
 export const useLocalStorage = (key, initialValue) => {
@@ -12,11 +17,11 @@ export const useLocalStorage = (key, initialValue) => {
 
   const setValue = (value) => {
     try {
-      const val = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(val);
-      window.localStorage.setItem(key, JSON.stringify(val));
-    } catch (err) {
-      console.error(err);
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
+      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+    } catch (error) {
+      console.error('useLocalStorage error:', error);
     }
   };
 

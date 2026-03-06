@@ -1,23 +1,42 @@
-import { formatDate, formatDateTime } from './formatDate';
+// =============================================
+// Watermark Text Builder
+// توليد نص العلامة المائية الديناميكي
+// =============================================
 
-export const buildWatermarkText = (template, user) => {
+/**
+ * Build dynamic watermark text by replacing variables
+ * Supported variables: [UserName], [Email], [Date], [Time], [Company], [IP]
+ * @param {string} template  e.g. "[UserName] - [Email] - [Date]"
+ * @param {Object} userData
+ * @returns {string}
+ */
+export const buildWatermarkText = (template, userData = {}) => {
+  if (!template) return '';
   const now = new Date();
-  return template
-    .replace(/\[UserName\]/g,  user?.name  || '')
-    .replace(/\[Email\]/g,     user?.email || '')
-    .replace(/\[Date\]/g,      formatDate(now))
-    .replace(/\[Time\]/g,      formatDateTime(now))
-    .replace(/\[Company\]/g,   user?.company || '')
-    .replace(/\[IP\]/g,        user?.ip || '');
+  const replacements = {
+    '[UserName]': userData.name || '',
+    '[Email]': userData.email || '',
+    '[Date]': now.toLocaleDateString('en-US'),
+    '[Time]': now.toLocaleTimeString('en-US'),
+    '[Company]': userData.company || '',
+    '[IP]': userData.ip || '',
+    '[UserId]': userData.id || '',
+  };
+  let result = template;
+  Object.entries(replacements).forEach(([key, value]) => {
+    result = result.replaceAll(key, value);
+  });
+  return result;
 };
 
 export const WATERMARK_VARIABLES = [
-  { label: 'User Name',  value: '[UserName]' },
-  { label: 'Email',      value: '[Email]' },
-  { label: 'Date',       value: '[Date]' },
-  { label: 'Time',       value: '[Time]' },
-  { label: 'Company',    value: '[Company]' },
-  { label: 'IP Address', value: '[IP]' },
+  { key: '[UserName]', description: 'Full name of the user' },
+  { key: '[Email]', description: 'Email address of the user' },
+  { key: '[Date]', description: 'Current date' },
+  { key: '[Time]', description: 'Current time' },
+  { key: '[Company]', description: 'Company name' },
+  { key: '[IP]', description: 'User IP address' },
+  { key: '[UserId]', description: 'User ID' },
 ];
 
 export default buildWatermarkText;

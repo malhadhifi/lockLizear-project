@@ -1,11 +1,16 @@
+// =============================================
+// useDebounce Hook
+// تأخير البحث لتقليل طلبات API
+// =============================================
+
 import { useState, useEffect } from 'react';
 
-export const useDebounce = (value, delay = 400) => {
+export const useDebounce = (value, delay = 300) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {
-    const handler = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(handler);
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
   }, [value, delay]);
 
   return debouncedValue;

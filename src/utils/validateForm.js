@@ -1,31 +1,36 @@
-export const required = (value) =>
-  value !== undefined && value !== null && value !== '' ? null : 'This field is required';
+// =============================================
+// Form Validation Utilities
+// أدوات التحقق من صحة النماذج
+// =============================================
 
-export const email = (value) =>
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? null : 'Invalid email address';
+export const validateEmail = (email) => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+};
 
-export const minLength = (min) => (value) =>
-  value && value.length >= min ? null : `Minimum ${min} characters`;
-
-export const maxLength = (max) => (value) =>
-  !value || value.length <= max ? null : `Maximum ${max} characters`;
-
-export const numeric = (value) =>
-  !isNaN(Number(value)) ? null : 'Must be a number';
-
-export const positiveNumber = (value) =>
-  Number(value) > 0 ? null : 'Must be greater than 0';
-
-export const validateFields = (rules, data) => {
-  const errors = {};
-  Object.entries(rules).forEach(([field, validators]) => {
-    const validators_ = Array.isArray(validators) ? validators : [validators];
-    for (const validator of validators_) {
-      const error = validator(data[field]);
-      if (error) { errors[field] = error; break; }
-    }
-  });
+export const validatePassword = (password) => {
+  const errors = [];
+  if (password.length < 8) errors.push('At least 8 characters');
+  if (!/[A-Z]/.test(password)) errors.push('At least one uppercase letter');
+  if (!/[0-9]/.test(password)) errors.push('At least one number');
   return errors;
 };
 
-export default validateFields;
+export const validateIP = (ip) => {
+  const re = /^(25[0-5]|2[0-4]\d|[01]?\d\d?)\.(25[0-5]|2[0-4]\d|[01]?\d\d?)\.(25[0-5]|2[0-4]\d|[01]?\d\d?)\.(25[0-5]|2[0-4]\d|[01]?\d\d?)$/;
+  return re.test(ip);
+};
+
+export const validateRequired = (value) => {
+  if (value === null || value === undefined) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  return true;
+};
+
+export const validateMaxLength = (value, max) =>
+  !value || value.length <= max;
+
+export const validateMinLength = (value, min) =>
+  value && value.length >= min;
+
+export default { validateEmail, validatePassword, validateIP, validateRequired };
