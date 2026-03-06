@@ -1,59 +1,34 @@
-import React from 'react'
-import Loader from './Loader'
+import LoadingSpinner from './LoadingSpinner';
 
-const Button = ({
-  children,
-  variant = 'primary',
-  size = 'md',
-  isLoading = false,
-  disabled = false,
-  fullWidth = false,
-  icon = null,
-  onClick,
-  type = 'button',
-  className = '',
-  ...props
-}) => {
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
-
+export default function Button({
+  children, onClick, type = 'button', variant = 'primary',
+  size = 'md', disabled = false, loading = false, className = '', icon,
+}) {
   const variants = {
-    primary: 'bg-primary-600 hover:bg-primary-700 text-white focus:ring-primary-500',
-    secondary: 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-gray-500',
-    success: 'bg-success-500 hover:bg-success-600 text-white focus:ring-success-500',
-    danger: 'bg-danger-500 hover:bg-danger-600 text-white focus:ring-danger-500',
-    outline: 'border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-gray-500',
-    ghost: 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-gray-500',
-  }
-
+    primary:   'bg-blue-600 text-white hover:bg-blue-700',
+    secondary: 'bg-slate-100 text-slate-700 hover:bg-slate-200',
+    danger:    'bg-red-600 text-white hover:bg-red-700',
+    success:   'bg-green-600 text-white hover:bg-green-700',
+    ghost:     'text-slate-600 hover:bg-slate-100',
+    outline:   'border border-slate-300 text-slate-700 hover:bg-slate-50',
+  };
   const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
-  }
-
-  const widthClass = fullWidth ? 'w-full' : ''
-
+    xs: 'px-2.5 py-1.5 text-xs',
+    sm: 'px-3 py-2 text-sm',
+    md: 'px-4 py-2.5 text-sm',
+    lg: 'px-6 py-3 text-base',
+  };
   return (
     <button
       type={type}
       onClick={onClick}
-      disabled={disabled || isLoading}
-      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${widthClass} ${className}`}
-      {...props}
+      disabled={disabled || loading}
+      className={`inline-flex items-center gap-2 font-medium rounded-lg
+                  transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
+                  ${variants[variant]} ${sizes[size]} ${className}`}
     >
-      {isLoading ? (
-        <>
-          <Loader size="sm" color={variant === 'primary' || variant === 'success' || variant === 'danger' ? 'white' : 'gray'} />
-          <span className="mr-2">جاري التحميل...</span>
-        </>
-      ) : (
-        <>
-          {icon && <span className="ml-2">{icon}</span>}
-          {children}
-        </>
-      )}
+      {loading ? <LoadingSpinner size="sm" /> : icon && <span>{icon}</span>}
+      {children}
     </button>
-  )
+  );
 }
-
-export default Button

@@ -1,85 +1,42 @@
-import { NavLink } from 'react-router-dom'
-import {
-  HiHome,
-  HiUsers,
-  HiVideoCamera,
-  HiCollection,
-  HiChartBar,
-  HiShieldCheck,
-  HiCog,
-  HiX,
-} from 'react-icons/hi'
-import { APP_NAME } from '../../constants'
+import { NavLink } from 'react-router-dom';
+import NavItem from './NavItem';
+import ROUTES from '@/constants/routes';
+import useAuth from '@/hooks/useAuth';
 
-const Sidebar = ({ isOpen, onClose }) => {
-  const menuItems = [
-    { name: 'لوحة التحكم', path: '/dashboard', icon: HiHome },
-    { name: 'المستخدمون', path: '/users', icon: HiUsers },
-    { name: 'الفيديوهات', path: '/videos', icon: HiVideoCamera },
-    { name: 'المنشورات', path: '/publications', icon: HiCollection },
-    { name: 'التقارير', path: '/reports', icon: HiChartBar },
-    { name: 'الصلاحيات', path: '/access', icon: HiShieldCheck },
-    { name: 'الإعدادات', path: '/settings', icon: HiCog },
-  ]
+const navItems = [
+  { label: 'Dashboard',       icon: '🏠', to: ROUTES.DASHBOARD       },
+  { label: 'Users',           icon: '👥', to: ROUTES.USERS           },
+  { label: 'Documents',       icon: '📹', to: ROUTES.DOCUMENTS       },
+  { label: 'Publications',    icon: '📚', to: ROUTES.PUBLICATIONS    },
+  { label: 'Access Control',  icon: '🔒', to: ROUTES.ACCESS_CONTROL  },
+  { label: 'Devices',         icon: '💻', to: ROUTES.DEVICES         },
+  { label: 'Emails',          icon: '✉️',  to: ROUTES.EMAILS          },
+  { label: 'Sub Admins',      icon: '👤', to: ROUTES.SUB_ADMINS      },
+  { label: 'Reports',         icon: '📊', to: ROUTES.REPORTS         },
+  { label: 'Settings',        icon: '⚙️',  to: ROUTES.SETTINGS        },
+];
 
+export default function Sidebar() {
+  const { user, handleLogout } = useAuth();
   return (
-    <>
-      {/* Mobile Overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
-          onClick={onClose}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={`fixed lg:static inset-y-0 right-0 z-30 w-64 bg-white dark:bg-dark-800 border-l border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
-        }`}
-      >
-        {/* Sidebar Header */}
-        <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold text-primary-600 dark:text-primary-400">
-            {APP_NAME}
-          </h2>
-          <button
-            onClick={onClose}
-            className="lg:hidden p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <HiX className="w-6 h-6 text-gray-500" />
-          </button>
-        </div>
-
-        {/* Navigation Menu */}
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  isActive
-                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-medium'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`
-              }
-            >
-              <item.icon className="w-5 h-5" />
-              <span>{item.name}</span>
-            </NavLink>
-          ))}
-        </nav>
-
-        {/* Sidebar Footer */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-          <p className="text-xs text-center text-gray-500 dark:text-gray-400">
-            © 2026 DRM System
-          </p>
-        </div>
-      </aside>
-    </>
-  )
+    <aside className="w-64 bg-slate-900 flex flex-col h-full text-slate-300 shrink-0">
+      <div className="p-5 border-b border-slate-700">
+        <h1 className="text-white font-bold text-xl">DRM Admin</h1>
+        <p className="text-slate-400 text-xs mt-1">نظام حماية المحتوى</p>
+      </div>
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        {navItems.map((item) => (
+          <NavItem key={item.to} {...item} />
+        ))}
+      </nav>
+      <div className="p-4 border-t border-slate-700">
+        <p className="text-sm text-slate-300 truncate">{user?.name}</p>
+        <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+        <button onClick={handleLogout}
+          className="mt-3 w-full text-left text-xs text-red-400 hover:text-red-300">
+          🚪 Logout
+        </button>
+      </div>
+    </aside>
+  );
 }
-
-export default Sidebar
