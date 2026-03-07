@@ -1,37 +1,13 @@
 import api from '../../../services/api';
-
 const documentService = {
-  getAll: async (params = {}) => {
-    return await api.get('/documents', { params });
-  },
-
-  getById: async (id) => {
-    return await api.get(`/documents/${id}`);
-  },
-
-  create: async (data) => {
-    return await api.post('/documents', data);
-  },
-
-  update: async (id, data) => {
-    return await api.put(`/documents/${id}`, data);
-  },
-
-  delete: async (id) => {
-    return await api.delete(`/documents/${id}`);
-  },
-
-  suspend: async (id) => {
-    return await api.post(`/documents/${id}/suspend`);
-  },
-
-  activate: async (id) => {
-    return await api.post(`/documents/${id}/activate`);
-  },
-
-  getDocumentAccessList: async (id) => {
-    return await api.get(`/documents/${id}/access`);
-  }
+  getAll: (params = {}) => api.get('/documents', { params }),
+  getById: (id) => api.get(`/documents/${id}`),
+  create: (data) => api.post('/documents', data),
+  update: (id, data) => api.put(`/documents/${id}`, data),
+  delete: (id) => api.delete(`/documents/${id}`),
+  suspend: (id) => api.put(`/documents/${id}/suspend`),
+  activate: (id) => api.put(`/documents/${id}/activate`),
+  exportCSV: (params = {}) => api.get('/documents/export', { params }),
+  getDocumentAccessList: (id) => api.get(`/documents/${id}/access`),
 };
-
 export default documentService;

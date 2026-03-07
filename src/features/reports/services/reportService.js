@@ -1,29 +1,10 @@
 import api from '../../../services/api';
-
 const reportService = {
-  getViewLogs: async (filters = {}) => {
-    return await api.get('/reports/view-logs', { params: filters });
-  },
-
-  getPrintLogs: async (filters = {}) => {
-    return await api.get('/reports/print-logs', { params: filters });
-  },
-
-  getAdminLogs: async (filters = {}) => {
-    return await api.get('/reports/admin-logs', { params: filters });
-  },
-
-  getTopDocuments: async () => {
-    return await api.get('/reports/top-documents');
-  },
-
-  getSystemStats: async () => {
-    return await api.get('/reports/stats');
-  },
-
-  exportLogsCSV: async (filters = {}) => {
-    return await api.get('/reports/export', { params: filters, responseType: 'blob' });
-  }
+  getViewLogs: (filters = {}) => api.get('/reports/views', { params: filters }),
+  getPrintLogs: (filters = {}) => api.get('/reports/prints', { params: filters }),
+  getAdminLogs: (filters = {}) => api.get('/reports/admin', { params: filters }),
+  getTopDocuments: () => api.get('/reports/top-documents'),
+  getSystemStats: () => api.get('/reports/system-stats'),
+  exportLogsCSV: (filters = {}) => api.get('/reports/export', { params: filters }),
 };
-
 export default reportService;

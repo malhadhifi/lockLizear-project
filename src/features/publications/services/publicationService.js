@@ -1,37 +1,13 @@
 import api from '../../../services/api';
-
 const publicationService = {
-  getAll: async (params = {}) => {
-    return await api.get('/publications', { params });
-  },
-
-  getById: async (id) => {
-    return await api.get(`/publications/${id}`);
-  },
-
-  create: async (data) => {
-    return await api.post('/publications', data);
-  },
-
-  update: async (id, data) => {
-    return await api.put(`/publications/${id}`, data);
-  },
-
-  delete: async (id) => {
-    return await api.delete(`/publications/${id}`);
-  },
-
-  addDocument: async (id, documentId) => {
-    return await api.post(`/publications/${id}/documents`, { document_id: documentId });
-  },
-
-  removeDocument: async (id, documentId) => {
-    return await api.delete(`/publications/${id}/documents/${documentId}`);
-  },
-
-  getSubscribers: async (id) => {
-    return await api.get(`/publications/${id}/subscribers`);
-  }
+  getAll: (params = {}) => api.get('/publications', { params }),
+  getById: (id) => api.get(`/publications/${id}`),
+  create: (data) => api.post('/publications', data),
+  update: (id, data) => api.put(`/publications/${id}`, data),
+  delete: (id) => api.delete(`/publications/${id}`),
+  addDocument: (id, documentId) => api.post(`/publications/${id}/documents`, { documentId }),
+  removeDocument: (id, documentId) => api.delete(`/publications/${id}/documents/${documentId}`),
+  getSubscribers: (id) => api.get(`/publications/${id}/subscribers`),
+  exportCSV: (params = {}) => api.get('/publications/export', { params }),
 };
-
 export default publicationService;

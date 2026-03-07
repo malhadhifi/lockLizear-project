@@ -1,18 +1,9 @@
 import { combineReducers } from '@reduxjs/toolkit';
-import authReducer from '../features/auth/store/authSlice';
-import usersReducer from '../features/users/store/usersSlice';
-import documentsReducer from '../features/documents/store/documentsSlice';
-import publicationsReducer from '../features/publications/store/publicationsSlice';
-import accessReducer from '../features/access/store/accessSlice';
-import devicesReducer from '../features/devices/store/devicesSlice';
+import auth from '../features/auth/store/authSlice';
+import users from '../features/users/store/usersSlice';
+import documents from '../features/documents/store/documentsSlice';
+import access from '../features/access/store/accessSlice';
+import devices from '../features/devices/store/devicesSlice';
 
-const rootReducer = combineReducers({
-  auth: authReducer,
-  users: usersReducer,
-  documents: documentsReducer,
-  publications: publicationsReducer,
-  access: accessReducer,
-  devices: devicesReducer
-});
-
+const rootReducer = combineReducers({ auth, users, documents, access, devices });
 export default rootReducer;

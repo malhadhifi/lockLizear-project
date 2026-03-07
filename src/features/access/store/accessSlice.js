@@ -1,19 +1,3 @@
 import { createSlice } from '@reduxjs/toolkit';
-
-const accessSlice = createSlice({
-  name: 'access',
-  initialState: {
-    selectedUserId: null,
-    userAccess: null,
-    loading: false,
-    error: null
-  },
-  reducers: {
-    setSelectedUser: (state, action) => {
-      state.selectedUserId = action.payload;
-    }
-  }
-});
-
-export const { setSelectedUser } = accessSlice.actions;
+const accessSlice = createSlice({ name: 'access', initialState: { selectedUser: null, properties: {}, documents: [], publications: [], loading: false, error: null }, reducers: {} });
 export default accessSlice.reducer;
