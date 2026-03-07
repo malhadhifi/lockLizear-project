@@ -1,21 +1,46 @@
-import SearchBox from '@/components/common/SearchBox';
-import Select   from '@/components/common/Select';
+import SearchBox from '../common/SearchBox';
+import Select from '../common/Select';
+import Button from '../common/Button';
 
-export default function TableFilters({ onSearch, filters = [], onFilterChange, values = {} }) {
+const TableFilters = ({ filters, onFilterChange, onReset }) => {
   return (
-    <div className="flex flex-wrap gap-3 mb-4 items-center">
-      <SearchBox onSearch={onSearch} className="w-64" />
-      {filters.map((f) => (
-        <Select
-          key={f.name}
-          name={f.name}
-          value={values[f.name] || ''}
-          onChange={(e) => onFilterChange(f.name, e.target.value)}
-          options={f.options}
-          placeholder={f.placeholder}
-          className="!mb-0 w-44"
-        />
-      ))}
+    <div className="bg-white p-4 rounded-lg shadow mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {filters.map((filter) => {
+          if (filter.type === 'search') {
+            return (
+              <SearchBox
+                key={filter.key}
+                placeholder={filter.placeholder}
+                value={filter.value}
+                onChange={(value) => onFilterChange(filter.key, value)}
+              />
+            );
+          }
+
+          if (filter.type === 'select') {
+            return (
+              <Select
+                key={filter.key}
+                label={filter.label}
+                options={filter.options}
+                value={filter.value}
+                onChange={(value) => onFilterChange(filter.key, value)}
+              />
+            );
+          }
+
+          return null;
+        })}
+
+        {onReset && (
+          <Button onClick={onReset} variant="outline">
+            إعادة تعيين
+          </Button>
+        )}
+      </div>
     </div>
   );
-}
+};
+
+export default TableFilters;

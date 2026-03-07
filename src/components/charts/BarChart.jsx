@@ -1,20 +1,30 @@
-import { Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js';
+const BarChart = ({ data, title }) => {
+  const maxValue = Math.max(...data.map(item => item.value));
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
-
-export default function BarChart({ title, labels, datasets }) {
-  const chartData = { labels, datasets };
   return (
-    <div className="card">
-      {title && <h3 className="text-base font-semibold text-slate-700 mb-4">{title}</h3>}
-      <div className="h-56">
-        <Bar data={chartData} options={{
-          maintainAspectRatio: false,
-          plugins: { legend: { display: datasets.length > 1 } },
-          scales: { y: { beginAtZero: true } },
-        }} />
+    <div className="bg-white rounded-lg shadow p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
+      <div className="space-y-4">
+        {data.map((item, index) => {
+          const percentage = (item.value / maxValue) * 100;
+          return (
+            <div key={index} className="space-y-1">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">{item.label}</span>
+                <span className="font-medium text-gray-900">{item.value}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div
+                  className={`h-3 rounded-full ${item.color || 'bg-blue-500'}`}
+                  style={{ width: `${percentage}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
-}
+};
+
+export default BarChart;

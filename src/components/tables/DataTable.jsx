@@ -1,40 +1,60 @@
-import TableHeader  from './TableHeader';
-import TableRow    from './TableRow';
-import Pagination  from './Pagination';
-import SkeletonLoader from '@/components/common/SkeletonLoader';
-import EmptyState  from '@/components/common/EmptyState';
+import TableHeader from './TableHeader';
+import TableRow from './TableRow';
+import Pagination from './Pagination';
+import EmptyState from '../common/EmptyState';
+import LoadingSpinner from '../common/LoadingSpinner';
 
-export default function DataTable({
-  columns = [], data = [], loading = false,
-  pagination, onRowClick, selectedRows = [],
-  onSelectRow, onSelectAll,
-}) {
-  if (loading) return <SkeletonLoader rows={8} />;
-  if (!data.length) return <EmptyState title="No records found" />;
+const DataTable = ({
+  columns,
+  data,
+  loading,
+  pagination,
+  onPageChange,
+  onSort,
+  sortBy,
+  sortOrder
+}) => {
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return <EmptyState message="لا توجد بيانات" />;
+  }
 
   return (
-    <div>
-      <div className="overflow-x-auto rounded-xl border border-slate-200">
-        <table>
+    <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
           <TableHeader
             columns={columns}
-            selectedAll={selectedRows.length === data.length}
-            onSelectAll={onSelectAll}
+            onSort={onSort}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
           />
-          <tbody>
-            {data.map((row, i) => (
-              <TableRow
-                key={row.id || i}
-                row={row} columns={columns}
-                selected={selectedRows.includes(row.id)}
-                onSelect={onSelectRow}
-                onClick={onRowClick}
-              />
+          <tbody className="bg-white divide-y divide-gray-200">
+            {data.map((row, index) => (
+              <TableRow key={row.id || index} columns={columns} data={row} />
             ))}
           </tbody>
         </table>
       </div>
-      {pagination && <Pagination {...pagination} />}
+
+      {pagination && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          pageSize={pagination.pageSize}
+          onPageChange={onPageChange}
+        />
+      )}
     </div>
   );
-}
+};
+
+export default DataTable;

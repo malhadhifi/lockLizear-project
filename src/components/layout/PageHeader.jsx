@@ -1,25 +1,39 @@
-export default function PageHeader({ title, subtitle, actions, breadcrumbs }) {
+import { Link } from 'react-router-dom';
+import Button from '../common/Button';
+
+const PageHeader = ({ title, breadcrumbs, action }) => {
   return (
     <div className="mb-6">
-      {breadcrumbs && (
-        <nav className="text-xs text-slate-500 mb-2">
-          {breadcrumbs.map((b, i) => (
-            <span key={i}>
-              {i > 0 && <span className="mx-1">/</span>}
-              <span className={i === breadcrumbs.length - 1 ? 'text-slate-800 font-medium' : ''}>
-                {b}
-              </span>
-            </span>
-          ))}
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <nav className="flex mb-2" aria-label="Breadcrumb">
+          <ol className="flex items-center space-x-2 space-x-reverse">
+            {breadcrumbs.map((crumb, index) => (
+              <li key={index} className="flex items-center">
+                {index > 0 && <span className="mx-2 text-gray-400">/</span>}
+                {crumb.path ? (
+                  <Link to={crumb.path} className="text-sm text-blue-600 hover:text-blue-800">
+                    {crumb.label}
+                  </Link>
+                ) : (
+                  <span className="text-sm text-gray-600">{crumb.label}</span>
+                )}
+              </li>
+            ))}
+          </ol>
         </nav>
       )}
+
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">{title}</h1>
-          {subtitle && <p className="text-slate-500 text-sm mt-1">{subtitle}</p>}
-        </div>
-        {actions && <div className="flex items-center gap-3">{actions}</div>}
+        <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
+        {action && (
+          <Button onClick={action.onClick} variant={action.variant || 'primary'}>
+            {action.icon && <span className="mr-2">{action.icon}</span>}
+            {action.label}
+          </Button>
+        )}
       </div>
     </div>
   );
-}
+};
+
+export default PageHeader;

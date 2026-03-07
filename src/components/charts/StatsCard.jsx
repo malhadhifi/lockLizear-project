@@ -1,28 +1,32 @@
-export default function StatsCard({ title, value, icon, color = 'blue', change, subtitle }) {
-  const colors = {
-    blue:   'bg-blue-50 text-blue-600',
-    green:  'bg-green-50 text-green-600',
-    red:    'bg-red-50 text-red-600',
-    orange: 'bg-orange-50 text-orange-600',
-    purple: 'bg-purple-50 text-purple-600',
+const StatsCard = ({ title, value, icon, color = 'blue', change }) => {
+  const colorClasses = {
+    blue: 'bg-blue-500',
+    green: 'bg-green-500',
+    red: 'bg-red-500',
+    yellow: 'bg-yellow-500',
+    purple: 'bg-purple-500'
   };
+
   return (
-    <div className="card">
+    <div className="bg-white rounded-lg shadow p-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-slate-500 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-slate-800">{value}</p>
-          {subtitle && <p className="text-xs text-slate-400 mt-1">{subtitle}</p>}
-          {change !== undefined && (
-            <span className={`text-xs font-medium ${change >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-              {change >= 0 ? '+' : ''}{change}% this month
-            </span>
+          <p className="text-sm text-gray-600 mb-1">{title}</p>
+          <p className="text-3xl font-bold text-gray-900">{value}</p>
+          {change && (
+            <p className={`text-sm mt-2 ${
+              change > 0 ? 'text-green-600' : 'text-red-600'
+            }`}>
+              {change > 0 ? '↑' : '↓'} {Math.abs(change)}%
+            </p>
           )}
         </div>
-        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl ${colors[color]}`}>
+        <div className={`w-12 h-12 rounded-full ${colorClasses[color]} flex items-center justify-center text-white text-2xl`}>
           {icon}
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default StatsCard;
