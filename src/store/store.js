@@ -1,21 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit'
 import authReducer from '../features/auth/store/authSlice'
 import usersReducer from '../features/users/store/usersSlice'
-import videosReducer from '../features/videos/store/videosSlice'
-import publicationsReducer from '../features/publications/store/publicationsSlice'
-import reportsReducer from '../features/reports/store/reportsSlice'
 import accessReducer from '../features/access/store/accessSlice'
-import settingsReducer from '../features/settings/store/settingsSlice'
 
 const store = configureStore({
   reducer: {
     auth: authReducer,
     users: usersReducer,
-    videos: videosReducer,
-    publications: publicationsReducer,
-    reports: reportsReducer,
     access: accessReducer,
-    settings: settingsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
