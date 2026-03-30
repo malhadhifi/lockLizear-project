@@ -28,7 +28,7 @@ return new class extends Migration {
             $table->timestamp('published_at')->useCurrent();
 
             // نطاق الوصول
-+
+            $table->enum('access_scope', ['all_customers', 'selected_customers', 'publication'])->default('selected_customers');
 
             // العلاقات
             $table->foreignId('publisher_id')->constrained('publishers')->cascadeOnDelete();
