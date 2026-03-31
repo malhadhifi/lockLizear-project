@@ -1,30 +1,16 @@
-import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
-import Sidebar from './Sidebar'
 import Header from './Header'
 
 function DashboardLayout() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen)
-  }
-
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-dark-900">
-      {/* Sidebar */}
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+    <div dir="rtl" style={{ minHeight: '100vh', backgroundColor: '#fff', fontFamily: 'Arial, sans-serif' }}>
+      {/* Top Header Navigation (LockLizard Style translated to Arabic) */}
+      <Header />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <Header onMenuClick={toggleSidebar} isSidebarOpen={isSidebarOpen} />
-
-        {/* Page Content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-dark-900 p-6">
-          <Outlet />
-        </main>
-      </div>
+      {/* Main Content Area */}
+      <main style={{ padding: '0 20px 20px 20px', maxWidth: 1200, margin: '0 auto' }}>
+        <Outlet />
+      </main>
     </div>
   )
 }

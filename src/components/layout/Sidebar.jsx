@@ -2,32 +2,32 @@ import { NavLink, useNavigate } from 'react-router-dom'
 
 const navItems = [
     {
-        section: 'MAIN',
+        section: 'الرئيسية',
         items: [
-            { to: '/dashboard', icon: 'bi-grid-fill', label: 'Dashboard' },
+            { to: '/dashboard', icon: 'bi-grid-fill', label: 'لوحة التحكم' },
         ]
     },
     {
-        section: 'CONTENT',
+        section: 'المحتوى',
         items: [
-            { to: '/users', icon: 'bi-people-fill', label: 'Users', badge: '1,234' },
-            { to: '/documents', icon: 'bi-play-circle-fill', label: 'Documents', badge: '567' },
-            { to: '/publications', icon: 'bi-collection-fill', label: 'Publications', badge: '89' },
+            { to: '/users', icon: 'bi-people-fill', label: 'المستخدمون', badge: '1,234' },
+            { to: '/documents', icon: 'bi-play-circle-fill', label: 'المستندات', badge: '567' },
+            { to: '/publications', icon: 'bi-collection-fill', label: 'المنشورات', badge: '89' },
         ]
     },
     {
-        section: 'ACCESS',
+        section: 'الوصول',
         items: [
-            { to: '/access', icon: 'bi-shield-lock-fill', label: 'Access Control' },
-            { to: '/emails', icon: 'bi-envelope-fill', label: 'Emails' },
+            { to: '/access', icon: 'bi-shield-lock-fill', label: 'التحكم بالوصول' },
+            { to: '/emails', icon: 'bi-envelope-fill', label: 'البريد الإلكتروني' },
         ]
     },
     {
-        section: 'ADMIN',
+        section: 'الإدارة',
         items: [
-            { to: '/sub-admins', icon: 'bi-person-badge-fill', label: 'Sub Admins' },
-            { to: '/reports', icon: 'bi-bar-chart-fill', label: 'Reports' },
-            { to: '/settings', icon: 'bi-gear-fill', label: 'Settings' },
+            { to: '/sub-admins', icon: 'bi-person-badge-fill', label: 'المشرفون الفرعيون' },
+            { to: '/reports', icon: 'bi-bar-chart-fill', label: 'التقارير' },
+            { to: '/settings', icon: 'bi-gear-fill', label: 'الإعدادات' },
         ]
     }
 ]
@@ -42,16 +42,16 @@ const Sidebar = () => {
 
     return (
         <aside className="drm-sidebar">
-            {/* Brand */}
+            {/* العلامة التجارية */}
             <div className="sidebar-brand">
                 <div className="brand-icon">🔐</div>
                 <div>
-                    <div className="brand-name">DRM Admin</div>
-                    <div className="brand-sub">Content Protection</div>
+                    <div className="brand-name">لوحة تحكم DRM</div>
+                    <div className="brand-sub">نظام حماية المحتوى</div>
                 </div>
             </div>
 
-            {/* Navigation */}
+            {/* التنقل */}
             <nav className="sidebar-nav">
                 {navItems.map((section) => (
                     <div key={section.section}>
@@ -78,13 +78,13 @@ const Sidebar = () => {
                 ))}
             </nav>
 
-            {/* Footer User */}
+            {/* المستخدم */}
             <div className="sidebar-footer">
                 <div className="sidebar-user" onClick={handleLogout}
-                    title="Click to Logout">
+                    title="اضغط لتسجيل الخروج">
                     <div className="user-avatar">A</div>
                     <div>
-                        <div className="user-name">Super Admin</div>
+                        <div className="user-name">المدير العام</div>
                         <div className="user-role">admin@drm.com</div>
                     </div>
                     <i className="bi bi-box-arrow-right ms-auto"

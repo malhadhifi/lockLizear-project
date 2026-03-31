@@ -3,10 +3,10 @@ import Button from './Button';
 
 export default function ConfirmDialog({
   isOpen, onConfirm, onCancel,
-  title = 'Confirm Action',
-  message = 'Are you sure?',
-  confirmLabel = 'Confirm',
-  cancelLabel  = 'Cancel',
+  title = 'تأكيد الإجراء',
+  message = 'هل أنت متأكد؟',
+  confirmLabel = 'تأكيد',
+  cancelLabel = 'إلغاء',
   variant = 'danger',
 }) {
   return (
@@ -14,7 +14,7 @@ export default function ConfirmDialog({
       <p className="text-slate-600 text-sm">{message}</p>
       <div className="flex gap-3 mt-6 justify-end">
         <Button variant="secondary" onClick={onCancel}>{cancelLabel}</Button>
-        <Button variant={variant}   onClick={onConfirm}>{confirmLabel}</Button>
+        <Button variant={variant} onClick={onConfirm}>{confirmLabel}</Button>
       </div>
     </Modal>
   );

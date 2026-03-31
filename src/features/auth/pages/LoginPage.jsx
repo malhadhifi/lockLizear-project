@@ -5,9 +5,9 @@ import { loginSuccess } from '../store/authSlice'
 import toast from 'react-hot-toast'
 
 const LoginPage = () => {
-  const navigate  = useNavigate()
-  const dispatch  = useDispatch()
-  const [form, setForm]     = useState({ email: '', password: '' })
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
+  const [form, setForm] = useState({ email: '', password: '' })
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -22,12 +22,12 @@ const LoginPage = () => {
       if (form.email === 'admin@drm.com' && form.password === 'password') {
         dispatch(loginSuccess({
           token: 'mock_token_xyz_2026',
-          user:  { name: 'Super Admin', email: form.email, role: 'super_admin' }
+          user: { name: 'المدير العام', email: form.email, role: 'super_admin' }
         }))
-        toast.success('Welcome back, Admin! 👋')
+        toast.success('مرحباً بعودتك، أيها المدير! 👋')
         navigate('/dashboard')
       } else {
-        toast.error('Invalid email or password')
+        toast.error('البريد الإلكتروني أو كلمة المرور غير صحيحة')
       }
     } finally {
       setLoading(false)
@@ -36,29 +36,29 @@ const LoginPage = () => {
 
   return (
     <div className="auth-card">
-      {/* Header */}
+      {/* الرأس */}
       <div className="auth-header">
         <div className="auth-logo">🔐</div>
-        <h4 className="text-white fw-bold mb-1">DRM Admin Panel</h4>
+        <h4 className="text-white fw-bold mb-1">لوحة تحكم DRM</h4>
         <p className="text-white-50 mb-0" style={{ fontSize: '13px' }}>
-          Smart Content Protection System
+          نظام حماية المحتوى الذكي
         </p>
       </div>
 
-      {/* Body */}
+      {/* المحتوى */}
       <div className="auth-body">
-        <h5 className="fw-bold mb-1" style={{ color: '#1a1d2e' }}>Sign In</h5>
+        <h5 className="fw-bold mb-1" style={{ color: '#1a1d2e' }}>تسجيل الدخول</h5>
         <p className="text-muted mb-4" style={{ fontSize: '13px' }}>
-          Enter your credentials to access the admin panel
+          أدخل بيانات الاعتماد الخاصة بك للوصول إلى لوحة التحكم
         </p>
 
         <form onSubmit={submit}>
-          {/* Email */}
+          {/* البريد الإلكتروني */}
           <div className="mb-3">
-            <label className="drm-label">Email Address</label>
+            <label className="drm-label">البريد الإلكتروني</label>
             <div className="input-group">
               <span className="input-group-text"
-                style={{ borderRadius: '10px 0 0 10px', background: '#f8f9fa' }}>
+                style={{ borderRadius: '0 10px 10px 0', background: '#f8f9fa' }}>
                 <i className="bi bi-envelope text-muted" />
               </span>
               <input
@@ -67,19 +67,19 @@ const LoginPage = () => {
                 value={form.email}
                 onChange={handle}
                 className="form-control drm-input"
-                style={{ borderRadius: '0 10px 10px 0', borderLeft: 'none' }}
+                style={{ borderRadius: '10px 0 0 10px', borderRight: 'none' }}
                 placeholder="admin@drm.com"
                 required
               />
             </div>
           </div>
 
-          {/* Password */}
+          {/* كلمة المرور */}
           <div className="mb-3">
-            <label className="drm-label">Password</label>
+            <label className="drm-label">كلمة المرور</label>
             <div className="input-group">
               <span className="input-group-text"
-                style={{ borderRadius: '10px 0 0 10px', background: '#f8f9fa' }}>
+                style={{ borderRadius: '0 10px 10px 0', background: '#f8f9fa' }}>
                 <i className="bi bi-lock text-muted" />
               </span>
               <input
@@ -88,49 +88,49 @@ const LoginPage = () => {
                 value={form.password}
                 onChange={handle}
                 className="form-control drm-input"
-                style={{ borderRadius: '0', borderLeft: 'none' }}
+                style={{ borderRadius: '0', borderRight: 'none' }}
                 placeholder="••••••••"
                 required
               />
               <button type="button"
                 className="input-group-text"
-                style={{ borderRadius: '0 10px 10px 0', background: '#f8f9fa', cursor: 'pointer' }}
+                style={{ borderRadius: '10px 0 0 10px', background: '#f8f9fa', cursor: 'pointer' }}
                 onClick={() => setShowPw(!showPw)}>
                 <i className={`bi ${showPw ? 'bi-eye-slash' : 'bi-eye'} text-muted`} />
               </button>
             </div>
           </div>
 
-          {/* Remember */}
+          {/* تذكرني */}
           <div className="d-flex justify-content-between align-items-center mb-4">
             <div className="form-check">
               <input className="form-check-input" type="checkbox" id="remember" />
               <label className="form-check-label" htmlFor="remember"
-                style={{ fontSize: '13px' }}>Remember me</label>
+                style={{ fontSize: '13px' }}>تذكرني</label>
             </div>
             <a href="#" style={{ fontSize: '13px', color: 'var(--primary)' }}>
-              Forgot password?
+              نسيت كلمة المرور؟
             </a>
           </div>
 
-          {/* Submit */}
+          {/* زر الدخول */}
           <button type="submit" className="btn btn-primary-drm w-100" disabled={loading}>
             {loading ? (
-              <><span className="spinner-border spinner-border-sm me-2" />Signing in...</>
+              <><span className="spinner-border spinner-border-sm me-2" />جاري تسجيل الدخول...</>
             ) : (
-              <><i className="bi bi-box-arrow-in-right me-2" />Sign In</>
+              <><i className="bi bi-box-arrow-in-right me-2" />تسجيل الدخول</>
             )}
           </button>
         </form>
 
-        {/* Demo hint */}
+        {/* بيانات تجريبية */}
         <div className="mt-4 p-3 rounded-3" style={{ background: '#f8f9fa' }}>
           <p className="mb-1" style={{ fontSize: '11px', color: '#6b7280' }}>
             <i className="bi bi-info-circle me-1" />
-            <strong>Demo credentials:</strong>
+            <strong>بيانات الدخول التجريبية:</strong>
           </p>
           <p className="mb-0" style={{ fontSize: '11px', color: '#6b7280' }}>
-            Email: admin@drm.com &nbsp;|&nbsp; Password: password
+            البريد: admin@drm.com &nbsp;|&nbsp; كلمة المرور: password
           </p>
         </div>
       </div>

@@ -1,16 +1,12 @@
 import { Outlet } from 'react-router-dom'
-import Sidebar from './Sidebar'
-import Header  from './Header'
+import Header from './Header'
 
 const MainLayout = () => (
-  <div style={{ display: 'flex' }}>
-    <Sidebar />
-    <div className="drm-main">
-      <Header />
-      <div className="page-content">
-        <Outlet />
-      </div>
-    </div>
+  <div dir="rtl" style={{ minHeight: '100vh', backgroundColor: '#fff', fontFamily: 'Arial, sans-serif' }}>
+    <Header />
+    <main style={{ padding: '0 20px 20px 20px', maxWidth: 1200, margin: '0 auto' }}>
+      <Outlet />
+    </main>
   </div>
 )
 

@@ -1,52 +1,104 @@
-import { useLocation } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 
-const pageTitles = {
-  '/dashboard':    { title: 'Dashboard',        icon: 'bi-grid-fill' },
-  '/users':        { title: 'Users Management', icon: 'bi-people-fill' },
-  '/documents':    { title: 'Documents',         icon: 'bi-play-circle-fill' },
-  '/publications': { title: 'Publications',      icon: 'bi-collection-fill' },
-  '/access':       { title: 'Access Control',    icon: 'bi-shield-lock-fill' },
-  '/emails':       { title: 'Email Management',  icon: 'bi-envelope-fill' },
-  '/sub-admins':   { title: 'Sub Admins',        icon: 'bi-person-badge-fill' },
-  '/reports':      { title: 'Reports & Logs',    icon: 'bi-bar-chart-fill' },
-  '/settings':     { title: 'Settings',          icon: 'bi-gear-fill' },
-}
+const TEAL = '#009cad'
+
+const navItems = [
+  { to: '/users', icon: 'bi-people-fill', label: 'العملاء' },
+  { to: '/usb', icon: 'bi-usb-drive-fill', label: 'أجهزة USB' },
+  { to: '/publications', icon: 'bi-collection-fill', label: 'المنشورات' },
+  { to: '/documents', icon: 'bi-file-earmark-text-fill', label: 'المستندات' },
+  { to: '/statistics', icon: 'bi-bar-chart-fill', label: 'الإحصائيات' },
+  { to: '/backups', icon: 'bi-hdd-fill', label: 'النسخ الاحتياطية' },
+  { to: '/settings', icon: 'bi-gear-fill', label: 'الإعدادات' },
+  { to: '/news', icon: 'bi-newspaper', label: 'الأخبار' },
+  { to: '/my-account', icon: 'bi-person-badge-fill', label: 'حسابي' },
+  { action: 'logout', icon: 'bi-box-arrow-right', label: 'تسجيل الخروج' },
+  { action: 'help', icon: 'bi-question-circle-fill', label: 'مساعدة' },
+]
 
 const Header = () => {
-  const location = useLocation()
-  const base     = '/' + location.pathname.split('/')[1]
-  const current  = pageTitles[base] || { title: 'DRM Panel', icon: 'bi-house-fill' }
+  const navigate = useNavigate()
+
+  const handleLogout = (e) => {
+    e.preventDefault()
+    localStorage.removeItem('drm_token')
+    navigate('/login')
+  }
 
   return (
-    <header className="drm-header">
-      <div>
-        <h1 className="page-title">
-          <i className={`bi ${current.icon} me-2`}
-            style={{ color: 'var(--primary)', fontSize: '20px' }} />
-          {current.title}
-        </h1>
+    <header style={{ width: '100%', marginBottom: 20 }}>
+      {/* Top Blue Bar */}
+      <div style={{
+        background: '#0a80b0', /* Slightly darker blue from screenshot */
+        color: '#fff',
+        padding: '12px 20px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 24 }}>🛡️</span>
+          <span style={{ fontSize: 20, fontWeight: 700 }}>Locklizard</span>
+        </div>
+        <div style={{ fontSize: 22, fontWeight: 700 }}>
+          Safeguard Enterprise لحماية PDF
+        </div>
       </div>
 
-      <div className="header-actions">
-        {/* Search */}
-        <div className="drm-search" style={{ width: '220px' }}>
-          <i className="bi bi-search" />
-          <input type="text" className="form-control" placeholder="Quick search..." />
-        </div>
+      {/* Info Bar */}
+      <div style={{
+        padding: '6px 20px',
+        borderBottom: '1px solid #ddd',
+        fontSize: 12,
+        color: '#666',
+        display: 'flex',
+        justifyContent: 'space-between'
+      }}>
+        <span>
+          مسجل الدخول باسم: <span style={{ color: TEAL }}>A.Fletcher (A.fletcher@locklizard.int)</span>
+        </span>
+        <span dir="ltr">
+          Server Time (UTC): 14:46 - Jun 17, 2016
+        </span>
+      </div>
 
-        {/* Notifications */}
-        <button className="header-icon-btn">
-          <i className="bi bi-bell" style={{ fontSize: '18px' }} />
-          <span className="notification-dot" />
-        </button>
+      {/* Navigation Menu */}
+      <div style={{ borderBottom: '2px solid #0a80b0', display: 'flex' }}>
+        {navItems.map((item, i) => {
+          const isButton = item.action
+          const content = (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
+              <i className={`bi ${item.icon}`} style={{ fontSize: 14 }} />
+              {item.label}
+            </div>
+          )
 
-        {/* Refresh */}
-        <button className="header-icon-btn">
-          <i className="bi bi-arrow-clockwise" style={{ fontSize: '18px' }} />
-        </button>
+          const style = (isActive) => ({
+            padding: '10px 16px',
+            fontSize: 13,
+            color: isActive ? '#fff' : TEAL,
+            background: isActive ? TEAL : 'transparent',
+            textDecoration: 'none',
+            borderLeft: '1px solid #eee',
+            cursor: 'pointer',
+            display: 'block'
+          })
 
-        {/* Admin Avatar */}
-        <div className="user-avatar-sm ms-2" style={{ cursor: 'pointer' }}>A</div>
+          if (isButton) {
+            return (
+              <a key={item.label} href="#" style={style(false)}
+                onClick={item.action === 'logout' ? handleLogout : e => e.preventDefault()}>
+                {content}
+              </a>
+            )
+          }
+
+          return (
+            <NavLink key={item.to} to={item.to} style={({ isActive }) => style(isActive)}>
+              {content}
+            </NavLink>
+          )
+        })}
       </div>
     </header>
   )
