@@ -5,9 +5,21 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\CustomerManagement\Models\CustomerLicense;
 use Modules\CustomerManagement\Models\Voucher;
+use Modules\CustomerManagement\Services\LicenseDocuments\LicenseDocumentService;
+use Modules\CustomerManagement\Services\LicensePublications\LicensePublicationService;
 
 class LicenseService
 {
+    protected $publicationService;
+    protected $documentService;
+
+    public function __construct(
+        LicensePublicationService $publicationService,
+         LicenseDocumentService $documentService
+    ) {
+        $this->publicationService = $publicationService;
+        $this->documentService = $documentService;
+    }
     public function createLicense(array $data)
     {
         return DB::transaction(function () use ($data) {
@@ -135,4 +147,110 @@ class LicenseService
 
         return $query->paginate($filters['show_at_least']);
     }
+
+    /**
+     * تنفيذ الإجراءات الجماعية على الرخص
+     */
+    public function handleBulkActions(array $data)
+    {
+        $ids = $data['license_ids'];
+        $action = $data['action'];
+
+        return DB::transaction(function () use ($ids, $action, $data) {
+            $query = CustomerLicense::whereIn('id', $ids);
+
+            switch ($action) {
+                case 'suspend':
+                    $query->update(['status' => 'suspend']);
+                    break;
+
+                case 'activate':
+                    $query->update(['status' => 'active']);
+                    break;
+
+                case 'delete':
+                    $query->delete(); // Soft Delete
+                    break;
+
+                case 'grant_access_to_publication':
+                    $this->bulkGrantAccess($ids, 'publications', $data['publication_ids'], [
+                        'status' => 'active',
+                        'access_mode' => 'unlimited'
+                    ]);
+                    break;
+
+                case 'grant_access_to_documents':
+                    $this->bulkGrantAccess($ids, 'documents', $data['document_ids'], [
+                        'status' => 'active',
+                        'access_mode' => 'baselimited'
+                    ]);
+                    break;
+            }
+            return true;
+        });
+    }
+
+    /**
+     * دالة مساعدة لربط مصفوفة رخص بمصفوفة موارد (منشورات أو ملفات)
+     */
+    private function bulkGrantAccess(array $licenseIds, string $relation, array $resourceIds, array $pivotData)
+    {
+        $licenses = CustomerLicense::whereIn('id', $licenseIds)->get();
+
+        // تجهيز بيانات الجدول الوسيط
+        $syncData = [];
+        foreach ($resourceIds as $id) {
+            $syncData[$id] = $pivotData;
+        }
+
+        foreach ($licenses as $license) {
+            // استخدام العلاقة (publications() أو documents()) ديناميكياً
+            $license->{$relation}()->syncWithoutDetaching($syncData);
+        }
+    }
+
+    /**
+     * جلب تفاصيل رخصة واحدة مع عدد الكروت (للرخصة الجماعية)
+     */
+    public function getLicenseDetails(int $id)
+    {
+        // نستخدم withCount لجلب عدد الكروت وتجهيزها للـ Resource
+        return CustomerLicense::withCount('vouchers')->findOrFail($id);
+    }
+
+    /**
+     * تحديث بيانات رخصة محددة (الحقول المسموحة فقط)
+     */
+
+    public function updateLicense(int $id, array $data)
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $license = CustomerLicense::findOrFail($id);
+
+            // 1. تحديث البيانات الأساسية (عزل الإجراءات المدمجة)
+            $mainData = collect($data)->except(['publications_action', 'documents_action'])->toArray();
+
+            if (isset($mainData['never_expires']) && $mainData['never_expires'] == true) {
+                $mainData['valid_until'] = null;
+            }
+
+            if (!empty($mainData)) {
+                $license->update($mainData);
+            }
+
+            // 2. تمرير الإجراء الموحد للمنشورات إلى خدمتك الجاهزة
+            if (!empty($data['publications_action'])) {
+                // الكائن publications_action يطابق تماماً ما تتوقعه خدمتك (action, publication_ids, valid_from...)
+                $this->publicationService->updatePublicationsAccess($id, $data['publications_action']);
+            }
+
+            // 3. تمرير الإجراء الموحد للملفات إلى خدمتك الجاهزة
+            if (!empty($data['documents_action'])) {
+                $this->documentService->updateDocumentsAccess($id, $data['documents_action']);
+            }
+
+            return $license;
+        });
+    }
 }
+

@@ -94,8 +94,11 @@ use App\Http\Controllers\Controller;
 
 use App\Traits\ApiResponseTrait;
 use Modules\CustomerManagement\Http\Requests\License\IndexLicenseRequest;
+use Modules\CustomerManagement\Http\Requests\License\LicenseBulkActionRequest;
 use Modules\CustomerManagement\Http\Requests\License\StoreLicenseRequest;
+use Modules\CustomerManagement\Http\Requests\License\UpdateCustomerLicenseRequest;
 use Modules\CustomerManagement\Services\License\LicenseService;
+use Modules\CustomerManagement\Transformers\License\CustomerLicenseDetailsResource;
 use Modules\CustomerManagement\Transformers\License\CustomerLicenseResource;
 
 class CustomerLicenseController extends Controller
@@ -150,6 +153,65 @@ class CustomerLicenseController extends Controller
             // 1001 => 'تم جلب البيانات بنجاح.'
             return $this->sendResponse(true, 1001, $responseData, 200);
 
+        } catch (\Exception $e) {
+            return $this->sendResponse(false, 5000, null, 500);
+        }
+    }
+
+
+    /**
+     * الإجراءات الجماعية على الرخص (حذف، إيقاف، تفعيل، منح وصول)
+     * الرابط: POST /api/customer-management/customer-licenses/bulk-action
+     */
+    public function bulkAction(LicenseBulkActionRequest $request)
+    {
+        try {
+            $this->licenseService->handleBulkActions($request->validated());
+
+            // 1000 => 'تمت العملية بنجاح.'
+            return $this->sendResponse(true, 1000, null, 200);
+
+        } catch (\Exception $e) {
+            return $this->sendResponse(false, 5000, null, 500);
+        }
+    }
+
+
+    /**
+     * عرض تفاصيل رخصة محددة
+     * الرابط: GET /api/customer-management/customer-licenses/{id}
+     */
+    public function show($id)
+    {
+        try {
+            $license = $this->licenseService->getLicenseDetails($id);
+            $responseData = new CustomerLicenseDetailsResource($license);
+
+            // 1001 => 'تم جلب البيانات بنجاح.'
+            return $this->sendResponse(true, 1001, $responseData, 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // 4004 (أو أي كود تفضله): الرخصة غير موجودة
+            return $this->sendResponse(false, 4004, null, 404);
+        } catch (\Exception $e) {
+            return $this->sendResponse(false, 5000, null, 500);
+        }
+    }
+
+    /**
+     * تحديث بيانات رخصة محددة
+     * الرابط: PUT /api/customer-management/customer-licenses/{id}
+     */
+    public function update(UpdateCustomerLicenseRequest $request, $id)
+    {
+        try {
+            $this->licenseService->updateLicense($id, $request->validated());
+
+            // 1000 => 'تمت العملية بنجاح.'
+            return $this->sendResponse(true, 1000, null, 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->sendResponse(false, 4004, null, 404);
         } catch (\Exception $e) {
             return $this->sendResponse(false, 5000, null, 500);
         }
