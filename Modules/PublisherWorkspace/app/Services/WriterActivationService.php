@@ -4,7 +4,7 @@ namespace Modules\PublisherWorkspace\Services;
 
 use Modules\PublisherWorkspace\Models\PublisherLicense;
 use Modules\PublisherWorkspace\Models\PublisherDevice;
-use Illuminate\Http\Exceptions\HttpResponseException;
+use Exception; // 👈 استدعاء الكلاس الأساسي للأخطاء
 
 class WriterActivationService
 {
@@ -13,20 +13,22 @@ class WriterActivationService
      */
     public function activateDevice(array $data, string $ipAddress)
     {
-        // 1. التحقق المزدوج (الرقم + المفتاح)
+        // 1. التحقق المزدوج
         $license = PublisherLicense::with('publisher', 'package')
             ->where('publisher_id', $data['publisher_id'])
             ->where('license_key', $data['license_key'])
             ->first();
 
         if (!$license || $license->status !== 'active') {
-            $this->fail('بيانات الرخصة غير متطابقة أو منتهية.', 'license', 401);
+            // 4060 => بيانات الرخصة غير متطابقة أو منتهية
+            throw new Exception('license_invalid', 4060);
         }
 
         $publisher = $license->publisher;
 
         if ($publisher->status !== 'active') {
-            $this->fail('حساب الناشر موقوف، يرجى مراجعة الإدارة.', 'account', 403);
+            // 4061 => حساب الناشر موقوف
+            throw new Exception('account_suspended', 4061);
         }
 
         // 2. البحث عن الجهاز أو إنشاؤه
@@ -36,7 +38,8 @@ class WriterActivationService
 
         if ($device) {
             if ($device->status === 'revoked') {
-                $this->fail('هذا الجهاز محظور من استخدام النظام.', 'device', 403);
+                // 2000 => تم حظر هذا الجهاز من قبل الإدارة
+                throw new Exception('device_blocked', 2000);
             }
 
             // تحديث بيانات الجهاز
@@ -54,7 +57,8 @@ class WriterActivationService
                 ->count();
 
             if ($activeCount >= $allowedDevices) {
-                $this->fail("لقد وصلت للحد الأقصى للأجهزة ({$allowedDevices}). يرجى تسجيل الخروج من جهاز آخر أولاً.", 'device', 403);
+                // 4034 => تجاوزت الحد الأقصى للأجهزة
+                throw new Exception('max_devices_reached', 4034);
             }
 
             // إنشاء الجهاز الجديد
@@ -63,8 +67,8 @@ class WriterActivationService
                 'publisher_license_id' => $license->id,
                 'hardware_id' => $data['hardware_id'],
                 'device_name' => $data['device_name'] ?? 'Unknown Device',
-                'os_version' => $data['os_version']??null,
-                'app_version' => $data['app_version']??null,
+                'os_version' => $data['os_version'] ?? null,
+                'app_version' => $data['app_version'] ?? null,
                 'last_ip' => $ipAddress,
                 'last_synced_at' => now(),
                 'status' => 'active'
@@ -92,14 +96,14 @@ class WriterActivationService
             ->first();
 
         if (!$device) {
-            $this->fail('الجهاز غير مسجل في النظام.', 'device', 404);
+            // 2001 => هذا الجهاز غير مسجل. يرجى تسجيل الدخول.
+            throw new Exception('device_not_found', 2001);
         }
 
-        // فحص الحظر للناشر أو الجهاز
         if ($publisher->status !== 'active' || $device->status === 'revoked') {
-            // حذف التوكن الحالي لطرده
             $publisher->currentAccessToken()->delete();
-            $this->fail('تم حظر الحساب أو الجهاز، يرجى تسجيل الخروج.', 'logout', 403);
+            // 4062 => تم حظر الحساب أو الجهاز، يرجى تسجيل الخروج
+            throw new Exception('account_or_device_blocked', 4062);
         }
 
         // تحديث النبض
@@ -109,18 +113,5 @@ class WriterActivationService
         ]);
 
         return true;
-    }
-
-    /**
-     * دالة لرمي خطأ متوافق مع الغلاف الموحد
-     */
-    private function fail(string $message, string $action, int $code = 400)
-    {
-        throw new HttpResponseException(response()->json([
-            'success' => false,
-            'action' => $action,
-            'message' => $message,
-            'data' => null
-        ], $code));
     }
 }

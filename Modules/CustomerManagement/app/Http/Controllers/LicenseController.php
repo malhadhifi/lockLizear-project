@@ -93,8 +93,10 @@ use App\Http\Controllers\Controller;
 
 
 use App\Traits\ApiResponseTrait;
+use Modules\CustomerManagement\Http\Requests\License\IndexLicenseRequest;
 use Modules\CustomerManagement\Http\Requests\License\StoreLicenseRequest;
 use Modules\CustomerManagement\Services\License\LicenseService;
+use Modules\CustomerManagement\Transformers\License\CustomerLicenseResource;
 
 class CustomerLicenseController extends Controller
 {
@@ -122,6 +124,33 @@ class CustomerLicenseController extends Controller
 
         } catch (\Exception $e) {
             // في بيئة التطوير يمكنك إرجاع $e->getMessage() لمعرفة الخطأ إن وجد
+            return $this->sendResponse(false, 5000, null, 500);
+        }
+    }
+
+    /**
+     * عرض جميع الرخص مع الفلاتر والبحث
+     * الرابط: GET /api/customer-management/customer-licenses
+     */
+    public function index(IndexLicenseRequest $request)
+    {
+        try {
+            $paginator = $this->licenseService->getLicenses($request->validated());
+
+            $responseData = [
+                'items' => CustomerLicenseResource::collection($paginator),
+                'pagination' => [
+                    'total' => $paginator->total(),
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                    'per_page' => $paginator->perPage(),
+                ]
+            ];
+
+            // 1001 => 'تم جلب البيانات بنجاح.'
+            return $this->sendResponse(true, 1001, $responseData, 200);
+
+        } catch (\Exception $e) {
             return $this->sendResponse(false, 5000, null, 500);
         }
     }

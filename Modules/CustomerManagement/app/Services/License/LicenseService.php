@@ -88,4 +88,51 @@ class LicenseService
 
         return $pin;
     }
+
+
+
+    /**
+     * جلب قائمة الرخص مع الفلاتر والبحث
+     */
+    public function getLicenses(array $filters)
+    {
+        // استخدام withCount لجلب عدد الكروت من جدول vouchers
+        $query = CustomerLicense::withCount('vouchers');
+
+        // 1. فلتر البحث (في الاسم، الإيميل، أو الشركة)
+        if (!empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('name', 'like', '%' . $filters['search'] . '%')
+                    ->orWhere('email', 'like', '%' . $filters['search'] . '%')
+                    ->orWhere('company', 'like', '%' . $filters['search'] . '%');
+            });
+        }
+
+        // 2. فلتر العرض (show)
+        $now = \Carbon\Carbon::now();
+
+        switch ($filters['show']) {
+            case 'registered':
+                $query->whereNotNull('registered_at');
+                break;
+            case 'not_registered':
+                $query->whereNull('registered_at');
+                break;
+            case 'suspended':
+                $query->where('status', 'suspend');
+                break;
+            case 'expired':
+                // منتهية الصلاحية: لها تاريخ انتهاء، والتاريخ في الماضي
+                $query->where('never_expires', false)
+                    ->where('valid_until', '<', $now);
+                break;
+        }
+
+        // 3. الترتيب
+        // إذا كان الترتيب بالشركة، نجعله تصاعدياً (أبجدياً)، وإلا تنازلياً (أحدث شيء)
+        $sortDirection = $filters['sort_by'] === 'name'|| $filters['sort_by'] === 'company' ? 'asc' : 'desc';
+        $query->orderBy($filters['sort_by'], $sortDirection);
+
+        return $query->paginate($filters['show_at_least']);
+    }
 }

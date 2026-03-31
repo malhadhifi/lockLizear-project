@@ -2,34 +2,34 @@
 
 namespace Modules\PublisherWorkspace\Http\Controllers\Writer;
 
-use App\Http\Controllers\Controller; // تم التعديل ليتطابق مع الكنترولر الأول
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Modules\Library\Models\Publication;
 use Modules\PublisherWorkspace\Http\Requests\SyncWriterDocumentsRequest;
 use Modules\Library\Services\WriterSyncService;
 use App\Traits\ApiResponseTrait;
+
 class WriterContentController extends Controller
 {
-    use ApiResponseTrait; // 2. استخدام الترايت داخل الكلاس
+    use ApiResponseTrait;
 
     public function sync(SyncWriterDocumentsRequest $request, WriterSyncService $syncService)
     {
-        // تم التحقق بنجاح! نأخذ البيانات النظيفة
-        $validatedData = $request->validated();
+        try {
+            // تم التحقق بنجاح في الـ FormRequest! نأخذ البيانات النظيفة
+            $validatedData = $request->validated();
+            $publisherId = $request->user()->id;
 
-        $publisherId = $request->user()->id;
+            // نمرر البيانات للخدمة في وحدة المكتبة لتقوم بعملها بصمت
+            $savedDocsIds = $syncService->syncDocuments($publisherId, $validatedData);
 
-        // نمرر البيانات للخدمة في وحدة المكتبة لتقوم بعملها بصمت
-        $savedDocsIds = $syncService->syncDocuments($publisherId, $validatedData);
+            // 1063 => تمت المزامنة بنجاح
+            return $this->sendResponse(true, 1063, $savedDocsIds, 200);
 
-
-        return $this->sendResponse(
-            true,
-            'sync_success',
-            'تمت مزامنة الملفات بنجاح.',
-            $savedDocsIds,
-            200
-        );
+        } catch (\Exception $e) {
+            // 5000 => خطأ داخلي
+            return $this->sendResponse(false, 5000, null, 500);
+        }
     }
 
     /**
@@ -37,27 +37,25 @@ class WriterContentController extends Controller
      */
     public function getPublications(Request $request)
     {
-        // 1. جلب رقم الناشر من التوكن
-        $publisherId = $request->user()->id;
+        try {
+            // 1. جلب رقم الناشر من التوكن
+            $publisherId = $request->user()->id;
 
-        // 2. الاستعلام عن المنشورات الخاصة به فقط (من وحدة المكتبة)
-        // نختار فقط الحقول التي يحتاجها برنامج الـ C# لتخفيف حجم البيانات
-        $publications = Publication::where('publisher_id', $publisherId)
-            ->select('id', 'name', 'description')
-            ->get();
+            // 2. الاستعلام عن المنشورات الخاصة به فقط
+            $publications = Publication::where('publisher_id', $publisherId)
+                ->select('id', 'name', 'description')
+                ->get();
 
-        $responseData = [
-            'count' => $publications->count(),
-            'items' => $publications
-        ];
+            $responseData = [
+                'count' => $publications->count(),
+                'items' => $publications
+            ];
 
-        // 3. إرجاع النتيجة كـ JSON موحد
-        return $this->sendResponse(
-            true,
-            'publications',
-            'تم جلب المنشورات بنجاح.',
-            $responseData,
-            200
-        );
+            // 1001 => تم جلب البيانات بنجاح (الكود العام الموجود مسبقاً في ملفك)
+            return $this->sendResponse(true, 1001, $responseData, 200);
+
+        } catch (\Exception $e) {
+            return $this->sendResponse(false, 5000, null, 500);
+        }
     }
 }

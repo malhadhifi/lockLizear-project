@@ -21,58 +21,81 @@ class WriterActivationController extends Controller
 
     public function activate(Request $request)
     {
-        // 1. التحقق اليدوي للحفاظ على الغلاف الموحد
-        $validator = Validator::make($request->all(), [
-            'publisher_id' => 'required|integer',
-            'license_key' => 'required|string',
-            'hardware_id' => 'required|string',
-            'device_name' => 'nullable|string',
-            'os_version' => 'nullable|string',
-            'app_version' => 'nullable|string',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'publisher_id' => 'required|integer',
+                'license_key' => 'required|string',
+                'hardware_id' => 'required|string',
+                'device_name' => 'nullable|string',
+                'os_version' => 'nullable|string',
+                'app_version' => 'nullable|string',
+            ]);
 
-        if ($validator->fails()) {
-            return $this->sendResponse(false, 'validation', $validator->errors()->first(), $validator->errors(), 422);
+            if ($validator->fails()) {
+                return $this->sendResponse(false, 4020, $validator->errors(), 422);
+            }
+
+            $result = $this->activationService->activateDevice($request->all(), $request->ip());
+
+            $payloadData = [
+                'token' => $result['token'],
+                'device_id' => $result['device_id'],
+                'publisher' => [
+                    'name' => $result['publisher']->name,
+                    'company' => $result['publisher']->company
+                ]
+            ];
+
+            return $this->sendResponse(true, 1060, $payloadData, 200);
+
+        } catch (\Exception $e) {
+            // 👈 هنا التعديل الجوهري: نقرأ كود الخطأ
+            $code = $e->getCode();
+
+            // إذا كان الخطأ قادماً من السيرفيس بأكوادنا المخصصة (أكبر من أو يساوي 2000)
+            if (is_numeric($code) && $code >= 2000 && $code < 5000) {
+                // نمرر الكود المخصص، ونضع 400 ككود HTTP عام لرفض العملية
+                return $this->sendResponse(false, $code, null, 400);
+            }
+
+            // أما إذا كان خطأ برمجي بحت (قاعدة البيانات مثلاً)، نرجع 5000
+            return $this->sendResponse(false, 5000, null, 500);
         }
-
-        // 2. تنفيذ الخدمة
-        $result = $this->activationService->activateDevice($request->all(), $request->ip());
-
-
-        $payloadData = [
-            'token' => $result['token'],
-            'device_id' => $result['device_id'],
-            'publisher' => [
-                'name' => $result['publisher']->name,
-                'company' => $result['publisher']->company
-            ]
-        ];
-
-        return $this->sendResponse(true, 'activation', 'تم تفعيل البرنامج بنجاح.', $payloadData, 200);
     }
 
     public function ping(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'hardware_id' => 'required|string'
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'hardware_id' => 'required|string'
+            ]);
 
-        if ($validator->fails()) {
-            return $this->sendResponse(false, 'validation', 'رقم الجهاز مفقود.', null, 422);
+            if ($validator->fails()) {
+                return $this->sendResponse(false, 4020, $validator->errors(), 422);
+            }
+
+            $this->activationService->pingDevice($request->user(), $request->hardware_id, $request->ip());
+
+            return $this->sendResponse(true, 1061, null, 200);
+
+        } catch (\Exception $e) {
+            // 👈 نفس المعالجة هنا
+            $code = $e->getCode();
+            if (is_numeric($code) && $code >= 2000 && $code < 5000) {
+                return $this->sendResponse(false, $code, null, 400);
+            }
+            return $this->sendResponse(false, 5000, null, 500);
         }
-
-        // تمرير بيانات المستخدم من التوكن
-        $this->activationService->pingDevice($request->user(), $request->hardware_id, $request->ip());
-
-        // الرد بالاستمرار
-        return $this->sendResponse(true, 'continue', 'الاتصال سليم.', null, 200);
     }
 
     public function deactivate(Request $request)
     {
-        // إلغاء تنشيط الجهاز (تسجيل الخروج)
-        $request->user()->currentAccessToken()->delete();
+        try {
+            $request->user()->currentAccessToken()->delete();
+            return $this->sendResponse(true, 1062, null, 200);
 
-        return $this->sendResponse(true, 'logout', 'تم تسجيل الخروج وإلغاء تنشيط الجهاز.', null, 200);
+        } catch (\Exception $e) {
+            return $this->sendResponse(false, 5000, null, 500);
+        }
     }
 }

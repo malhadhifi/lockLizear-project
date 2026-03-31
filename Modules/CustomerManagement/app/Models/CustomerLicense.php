@@ -86,4 +86,9 @@ class CustomerLicense extends Model
         return $this->belongsTo(Publisher::class, 'publisher_id');
     }
 
+    public function vouchers()
+    {
+        return $this->hasMany(Voucher::class, 'customer_license_id');
+    }
+
 }
