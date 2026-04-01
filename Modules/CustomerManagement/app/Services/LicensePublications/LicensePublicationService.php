@@ -19,13 +19,12 @@ class LicensePublicationService
                     ->orWhere('description', 'like', '%' . $filters['search'] . '%');
             });
         }
-
-        if ($filters['access_status'] === 'granted') {
+        if ($filters['show'] === 'with_access') {
             $query->whereHas('customers', function ($q) use ($customerLicenseId) {
                 $q->where('customer_licenses.id', $customerLicenseId)
                     ->where('license_publications.status', '!=', 'revoked');
             });
-        } elseif ($filters['access_status'] === 'denied') {
+        } elseif ($filters['show'] === 'without_access') {
             $query->whereDoesntHave('customers', function ($q) use ($customerLicenseId) {
                 $q->where('customer_licenses.id', $customerLicenseId)
                     ->where('license_publications.status', '!=', 'revoked');

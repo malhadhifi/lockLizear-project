@@ -24,7 +24,7 @@ class LicenseDocumentRequest extends BaseRequest
         return [
             'search' => 'nullable|string|max:100',
             'sort_by' => 'in:id,title,published_at',
-            'show_at_least' => 'integer|min:1',
+            'show_at_least' => 'integer|min:25',
             // الفلاتر المحددة التي طلبتها بالضبط
             'show' => 'in:all,with_access,not_access,video,pdf,access_video,access_pdf,not_access_video,not_access_pdf',
         ];

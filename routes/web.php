@@ -26,7 +26,7 @@ Route::get('/test-real-flow', function (CreatePublisherAndLicenseAction $action)
 
        $safe=base64_encode($result['binary_file']);
         // نستدعي الإشعار مباشرة ونعطيه للناشر!
-       $result['publisher']->notify(new \Modules\SaaSAdmin\Notifications\LicenseGeneratedNotification($safe));
+       $result['publisher']->notify(new LicenseGeneratedNotification($safe));
 
         return response()->json([
             'success' => true,
@@ -44,3 +44,27 @@ Route::get('/test-real-flow', function (CreatePublisherAndLicenseAction $action)
     }
 });
 
+
+Route::get('/get-public-key', function () {
+    // 1. جلب مسار المفتاح الخاص من الإعدادات
+    $keyPath = config('saasadmin.server_private_key_path');
+
+    if (!file_exists($keyPath)) {
+        return "ملف المفتاح الخاص غير موجود في المسار المكتوب!";
+    }
+
+    // 2. قراءة المفتاح الخاص
+    $privateKeyContent = file_get_contents($keyPath);
+    $privateKeyResource = openssl_pkey_get_private($privateKeyContent);
+
+    if (!$privateKeyResource) {
+        return "فشل في قراءة المفتاح الخاص. تأكد من صيغة الملف.";
+    }
+
+    // 3. استخراج تفاصيل المفتاح (والتي تتضمن المفتاح العام تلقائياً)
+    $keyDetails = openssl_pkey_get_details($privateKeyResource);
+    $publicKey = $keyDetails['key'];
+
+    // 4. إرجاع المفتاح كنص نقي (Text) لكي لا يحذف المتصفح الأسطر
+    return response($publicKey)->header('Content-Type', 'text/plain');
+});

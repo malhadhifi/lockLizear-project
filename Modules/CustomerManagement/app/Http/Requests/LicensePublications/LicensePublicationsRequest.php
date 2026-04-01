@@ -25,8 +25,8 @@ class LicensePublicationsRequest extends BaseRequest
         return [
             'search' => 'nullable|string|max:100',
             'sort_by' => 'in:name,created_at',
-            'show_at_least' => 'integer|min:1',
-            'access_status' => 'in:all,granted,denied',
+            'show_at_least' => 'integer|min:25',
+            'show' => 'in:all,with_access,without_access',
         ];
     }
 }

@@ -2,12 +2,13 @@
 
 namespace Modules\CustomerManagement\Exports;
 
-use Modules\CustomerManagement\Models\CustomerLicense;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Modules\CustomerManagement\Models\CustomerLicense;
+
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class GroupLicenseVouchersExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize

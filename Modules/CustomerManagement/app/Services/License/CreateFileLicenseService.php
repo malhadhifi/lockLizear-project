@@ -15,7 +15,7 @@ class CreateFileLicenseService
 
     public function __construct(LicensePayloadBuilderService $payloadBuilder)
     {
-        $this->containerSecret = config('saasadmin.');
+        $this->containerSecret = config('saasadmin.app_container_key');
 
         $this->sslConfig = [
             "config" => "C:/xampp/php/extras/ssl/openssl.cnf",
@@ -36,9 +36,7 @@ class CreateFileLicenseService
      */
     public function createLicenseFile(CustomerLicense $license)
     {
-        // 1. جلب بيانات الرخصة الكاملة (يمرر null بشكل طبيعي إذا لم يتم إرسالها)
         $fullPayloadResource = $this->payloadBuilder->buildPayload($license->id, 1, 1);
-
         $fullLicenseData = $fullPayloadResource->resolve();
 
         // 2. بناء الهيكل (Payload)
@@ -63,15 +61,19 @@ class CreateFileLicenseService
                 'AuthEndpoint' => config('saasadmin.endpoints.auth_endpoint'),
             ],
 
-            // حقن البيانات المفصلة للرخصة
             'FullLicenseData' => $fullLicenseData
         ];
 
-        // 3. التوقيع الرقمي
+        // 3. الترتيب العميق للمصفوفة (خطوة حاسمة جداً)
+        $payload = $this->recursiveKsort($payload);
+
+        // 4. التوقيع الرقمي (نمرر المصفوفة المرتبة)
         $payload['AdminDigitalSignature'] = $this->signPayload($payload);
 
-        // 4. التشفير والتحزيم النهائي
-        $finalJson = json_encode($payload);
+        // 5. التشفير والتحزيم النهائي
+        // استخدام هذه الـ Flags يمنع PHP من تشويه الحروف العربية والروابط
+        $finalJson = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
         $encryptedContainer = $this->encryptOuterLayer($finalJson);
 
         $binaryFile = $this->packBinaryFile($encryptedContainer['data'], $encryptedContainer['salt'], $encryptedContainer['iv']);
@@ -81,12 +83,31 @@ class CreateFileLicenseService
         ];
     }
 
+    /**
+     * توقيع البيانات بعد تحويلها لـ JSON نظيف
+     */
     private function signPayload($payloadArray)
     {
-        ksort($payloadArray);
-        $dataToSign = json_encode($payloadArray);
+        // لاحظ: لا نقوم بعمل ksort هنا لأننا رتبناها مسبقاً بشكل عميق
+        // نستخدم نفس الـ Flags المستخدمة في التصدير النهائي
+        $dataToSign = json_encode($payloadArray, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
         openssl_sign($dataToSign, $signature, $this->serverPrivateKey, OPENSSL_ALGO_SHA256);
         return base64_encode($signature);
+    }
+
+    /**
+     * دالة مساعدة لترتيب المصفوفة بشكل أبجدي وعميق (لكل المستويات)
+     */
+    private function recursiveKsort(array $array)
+    {
+        foreach ($array as &$value) {
+            if (is_array($value)) {
+                $value = $this->recursiveKsort($value); // ترتيب المصفوفات الداخلية
+            }
+        }
+        ksort($array); // ترتيب المستوى الحالي
+        return $array;
     }
 
     private function encryptOuterLayer($jsonData)

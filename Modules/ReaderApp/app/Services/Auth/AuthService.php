@@ -20,68 +20,114 @@ class AuthService
         $this->deviceService = $deviceService;
     }
 
+    /**
+     * 1. مرحلة التسجيل (لا يتم الحفظ في الداتا بيز هنا)
+     */
     public function registerReader(array $data, string $ipAddress)
     {
-        return DB::transaction(function () use ($data, $ipAddress) {
-            $reader = Reader::create([
-                'name' => $data['name'],
-                'email' => $data['email'],
-                'phone' => $data['phone'] ?? null,
-                'password' => Hash::make($data['password']),
-            ]);
+        // تشفير كلمة المرور قبل وضعها في الكاش لأسباب أمنية
+        $data['password'] = Hash::make($data['password']);
 
-            $this->deviceService->syncDevice($reader, $data['device_info'], $ipAddress);
-            $this->generateAndCacheOtp($reader->email);
+        // توليد الرمز وتخزين كل البيانات في الكاش
+        $this->cacheDataAndSendOtp($data, $ipAddress);
 
-            return $reader;
-        });
+        // نرجع رسالة نجاح مبدئية
+        return [
+            'success' => true,
+            'message' => 'OTP sent successfully to your email.'
+        ];
     }
 
-    public function generateAndCacheOtp(string $email)
+    /**
+     * دالة مساعدة لتوليد الـ OTP وتخزين "البيانات كاملة" في الكاش
+     */
+    protected function cacheDataAndSendOtp(array $userData, string $ipAddress)
     {
-        $otpCode = rand(1000, 9999);
+        $email = $userData['email'];
+        $otpCode = rand(1000, 99999);
         $cacheKey = 'otp_register_' . $email;
 
-        Cache::put($cacheKey, $otpCode, now()->addMinutes(15));
-        Notification::route('mail', $email)->notify(new SendOtpNotification($otpCode));
+        // نقوم بتخزين الرمز + بيانات المستخدم + رقم الـ IP في مصفوفة واحدة
+        $cachePayload = [
+            'otp_code'   => $otpCode,
+            'user_data'  => $userData,
+            'ip_address' => $ipAddress
+        ];
 
+        Cache::put($cacheKey, $cachePayload, now()->addMinutes(2));
+
+        Notification::route('mail', $email)->notify(new SendOtpNotification($otpCode));
         \Log::info("OTP for {$email} is: {$otpCode}");
 
         return $otpCode;
     }
 
+    /**
+     * 2. إعادة إرسال الرمز (نجلب البيانات القديمة من الكاش ونحدث الرمز فقط)
+     */
     public function resendOtp(string $email)
     {
-        return $this->generateAndCacheOtp($email);
+        $cacheKey = 'otp_register_' . $email;
+        $cachedPayload = Cache::get($cacheKey);
+
+        if (!$cachedPayload) {
+            throw new Exception('expired', 4024); // الكاش انتهى، يجب عليه التسجيل من جديد
+        }
+
+        // نعيد استخدام البيانات المخزنة مسبقاً مع توليد رمز جديد
+        return $this->cacheDataAndSendOtp($cachedPayload['user_data'], $cachedPayload['ip_address']);
     }
 
+    /**
+     * 3. مرحلة التحقق (هنا يتم الحفظ الفعلي في الداتا بيز)
+     */
     public function verifyOtpAndLogin(array $data)
     {
         $email = $data['email'];
         $enteredOtp = $data['otp_code'];
         $cacheKey = 'otp_register_' . $email;
-        // ملاحظة: تأكد أن VerifyOtpRequest يرسل hardware_id بهذا الشكل أو عدله ليصبح device_info
-        $hardwareId = $data['hardware_id'] ?? $data['device_info']['hardware_id'];
 
-        if (!Cache::has($cacheKey)) {
+        // أ. جلب البيانات من الكاش
+        $cachedPayload = Cache::get($cacheKey);
+
+        if (!$cachedPayload) {
             throw new Exception('expired', 4024);
         }
 
-        $cachedOtp = Cache::get($cacheKey);
-        if ($cachedOtp != $enteredOtp) {
+        // ب. التحقق من صحة الرمز
+        if ($cachedPayload['otp_code'] != $enteredOtp) {
             throw new Exception('invalid', 4023);
         }
 
-        $reader = Reader::where('email', $email)->first();
+        // ج. الرمز صحيح! الآن نقوم بإنشاء الحساب في قاعدة البيانات
+        $userData = $cachedPayload['user_data'];
+        $ipAddress = $cachedPayload['ip_address'];
+        $hardwareId = $data['hardware_id'] ?? $userData['device_info']['hardware_id'];
 
-        if (is_null($reader->email_verified_at)) {
-            $reader->update(['email_verified_at' => now()]);
-        }
+        $reader = DB::transaction(function () use ($userData, $ipAddress) {
+            // حفظ العميل (لاحظ أن كلمة المرور مشفرة مسبقاً في دالة registerReader)
+            $reader = Reader::create([
+                'name'              => $userData['name'],
+                'email'             => $userData['email'],
+                'phone'             => $userData['phone'] ?? null,
+                'password'          => $userData['password'],
+                'email_verified_at' => now(), // تم التحقق مباشرة
+            ]);
 
+            // حفظ الجهاز
+            $this->deviceService->syncDevice($reader, $userData['device_info'], $ipAddress);
+
+            return $reader;
+        });
+
+        // د. مسح الكاش بعد النجاح
         Cache::forget($cacheKey);
 
+        // هـ. تسجيل الدخول وإرجاع التوكن
         return $this->generateAuthResponse($reader, $hardwareId);
     }
+
+    // ... (باقي الدوال login و logout و generateAuthResponse تبقى كما هي بدون تعديل) ...
 
     public function login(array $data, string $ipAddress)
     {
