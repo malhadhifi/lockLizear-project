@@ -1,4 +1,5 @@
 <?php
+
 namespace Modules\CustomerManagement\Http\Requests\License;
 
 use App\Http\Requests\BaseRequest;
@@ -7,19 +8,33 @@ class StoreLicenseRequest extends BaseRequest
 {
     public function authorize()
     {
-        return true;
+        // يفضل أن تتأكد هنا أن الطلب قادم من مستخدم مسجل دخول فعلاً
+        return $this->user() !== null;
+    }
+
+    /**
+     * هذه الدالة السحرية تعمل قبل التحقق
+     * نقوم فيها بدمج بيانات إضافية للطلب أو تعديلها
+     */
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            // نجبر الطلب على استخدام رقم الناشر من التوكن الحالي
+            // حتى لو حاول المستخدم إرسال رقم ناشر آخر في الـ Payload، سيتم استبداله فوراً
+            'publisher_id' => $this->user()->id,
+        ]);
     }
 
     public function rules()
     {
         return [
-            // حقل الناشر (يجب إرساله أو يمكن أخذه من Auth مستقبلاً)
-            // 'publisher_id' => 'required|exists:publishers,id',
+            // الآن هذا الحقل سيجد الـ publisher_id الذي حقنّاه في الدالة السابقة
+            'publisher_id' => 'required|exists:publishers,id',
 
             // البيانات الأساسية للرخصة
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'company' => 'nullable|string|max:255', // بديل organization_name
+            'company' => 'nullable|string|max:255',
             'note' => 'nullable|string|max:255',
 
             // التواريخ والصلاحية
@@ -28,7 +43,7 @@ class StoreLicenseRequest extends BaseRequest
             'valid_until' => 'required_if:never_expires,false|nullable|date|after_or_equal:valid_from',
 
             // إعدادات الرخصة
-            'type' => 'required|in:individual,group', // يحدد هل هي فردية أم جماعية
+            'type' => 'required|in:individual,group',
             'count_license' => 'required_if:type,group|nullable|integer|min:1',
             'send_via_email' => 'required|boolean',
 
@@ -38,9 +53,6 @@ class StoreLicenseRequest extends BaseRequest
 
             'publications' => 'nullable|array',
             'publications.*' => 'integer|exists:publications,id',
-
-            // حقل عدد الكروت مطلوب فقط إذا كان نوع الرخصة "جماعية"
-
         ];
     }
 }

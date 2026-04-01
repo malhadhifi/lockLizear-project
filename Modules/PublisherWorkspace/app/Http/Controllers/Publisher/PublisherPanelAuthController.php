@@ -40,7 +40,8 @@ class PublisherPanelAuthController extends Controller
             // إصدار التوكن المخصص للوحة التحكم فقط
             $token = $publisher->createToken(
                 'PanelApp_' . ($request->device_name ?? 'Web'), // وضعنا قيمة افتراضية لتجنب الأخطاء
-                ['panel-access'] // <--- صلاحية لوحة التحكم
+                ['panel-access'],
+                now()->addHours(2) // <--- صلاحية لوحة التحكم
             )->plainTextToken;
 
             // تجهيز البيانات

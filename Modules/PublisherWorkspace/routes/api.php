@@ -23,12 +23,11 @@ Route::prefix('publisher')->group(function () {
 
 
 /*
-|--------------------------------------------------------------------------
-| 2. مسارات لوحة تحكم الويب (Web Panel)
+|--------------------------------------------------لوحة تحكم الويب (Web Panel)
 |--------------------------------------------------------------------------
 | المسارات الخاصة بإدارة الناشر من المتصفح.
 */
-Route::prefix('panel')->group(function () {
+Route::prefix('publisher')->group(function () {
 
     // مسارات عامة للوحة
     Route::post('/login', [PublisherPanelAuthController::class, 'login']);
@@ -37,7 +36,7 @@ Route::prefix('panel')->group(function () {
     Route::middleware([
         'auth:publisher_api',
         'ability:panel-access',
-        CheckPublisherStatus::class
+
     ])->group(function () {
 
         Route::post('/logout', [PublisherPanelAuthController::class, 'logout']);
@@ -45,7 +44,7 @@ Route::prefix('panel')->group(function () {
     });
 });
 
-
+// CheckPublisherStatus::class;
 /*
 |--------------------------------------------------------------------------
 | 3. مسارات برنامج الكاتب (Writer Desktop App)

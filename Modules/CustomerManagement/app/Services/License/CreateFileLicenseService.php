@@ -1,44 +1,54 @@
 <?php
 
-namespace Modules\CustomerManagement\Services;
+namespace Modules\CustomerManagement\Services\License;
 
 use Exception;
 use Modules\CustomerManagement\Models\CustomerLicense;
+use Modules\ReaderApp\Services\License\LicensePayloadBuilderService;
 
-class CustomerLicenseFactoryService
+class CreateFileLicenseService
 {
     protected $containerSecret;
     protected $serverPrivateKey;
     protected $sslConfig;
+    protected $payloadBuilder;
 
-    public function __construct()
+    public function __construct(LicensePayloadBuilderService $payloadBuilder)
     {
-        // 1. نفس طريقة جلب المفاتيح بالضبط كما في رخصة الناشر
-        $this->containerSecret = config('saasadmin.app_container_key');
+        $this->containerSecret = config('saasadmin.');
 
         $this->sslConfig = [
             "config" => "C:/xampp/php/extras/ssl/openssl.cnf",
             "digest_alg" => "sha256",
         ];
 
-        // 2. جلب مفتاح السيرفر الخاص للتوقيع الرقمي بنفس الطريقة الموحدة
         $keyPath = config('saasadmin.server_private_key_path');
         if (!file_exists($keyPath)) {
             throw new Exception("Server Key Not Found: " . $keyPath);
         }
         $this->serverPrivateKey = file_get_contents($keyPath);
+
+        $this->payloadBuilder = $payloadBuilder;
     }
 
+    /**
+     * جعلنا $readerId و $voucherID يقبلان null كقيمة افتراضية
+     */
     public function createLicenseFile(CustomerLicense $license)
     {
-        // 3. بناء الهيكل (Payload) بنفس التنظيم المتبع في الناشر (MetaInfo, Endpoints, etc.)
+        // 1. جلب بيانات الرخصة الكاملة (يمرر null بشكل طبيعي إذا لم يتم إرسالها)
+        $fullPayloadResource = $this->payloadBuilder->buildPayload($license->id, 1, 1);
+
+        $fullLicenseData = $fullPayloadResource->resolve();
+
+        // 2. بناء الهيكل (Payload)
         $payload = [
             'Type' => 'IndividualCustomer',
             'Status' => $license->status === 'active' ? 'Active' : 'Suspended',
 
             'MetaInfo' => [
                 'LicenseId' => (string) $license->id,
-                'UserRef' => (string) $license->publisher_id, // ربط بالناشر الذي أصدرها
+                'UserRef' => (string) $license->publisher_id,
                 'IssueTimestamp' => time(),
             ],
 
@@ -51,17 +61,19 @@ class CustomerLicenseFactoryService
                 'ServerUrl' => config('saasadmin.endpoints.server_url'),
                 'ApiPort' => (int) config('saasadmin.endpoints.api_port'),
                 'AuthEndpoint' => config('saasadmin.endpoints.auth_endpoint'),
-            ]
+            ],
+
+            // حقن البيانات المفصلة للرخصة
+            'FullLicenseData' => $fullLicenseData
         ];
 
-        // 4. التوقيع الرقمي (بنفس المسمى الذي يتوقعه C#)
+        // 3. التوقيع الرقمي
         $payload['AdminDigitalSignature'] = $this->signPayload($payload);
 
-        // 5. التشفير والتحزيم النهائي
+        // 4. التشفير والتحزيم النهائي
         $finalJson = json_encode($payload);
         $encryptedContainer = $this->encryptOuterLayer($finalJson);
 
-        // نمرر النوع 2 في الهيدر لتمييز أنه (عميل)، بينما الناشر كان (1)
         $binaryFile = $this->packBinaryFile($encryptedContainer['data'], $encryptedContainer['salt'], $encryptedContainer['iv']);
 
         return [
@@ -95,13 +107,13 @@ class CustomerLicenseFactoryService
     private function packBinaryFile($encryptedData, $salt, $iv)
     {
         $binary = "";
-        $binary .= "LZPK";                   // نفس الـ Magic Bytes لتوحيد قارئ الملفات في C#
-        $binary .= pack('n', 3);             // Version (3)
-        $binary .= pack('n', 2);             // Type (2 = Customer, في الناشر كان 1)
-        $binary .= $salt;                    // Salt (32 bytes)
-        $binary .= $iv;                      // IV (16 bytes)
-        $binary .= pack('N', strlen($encryptedData)); // Size
-        $binary .= $encryptedData;           // Body
+        $binary .= "LZPK";
+        $binary .= pack('n', 3);
+        $binary .= pack('n', 2);
+        $binary .= $salt;
+        $binary .= $iv;
+        $binary .= pack('N', strlen($encryptedData));
+        $binary .= $encryptedData;
 
         return $binary;
     }

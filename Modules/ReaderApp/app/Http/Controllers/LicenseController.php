@@ -43,6 +43,7 @@ class LicenseController extends Controller
             $payloadData = $this->payloadBuilder->buildPayload(
                 $activationResult['license_id'],
                 $reader->id,
+                1
             );
 
             // 3. إرجاع الرد الموحد

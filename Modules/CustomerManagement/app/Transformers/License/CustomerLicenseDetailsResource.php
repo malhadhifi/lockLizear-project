@@ -24,6 +24,9 @@ class CustomerLicenseDetailsResource extends JsonResource
             'start_date' => $this->valid_from ? Carbon::parse($this->valid_from)->format('Y-m-d') : null,
             'never_expires' => (bool) $this->never_expires,
             'valid_until' => $this->valid_until ? Carbon::parse($this->valid_until)->format('Y-m-d') : null,
+
+            'download_url' => $this->file_path ? route('customer-licenses.download', $this->id) : null,
+
         ];
 
         // إذا كانت رخصة جماعية، نجلب عدد الكروت
@@ -35,3 +38,17 @@ class CustomerLicenseDetailsResource extends JsonResource
     }
 }
 ?>
+public function toArray($request)
+{
+return [
+'id' => $this->id,
+'name' => $this->name,
+'email' => $this->email,
+// ... الحقول السابقة ...
+
+// إرجاع رابط التحميل إذا كان الملف موجوداً
+
+// إذا أردت توفير خيار "إعادة توليد" الملف في حال فُقد أو حُدثت البيانات
+'has_file' => (bool) $this->file_path,
+];
+}

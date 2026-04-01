@@ -3,12 +3,12 @@
 namespace Modules\CustomerManagement\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue; // للإرسال في الخلفية
+use Illuminate\Contracts\Queue\ShouldQueue; // للإرسال في الخلفية (طابور المهام)
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 use Modules\CustomerManagement\Models\CustomerLicense;
 
-class CustomerLicenseGeneratedNotification extends Notification implements ShouldQueue
+class SendLicenseEmailNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -30,14 +30,13 @@ class CustomerLicenseGeneratedNotification extends Notification implements Shoul
 
     public function toMail($notifiable)
     {
-        // تخصيص رسالة الإيميل بناءً على نوع الرخصة (فردية أم كروت جماعية)
         $subject = $this->license->type === 'group'
             ? 'مرفق كروت تفعيل الرخص الخاصة بك'
             : 'مرفق ملف تفعيل الرخصة الخاصة بك';
 
         return (new MailMessage)
             ->subject($subject)
-            // سننشئ لاحقاً قالب HTML بسيط في (customermanagement::emails.customer_license)
+            // مسار قالب الإيميل (HTML) الذي سنقوم بإنشائه لاحقاً
             ->view('customermanagement::emails.customer_license', [
                 'license' => $this->license
             ])

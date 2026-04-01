@@ -2,9 +2,14 @@
 namespace Modules\CustomerManagement\Services\License;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
+use Modules\CustomerManagement\Actions\GenerateLicenseExcelAction;
+use Modules\CustomerManagement\Actions\GenerateLicenseFileAction;
 use Modules\CustomerManagement\Models\CustomerLicense;
 use Modules\CustomerManagement\Models\Voucher;
+use Modules\CustomerManagement\Notifications\SendGroupLicenseEmailNotification;
+use Modules\CustomerManagement\Notifications\SendLicenseEmailNotification;
 use Modules\CustomerManagement\Services\LicenseDocuments\LicenseDocumentService;
 use Modules\CustomerManagement\Services\LicensePublications\LicensePublicationService;
 
@@ -76,13 +81,37 @@ class LicenseService
                 Voucher::insert($vouchersData);
             }
 
-            // 5. التحقق من حقل إرسال البريد
+           // 5. بناء وتوليد الملف (دائماً نولده لكي نحفظ الرابط للتحميل لاحقاً)
+            $generatedFileData = [];
+
+            if ($data['type'] === 'group') {
+                // توليد إكسل للرخصة الجماعية
+                $generatedFileData = app(GenerateLicenseExcelAction::class)->execute($license);
+            } else {
+                // توليد ملف LZPK المشفر للرخصة الفردية
+                $generatedFileData = app(GenerateLicenseFileAction::class)->execute($license);
+            }
+
+            // 6. التحقق من حقل إرسال البريد (إذا كان true، نرسل الملف الذي تم توليده في الخطوة السابقة)
             if ($data['send_via_email']) {
                 if ($data['type'] === 'group') {
-                    // TODO: إرسال الكروت بملف إكسل للرخصة الجماعية
+                    // إرسال الإشعار الجماعي
+                 Notification::route('mail', $license->email)
+                        ->notify(new SendGroupLicenseEmailNotification(
+                            $license,
+                            $generatedFileData['file_path'],
+                            $generatedFileData['file_name']
+                        ));
                 } else {
-                    // TODO: إرسال بيانات الرخصة الفردية
+                    // إرسال الإشعار الفردي
+                   Notification::route('mail', $license->email)
+                        ->notify(new SendLicenseEmailNotification(
+                            $license,
+                            $generatedFileData['encoded_file'],
+                            $generatedFileData['file_name']
+                        ));
                 }
+
             }
 
             return $license;
@@ -100,8 +129,6 @@ class LicenseService
 
         return $pin;
     }
-
-
 
     /**
      * جلب قائمة الرخص مع الفلاتر والبحث

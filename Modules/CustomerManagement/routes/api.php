@@ -2,15 +2,14 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\CustomerManagement\Http\Controllers\CustomerLicenseController;
-
 use Modules\CustomerManagement\Http\Controllers\LicenseDocumentController;
 use Modules\CustomerManagement\Http\Controllers\LicensPublicationController;
 
-
-
-
-
-Route::prefix('customer-licenses')->group(function () {
+Route::prefix('customer-licenses')->middleware([
+    'auth:publisher_api',
+    'ability:panel-access',
+])->
+group(function () {
 
     // ====================================================================
     // 1. إدارة الرخص الأساسية (Customer Licenses CRUD & Bulk Actions)
