@@ -15,7 +15,7 @@ class IndexDocumentRequest extends BaseRequest
     {
         $this->merge([
             'sort_by' => $this->sort_by ?? 'id',
-            'show_at_least' => $this->show_at_least ?? 25,
+                        'show_at_least' => $this->per_page ?? $this->show_at_least ?? 25,
             'show' => $this->show ?? 'all',
         ]);
     }
