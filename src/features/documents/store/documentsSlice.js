@@ -1,53 +1,71 @@
-/**
- * ملف: documentsSlice.js
- * الوظيفة: إدارة حالة (State) المستندات على مستوى التطبيق (Redux)
- * الوصف:
- * - يحتوي هذا الملف على شريحة (Slice) المستندات التي ستستخدم لاحقاً للربط مع الـ API الخارجي.
- * - حالياً، نقوم بتجهيزه ببيانات وهمية (Mock Data) والوظائف الأساسية لتجربة واجهة المستخدم.
- * - تمت إضافة تعليقات باللغة العربية لشرح وظيفية جميع أجزاء الكود.
- */
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import documentService from '../services/documentService'
 
-import { createSlice } from '@reduxjs/toolkit'
+// ✅ جلب القائمة من الباك إند
+export const fetchDocuments = createAsyncThunk(
+  'documents/fetchAll',
+  async (params) => {
+    const res = await documentService.getAll(params)
+    return res.data.data  // { items, pagination }
+  }
+)
 
-// توحيد مصدر البيانات الوهمية (Mock Data) ليكون هنا بدلاً من المكونات
-const MOCK_DOCUMENTS = [
-  { id: 101, name: 'تقرير المبيعات السنوي.pdf', description: 'تقرير سري ومشفّر لمبيعات الربع الأول من العام.', publishedDate: '2026-03-15', status: 'valid', expires: '2027-03-15', customersCount: 45, publicationsCount: 2, drm: { printingEnabled: false, viewingWatermark: true, printingWatermark: false, lockToDevice: true, trackUsage: true } },
-  { id: 102, name: 'الكود المصدري للمشروع.zip', description: 'يحتوي على الأكواد الكاملة بتشفير عالي.', publishedDate: '2026-02-28', status: 'suspended', expires: '', customersCount: 12, publicationsCount: 1, drm: { printingEnabled: false, viewingWatermark: false, printingWatermark: false, lockToDevice: true, trackUsage: true } },
-  { id: 103, name: 'دليل المستخدم الإصدار 5.pdf', description: 'الدليل الأصلي للإصدار الخامس من لوك ليزارد.', publishedDate: '2025-01-10', status: 'expired', expires: '2026-01-10', customersCount: 120, publicationsCount: 0, drm: { printingEnabled: true, viewingWatermark: true, printingWatermark: true, lockToDevice: false, trackUsage: false } },
-  { id: 104, name: 'خطة التسويق السرية.pdf', description: 'توزيع خطة التسويق للمدراء فقط.', publishedDate: '2026-04-01', status: 'valid', expires: '', customersCount: 5, publicationsCount: 1, drm: { printingEnabled: false, viewingWatermark: true, printingWatermark: false, lockToDevice: true, trackUsage: true } },
-]
+// ✅ تنفيذ إجراء جماعي (حذف / إيقاف / تفعيل)
+export const executeDocumentAction = createAsyncThunk(
+  'documents/executeAction',
+  async ({ ids, action }, { dispatch, getState }) => {
+    await documentService.executeAction(ids, action)
+    // بعد العملية نعيد جلب القائمة بنفس الفلاتر الحالية
+    const filters = getState().documents.currentFilters
+    dispatch(fetchDocuments(filters))
+  }
+)
 
-export const documentsSlice = createSlice({
+const documentsSlice = createSlice({
   name: 'documents',
   initialState: {
-    list: MOCK_DOCUMENTS, // قائمة المستندات المحملة
-    loading: false,       // حالة التحميل (للاستخدام لاحقاً مع الـ API)
-    error: null,          // الأخطاء الواردة (للاستخدام لاحقاً)
+    list: [],          // القائمة تجي من الباك إند (مش mock)
+    pagination: null,  // بيانات الصفحات
+    loading: false,    // حالة التحميل
+    error: null,       // الأخطاء
+    currentFilters: {} // نحفظ الفلاتر الحالية لإعادة الجلب بعد الإجراءات
   },
   reducers: {
-    // تحديث بيانات مستند معين (مثل الوصف وتاريخ الانتهاء)
-    updateDocument: (state, action) => {
-      const index = state.list.findIndex(d => d.id === action.payload.id)
-      if (index !== -1) {
-        state.list[index] = { ...state.list[index], ...action.payload }
-      }
-    },
-    // تغيير حالة ملفات متعددة دفعة واحدة (موقوف، مفعل)
-    updateDocumentsStatus: (state, action) => {
-      const { ids, status } = action.payload
-      state.list = state.list.map(doc => 
-        ids.includes(doc.id) ? { ...doc, status } : doc
-      )
-    },
-    // إزالة ملفات متعددة دفعة واحدة (حذف)
-    deleteDocuments: (state, action) => {
-      const { ids } = action.payload
-      state.list = state.list.filter(doc => !ids.includes(doc.id))
+    // حفظ الفلاتر الحالية
+    setFilters: (state, action) => {
+      state.currentFilters = action.payload
     }
+  },
+  extraReducers: (builder) => {
+    builder
+      // --- fetchDocuments ---
+      .addCase(fetchDocuments.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchDocuments.fulfilled, (state, action) => {
+        state.loading = false
+        state.list = action.payload.items
+        state.pagination = action.payload.pagination
+      })
+      .addCase(fetchDocuments.rejected, (state) => {
+        state.loading = false
+        state.error = 'حدث خطأ في جلب البيانات'
+      })
+
+      // --- executeDocumentAction ---
+      .addCase(executeDocumentAction.pending, (state) => {
+        state.loading = true
+      })
+      .addCase(executeDocumentAction.fulfilled, (state) => {
+        state.loading = false
+      })
+      .addCase(executeDocumentAction.rejected, (state) => {
+        state.loading = false
+        state.error = 'حدث خطأ في تنفيذ الإجراء'
+      })
   }
 })
 
-// استخراج وصناعة الأوامر المتاحة للاستخدام في الواجهات
-export const { updateDocument, updateDocumentsStatus, deleteDocuments } = documentsSlice.actions
-
+export const { setFilters } = documentsSlice.actions
 export default documentsSlice.reducer
