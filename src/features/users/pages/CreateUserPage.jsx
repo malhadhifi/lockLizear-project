@@ -12,6 +12,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { userApi } from '../services/userApi'
 
 const TEAL = '#009cad'
 const GRAY_BG = '#e6e6e6'
@@ -19,21 +21,60 @@ const BORDER_COLOR = '#b3d9ff'
 
 const CreateUserPage = () => {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
+  // حالة (State) لتهيئة وتخزين مدخلات نموذج إضافة العميل الجديد
   const [form, setForm] = useState({
-    name: '', company: '', email: '', licenses: 1,
-    startDate: '', validUntil: '', neverExpires: true,
+    name: '', company: '', email: '', 
+    type: 'individual', count_license: 1,
+    startDate: new Date().toISOString().split('T')[0], // افتراضياً تاريخ اليوم
+    validUntil: '', neverExpires: true,
     notes: '',
-    emailLicense: true,
-    enableWebViewer: false,
-    emailLoginDetails: true
+    emailLicense: true
+  })
+
+  // خطاف (Hook) للاتصال بالخادم وإرسال طلب الإضافة
+  const mutation = useMutation({
+    mutationFn: userApi.createCustomer,
+    onSuccess: () => {
+      toast.success('تمت إضافة العميل بنجاح!')
+      queryClient.invalidateQueries({ queryKey: ['customers'] }) // تحديث قائمة العملاء فوراً
+      navigate('/users') // توجيه المستخدم لصفحة قائمة العملاء
+    },
+    onError: (error) => {
+      toast.error('حدث خطأ أثناء إضافة العميل، يرجى المحاولة مرة أخرى.')
+      console.error(error)
+    }
   })
 
   const submit = (e) => {
     e.preventDefault()
-    toast.success('تمت إضافة العميل بنجاح!')
-    navigate('/users')
+    // جلب بيانات الحساب الحالي من الجلسة
+    const adminUser = JSON.parse(sessionStorage.getItem('admin_user') || '{}');
+    const publisherId = adminUser.id || 1; // 1 كاحتياط في حال لم يتم تسجيل الدخول بعد
+
+    // ربط البيانات كما يتوقعها الباك إند (Laravel Payload)
+    const dataToSend = {
+      publisher_id: publisherId, 
+      name: form.name,
+      email: form.email,
+      company: form.company,
+      note: form.notes,
+      type: form.type,
+      valid_from: form.startDate,
+      never_expires: form.neverExpires,
+      valid_until: form.neverExpires ? null : form.validUntil, // إرسال null إذا كانت لا تنتهي
+      send_via_email: form.emailLicense,
+    }
+
+    if (form.type === 'group') {
+      dataToSend.count_license = parseInt(form.count_license, 10) || 1
+    }
+
+    mutation.mutate(dataToSend)
   }
 
+  // معالجة تغييرات نصوص صناديق الإدخال وتحديث الحالة
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
     setForm(prev => ({
@@ -44,10 +85,10 @@ const CreateUserPage = () => {
 
   return (
     <div style={{ paddingBottom: 40 }}>
-      {/* Top action info (optional, just space) */}
+      {/* === مساحة علوية فارغة للأبعاد الجمالية === */}
       <div style={{ marginBottom: 15 }} />
 
-      {/* === Container === */}
+      {/* === الحاوية الرئيسية للنموذج (Main Container) === */}
       <div style={{ 
         maxWidth: 600, 
         margin: '0 auto', 
@@ -56,7 +97,7 @@ const CreateUserPage = () => {
         fontFamily: 'Arial, sans-serif'
       }}>
         
-        {/* Header */}
+        {/* شريط العنوان العلوي (Header) */}
         <div style={{
           backgroundColor: TEAL, color: '#fff', padding: '6px 12px',
           fontWeight: 'bold', fontSize: 13,
@@ -68,9 +109,10 @@ const CreateUserPage = () => {
           <i className="bi bi-person-plus-fill" />
         </div>
 
+        {/* بداية النموذج الذي يتصل بدالة الحفظ عند الإرسال */}
         <form onSubmit={submit}>
           
-          {/* Main Info Section */}
+          {/* قسم البيانات الأساسية للعميل (Main Info Section) */}
           <div style={{ padding: '15px 20px' }}>
             
             <div style={rowStyle}>
@@ -95,11 +137,23 @@ const CreateUserPage = () => {
             </div>
 
             <div style={rowStyle}>
-              <div style={labelColStyle}>التراخيص (Licenses):</div>
+              <div style={labelColStyle}>نوع الرخصة (Type):</div>
               <div style={inputColStyle}>
-                <input type="number" name="licenses" value={form.licenses} onChange={handleChange} min={1} style={{ ...inputStyle, width: 80 }} />
+                <select name="type" value={form.type} onChange={handleChange} style={{ ...inputStyle, width: 140 }}>
+                  <option value="individual">فردية (Individual)</option>
+                  <option value="group">جماعية (Group)</option>
+                </select>
               </div>
             </div>
+
+            {form.type === 'group' && (
+              <div style={rowStyle}>
+                <div style={labelColStyle}>عدد التراخيص (Licenses):</div>
+                <div style={inputColStyle}>
+                  <input type="number" name="count_license" value={form.count_license} onChange={handleChange} min={1} style={{ ...inputStyle, width: 80 }} />
+                </div>
+              </div>
+            )}
 
             <div style={rowStyle}>
               <div style={labelColStyle}>تاريخ البدء (Start Date):</div>
@@ -128,7 +182,7 @@ const CreateUserPage = () => {
 
           </div>
 
-          {/* Manage Access Section */}
+          {/* قسم إدارة الوصول المسبق (تركت كعناصر للقراءة فقط حتى يتم إنشاء العميل) */}
           <div style={sectionHeaderStyle}>إدارة الوصول (Manage Access)</div>
           <div style={{ padding: '12px 20px' }}>
             <div style={{ marginBottom: 8 }}>
@@ -143,7 +197,7 @@ const CreateUserPage = () => {
             </div>
           </div>
 
-          {/* License Information Section */}
+          {/* قسم خيارات إرسال التراخيص */}
           <div style={sectionHeaderStyle}>معلومات الترخيص (License Information)</div>
           <div style={{ padding: '12px 20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -154,14 +208,15 @@ const CreateUserPage = () => {
 
           <hr style={{ margin: 0, border: 'none', borderTop: '1px solid #ccc' }} />
 
-          {/* Footer Actions */}
+          {/* شريط الإجراءات السفلي وأزرار الإرسال (Footer Actions) */}
           <div style={{ padding: '15px 20px', display: 'flex', justifyContent: 'flex-end', backgroundColor: '#fff' }}>
-             <button type="submit" 
+             <button type="submit" disabled={mutation.isPending}
               style={{
                 backgroundColor: TEAL, color: '#fff', border: 'none',
-                padding: '8px 30px', fontSize: 13, cursor: 'pointer', fontWeight: 'bold'
+                padding: '8px 30px', fontSize: 13, cursor: mutation.isPending ? 'not-allowed' : 'pointer', fontWeight: 'bold',
+                opacity: mutation.isPending ? 0.7 : 1
               }}>
-              إضافة (Add)
+              {mutation.isPending ? 'جاري الإضافة...' : 'إضافة (Add)'}
             </button>
           </div>
 
@@ -171,7 +226,7 @@ const CreateUserPage = () => {
   )
 }
 
-// Styles perfectly matched to the LockLizard admin panel exact tabular look
+// الأنماط (Styles) لتطابق لوحة تحكم LockLizard بدقة
 const rowStyle = { 
   display: 'flex', 
   marginBottom: 10 

@@ -1,14 +1,12 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
+import { usePublicationDocuments, useDetachDocument } from '../hooks/usePublications'
 
-const MOCK_DOCS = [
-  { id: 1, name: 'دورة React الكاملة', status: 'valid', publishedDate: '2026-01-10', webViewer: 'Yes' },
-  { id: 2, name: 'احتراف Laravel', status: 'valid', publishedDate: '2026-01-15', webViewer: 'No' },
-  { id: 4, name: 'دليل تصميم قواعد البيانات', status: 'valid', publishedDate: '2025-12-20', webViewer: 'Yes' },
-]
-
-const PublicationDocumentsList = ({ onAddDocument }) => {
-  const [docs, setDocs] = useState(MOCK_DOCS)
+const PublicationDocumentsList = ({ publicationId, onAddDocument }) => {
+  const { data: docsRes, isLoading } = usePublicationDocuments(publicationId)
+  const docs = docsRes?.data || []
+  
+  const detachMutation = useDetachDocument()
   const [selected, setSelected] = useState([])
   const [bulkAction, setBulkAction] = useState('')
 
@@ -17,15 +15,14 @@ const PublicationDocumentsList = ({ onAddDocument }) => {
 
   const handleRemove = (docId) => {
     if (!window.confirm('هل تريد إزالة هذا المستند من المنشور؟')) return
-    setDocs(d => d.filter(x => x.id !== docId))
-    toast.success('تم إزالة المستند')
+    detachMutation.mutate({ id: publicationId, document_id: docId })
   }
 
   const handleBulkAction = () => {
     if (!selected.length || !bulkAction) return
     if (bulkAction === 'remove') {
-      setDocs(d => d.filter(x => !selected.includes(x.id)))
-      toast.success(`تم إزالة ${selected.length} مستند`)
+      // إرسال طلب سحب المستندات للباك إند (طلب لكل مستند)
+      selected.forEach(docId => detachMutation.mutate({ id: publicationId, document_id: docId }))
     }
     setSelected([])
     setBulkAction('')
@@ -52,6 +49,8 @@ const PublicationDocumentsList = ({ onAddDocument }) => {
         </button>
       </div>
 
+      {isLoading && <div style={{ textAlign: 'center', padding: 20, color: '#0078d4' }}>جارٍ جلب المستندات... ⏳</div>}
+
       {/* الجدول */}
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
@@ -67,7 +66,7 @@ const PublicationDocumentsList = ({ onAddDocument }) => {
             </tr>
           </thead>
           <tbody>
-            {docs.length === 0 ? (
+            {!isLoading && docs.length === 0 ? (
               <tr><td colSpan={7} style={{ textAlign: 'center', padding: 30, color: '#888' }}>
                 لا توجد مستندات في هذا المنشور
               </td></tr>
@@ -80,8 +79,8 @@ const PublicationDocumentsList = ({ onAddDocument }) => {
                 <td style={tdStyle}>{d.publishedDate}</td>
                 <td style={tdStyle}>{d.webViewer}</td>
                 <td style={tdStyle}>
-                  <button onClick={() => handleRemove(d.id)} title="إزالة"
-                    style={{ background: 'none', border: '1px solid #d32f2f', color: '#d32f2f', borderRadius: 3, padding: '2px 6px', cursor: 'pointer', fontSize: 11 }}>
+                  <button onClick={() => handleRemove(d.id)} title="إزالة" disabled={detachMutation.isPending}
+                    style={{ background: 'none', border: '1px solid #d32f2f', color: '#d32f2f', borderRadius: 3, padding: '2px 6px', cursor: 'pointer', fontSize: 11, opacity: detachMutation.isPending ? 0.5 : 1 }}>
                     <i className="bi bi-x-lg" />
                   </button>
                 </td>

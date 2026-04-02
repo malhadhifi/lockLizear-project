@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { loginSuccess } from '../store/authSlice'
 import toast from 'react-hot-toast'
+import api from '../../../lib/axios'
 
 const LoginPage = () => {
   const navigate = useNavigate()
@@ -17,18 +18,29 @@ const LoginPage = () => {
     e.preventDefault()
     setLoading(true)
     try {
-      // ===== مؤقتاً بدون Backend =====
-      await new Promise(r => setTimeout(r, 1000))
-      if (form.email === 'admin@drm.com' && form.password === 'password') {
+      const response = await api.post('/publisher/login', { 
+        email: form.email, 
+        password: form.password 
+      })
+      
+      const resData = response.data?.data;
+      
+      if (resData?.token) {
+        sessionStorage.setItem('auth_token', resData.token)
+        sessionStorage.setItem('admin_user', JSON.stringify(resData.publisher))
+        
         dispatch(loginSuccess({
-          token: 'mock_token_xyz_2026',
-          user: { name: 'المدير العام', email: form.email, role: 'super_admin' }
+          token: resData.token,
+          user: resData.publisher
         }))
-        toast.success('مرحباً بعودتك، أيها المدير! 👋')
-        navigate('/dashboard')
-      } else {
-        toast.error('البريد الإلكتروني أو كلمة المرور غير صحيحة')
+        
+        toast.success(response.data.message || 'تم تسجيل الدخول بنجاح')
+        navigate('/publications') 
       }
+    } catch (error) {
+      console.error('Login error:', error)
+      const errRes = error.response?.data;
+      toast.error(errRes?.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة')
     } finally {
       setLoading(false)
     }
@@ -123,14 +135,13 @@ const LoginPage = () => {
           </button>
         </form>
 
-        {/* بيانات تجريبية */}
         <div className="mt-4 p-3 rounded-3" style={{ background: '#f8f9fa' }}>
           <p className="mb-1" style={{ fontSize: '11px', color: '#6b7280' }}>
             <i className="bi bi-info-circle me-1" />
-            <strong>بيانات الدخول التجريبية:</strong>
+            <strong>بيانات الدخول للناشر (تم ربطها بالـ API):</strong>
           </p>
           <p className="mb-0" style={{ fontSize: '11px', color: '#6b7280' }}>
-            البريد: admin@drm.com &nbsp;|&nbsp; كلمة المرور: password
+            البريد: golden_TlPz@test.com &nbsp;|&nbsp; الباسورد: 12345678
           </p>
         </div>
       </div>

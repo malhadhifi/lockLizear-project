@@ -1,17 +1,12 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
+import { usePublicationSubscribers, useRevokeSubscriberAccess } from '../hooks/usePublications'
 
-const MOCK_CUSTOMERS = [
-  { id: 1, name: 'أحمد علي', company: 'شركة التقنية', email: 'ahmed@email.com', status: 'registered', registered: '2026-01-10', expires: '' },
-  { id: 2, name: 'سارة أحمد', company: 'مؤسسة النور', email: 'sara@email.com', status: 'registered', registered: '2026-02-01', expires: '2026-12-31' },
-  { id: 3, name: 'محمد علي', company: 'شركة البرمجة', email: 'mo@email.com', status: 'suspended', registered: '2025-06-15', expires: '' },
-  { id: 4, name: 'فاطمة سعيد', company: '', email: 'fat@email.com', status: 'registered', registered: '2025-11-20', expires: '' },
-  { id: 5, name: 'عمر حسن', company: 'شركة الحلول', email: 'omar@email.com', status: 'expired', registered: '2024-05-01', expires: '2025-12-31' },
-  { id: 6, name: 'ليلى عبدالله', company: '', email: 'layla@email.com', status: 'not_registered', registered: '', expires: '' },
-]
-
-const PublicationAccessList = () => {
-  const [customers, setCustomers] = useState(MOCK_CUSTOMERS)
+const PublicationAccessList = ({ publicationId }) => {
+  const { data: subsRes, isLoading } = usePublicationSubscribers(publicationId)
+  const customers = subsRes?.data || []
+  
+  const revokeMutation = useRevokeSubscriberAccess()
   const [selected, setSelected] = useState([])
   const [filter, setFilter] = useState('')
   const [sortBy, setSortBy] = useState('name')
@@ -35,12 +30,8 @@ const PublicationAccessList = () => {
   const handleBulkAction = () => {
     if (!selected.length || !bulkAction) return
     if (bulkAction === 'revoke') {
-      setCustomers(cs => cs.filter(c => !selected.includes(c.id)))
-      toast.success(`تم إلغاء الوصول لـ ${selected.length} عميل`)
-    } else if (bulkAction === 'grant_webviewer') {
-      toast.success(`تم منح Web Viewer لـ ${selected.length} عميل`)
-    } else if (bulkAction === 'revoke_webviewer') {
-      toast.success(`تم إلغاء Web Viewer لـ ${selected.length} عميل`)
+      revokeMutation.mutate({ id: publicationId, customer_ids: selected })
+      toast.success(`جاري تنفيذ عملية الإلغاء لـ ${selected.length} عميل...`)
     }
     setSelected([])
     setBulkAction('')
@@ -63,6 +54,8 @@ const PublicationAccessList = () => {
       <div style={{ background: '#0078d4', color: '#fff', padding: '8px 16px', fontWeight: 700, fontSize: 13 }}>
         العملاء المصرح لهم (Customer Access) — {customers.length} عميل
       </div>
+
+      {isLoading && <div style={{ textAlign: 'center', padding: 20, color: '#0078d4' }}>جارٍ جلب عملاء المنشور... ⏳</div>}
 
       {/* الفلاتر */}
       <div style={{
@@ -112,7 +105,7 @@ const PublicationAccessList = () => {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {!isLoading && filtered.length === 0 ? (
               <tr><td colSpan={7} style={{ textAlign: 'center', padding: 30, color: '#888' }}>لا يوجد عملاء</td></tr>
             ) : filtered.map((c, idx) => (
               <tr key={c.id} style={{ background: idx % 2 === 0 ? '#fff' : '#f5f5f5', borderBottom: '1px solid #ddd' }}>
@@ -145,10 +138,8 @@ const PublicationAccessList = () => {
           style={{ border: '1px solid #999', borderRadius: 3, padding: '4px 6px', fontSize: 13 }}>
           <option value="">-- اختر --</option>
           <option value="revoke">إلغاء الوصول</option>
-          <option value="grant_webviewer">منح Web Viewer</option>
-          <option value="revoke_webviewer">إلغاء Web Viewer</option>
         </select>
-        <button onClick={handleBulkAction} disabled={!bulkAction || !selected.length}
+        <button onClick={handleBulkAction} disabled={!bulkAction || !selected.length || revokeMutation.isPending}
           style={{
             background: '#0078d4', color: '#fff', border: 'none', borderRadius: 3,
             padding: '4px 12px', fontSize: 13, cursor: 'pointer',

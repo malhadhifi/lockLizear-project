@@ -10,33 +10,28 @@
  * - تم إزالة عارض الويب (Web Viewer) بناءً على طلب المستخدم لتتطابق مع المتطلبات المحددة.
  */
 import { useState } from 'react'
+import { useCustomers, useCustomerBulkAction } from '../hooks/useUsers'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import SelectPublicationModal from '../components/SelectPublicationModal'
 import SelectDocumentModal from '../components/SelectDocumentModal'
 import ConfirmAccessModal from '../components/ConfirmAccessModal'
-
-const MOCK_USERS = [
-  { id: 1, name: 'سارة أحمد', company: 'النور تيك', email: 'sara@email.com', status: 'registered', registered: '02 26 2016 17:49:52', webViewer: true, validFrom: '05 26 2016', expires: '' },
-  { id: 2, name: 'أحمد علي', company: 'شركة التقنية', email: 'ahmed@email.com', status: 'registered', registered: '01 10 2026', webViewer: true, validFrom: '01 10 2026', expires: '' },
-  { id: 3, name: 'محمد خالد', company: '', email: 'mk@hotmail.com', status: 'expired', registered: '', webViewer: true, validFrom: '', expires: '02 15 2012' },
-  { id: 4, name: 'نور حسن', company: 'مؤسسة الابتكار', email: 'noor@email.com', status: 'registered', registered: '02 01 2026', webViewer: false, validFrom: '02 01 2026', expires: '' },
-]
-
 const TEAL = '#009cad'
 
-const borderColor = {
-  registered: '#4caf50',
-  suspended: '#ff9800',
-  expired: '#f44336',
-  not_registered: '#2196f3',
-}
+// استخراج دالة مساعدة لتحديد لون الحد الجانبي بناءً على `ui_status` الفعلي
+const getBorderColor = (uiStatus) => {
+  if (uiStatus?.expired_on) return '#f44336'; // منتهي
+  if (uiStatus?.account_status === 'suspend') return '#ff9800'; // موقوف
+  return '#4caf50'; // مفعل أو افتراضي
+};
 
 const UsersListPage = () => {
   const navigate = useNavigate()
   
-  // حالة البيانات (المنسوخة مؤقتاً لحين ربط الـ Backend/Redux)
-  const [users, setUsers] = useState(MOCK_USERS)
+  // جلب البيانات الحقيقية من الخادم (Laravel API)
+  const { data: usersResponse, isLoading, isError } = useCustomers()
+  const users = usersResponse?.data?.items || [] // استخراج مصفوفة العملاء الآتية من لارافيل
+  const bulkMutation = useCustomerBulkAction()
   
   // حالات الفلترة (Filters States) المذكورة في دليل الاستخدام
   const [filter, setFilter] = useState('')                       // صندوق البحث النصي
@@ -55,11 +50,24 @@ const UsersListPage = () => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)      // نافذة تأكيد الإجراء
   const [selectedResource, setSelectedResource] = useState(null) // المورد المحدد (منشور أو مستند)
 
+  // إذا كان السيرفر يحمل، عرض رسالة انتظار (Loading State)
+  if (isLoading) {
+    return <div style={{ padding: 40, textAlign: 'center', fontSize: 18, color: TEAL }}>جاري تحميل العملاء من الخادم...</div>
+  }
+  // إذا حدث خطأ أثناء الاتصال (Error State)
+  if (isError) {
+    return <div style={{ padding: 40, textAlign: 'center', fontSize: 18, color: 'red' }}>حدث خطأ أثناء جلب البيانات! تأكد من تشغيل السيرفر.</div>
+  }
+
   // دالة الفلترة الأساسية بناءً على المدخلات، تطابق عمليات البحث في الدليل الأصلي
   const filtered = users.filter(u => {
     const s = filter.toLowerCase()
     const matchFilter = !s || u.name.toLowerCase().includes(s) || u.email.toLowerCase().includes(s) || (u.company || '').toLowerCase().includes(s)
-    const matchStatus = showFilter === 'all' || u.status === showFilter
+    const matchStatus = showFilter === 'all' || 
+          (showFilter === 'registered' && u.ui_status?.registration !== 'not registers') ||
+          (showFilter === 'not_registered' && u.ui_status?.registration === 'not registers') ||
+          (showFilter === 'suspended' && u.ui_status?.account_status === 'suspend') ||
+          (showFilter === 'expired' && !!u.ui_status?.expired_on);
     return matchFilter && matchStatus
   }).sort((a, b) => {
     if (sortBy === 'name') return a.name.localeCompare(b.name)
@@ -74,55 +82,67 @@ const UsersListPage = () => {
   const uncheckAll = () => setSelected([])
   const invertSelection = () => setSelected(filtered.map(u => u.id).filter(id => !selected.includes(id)))
 
-  // الدالة الرئيسية المسؤولة عن تنفيذ العمليات المجمعة (Bulk Actions) المذكورة في الفصل 4 من كتاب الدليل
+  // الدالة الرئيسية المسؤولة عن تنفيذ العمليات المجمعة المباشرة (التي لا تتطلب نافذة تأكيد إضافية)
   const handleBulkAction = () => {
     if (!selected.length || !bulkAction) return
     const count = selected.length
 
-    // تعليق حساب العميل
-    if (bulkAction === 'Suspend') {
-      setUsers(u => u.map(x => selected.includes(x.id) ? { ...x, status: 'suspended' } : x))
-      toast.success(`Status: suspended`)
-      setSelected([])
-      setBulkAction('')
-      
-    // تفعيل حساب موقوف
-    } else if (bulkAction === 'Activate') {
-      setUsers(u => u.map(x => selected.includes(x.id) ? { ...x, status: 'registered' } : x))
-      toast.success(`Status: enabled`)
-      setSelected([])
-      setBulkAction('')
-      
-    // حذف حساب نهائياً
-    } else if (bulkAction === 'Delete') {
-      if (!window.confirm(`هل أنت متأكد من حذف ${count} عميل؟`)) return
-      setUsers(u => u.filter(x => !selected.includes(x.id)))
-      toast.success(`تم حذف ${count} عميل`)
-      setSelected([])
-      setBulkAction('')
-      
-    // منح حق وصول (لمنشور أو مستند) حيث تفتح نافذة التأكيد إذا تم اختيار المورد
-    } else if (bulkAction === 'grant_pub' || bulkAction === 'grant_doc') {
+    // إذا كان الإجراء يتطلب تحديد منشور أو مستند، نظهر النافذة أولاً ولا نرسل الطلب فوراً
+    if (bulkAction === 'grant_access_to_publication' || bulkAction === 'grant_access_to_documents') {
       if (!selectedResource) {
-        toast.error('أختر المورد أولاً (Select resource first)')
-        return
+        toast.error('الرجاء اختيار العنصر المطلوب المنح إليه (منشور أو مستند) أولاً');
+        return;
       }
-      setIsConfirmOpen(true) // فتح نافذة يرجى التأكيد
-      
-    // إعادة إرسال ترخيص المشاهد للمستخدمين
-    } else if (bulkAction === 'ResendLicense') {
-      toast.success(`تم إعادة إرسال الترخيص لـ ${count} عميل`)
-      setSelected([])
-      setBulkAction('')
+      setIsConfirmOpen(true);
+      return;
     }
+
+    // الإجراءات المباشرة مثل الحذف، الإيقاف، التفعيل
+    executeBulkAction(selected, bulkAction);
+  }
+
+  // دالة لتنفيذ طلب الـ API الفعلي لتجنب التكرار
+  const executeBulkAction = (ids, action, extraPayload = {}) => {
+    bulkMutation.mutate({
+      license_ids: ids,
+      action: action,
+      ...extraPayload
+    }, {
+      onSuccess: () => {
+        toast.success(`تم تنفيذ الإجراء ${action} بنجاح!`);
+        setSelected([]);
+        setBulkAction('');
+        setSelectedResource(null);
+        setIsConfirmOpen(false);
+      },
+      onError: (error) => {
+        toast.error('حدث خطأ أثناء التنفيذ!');
+        console.error('Bulk Action Error:', error);
+      }
+    });
+  }
+
+  // إذا كان السيرفر يحمل، عرض رسالة انتظار (Loading State)
+  if (isLoading) {
+    return <div style={{ padding: 40, textAlign: 'center', fontSize: 18, color: TEAL }}>جاري تحميل العملاء من الخادم...</div>
+  }
+  // إذا حدث خطأ أثناء الاتصال (Error State)
+  if (isError) {
+    return <div style={{ padding: 40, textAlign: 'center', fontSize: 18, color: 'red' }}>حدث خطأ أثناء جلب البيانات! تأكد من تشغيل السيرفر.</div>
   }
 
   const confirmGrantAccess = () => {
-    toast.success(`تم منح الوصول بنجاح!`)
-    setIsConfirmOpen(false)
-    setSelected([])
-    setBulkAction('')
-    setSelectedResource(null)
+    if (!selectedResource) return;
+    
+    // إرفاق مُعَرّف المورد المختار بناءً على نوع العملية المختارة
+    const extraPayload = {};
+    if (bulkAction === 'grant_access_to_publication') {
+      extraPayload.publication_ids = [selectedResource.id];
+    } else if (bulkAction === 'grant_access_to_documents') {
+      extraPayload.document_ids = [selectedResource.id];
+    }
+    
+    executeBulkAction(selected, bulkAction, extraPayload);
   }
 
   const sideNavItems = [
@@ -236,31 +256,31 @@ const UsersListPage = () => {
               <div style={{ display: 'flex', flexDirection: 'column', flex: 1, maxWidth: 300 }}>
                 <select value={bulkAction} onChange={e => { setBulkAction(e.target.value); setSelectedResource(null) }} style={{ ...filterSelectStyle, minWidth: 200 }}>
                   <option value=""></option>
-                  <option value="Suspend">تجميد (Suspend)</option>
-                  <option value="Activate">تفعيل (Activate)</option>
-                  <option value="Delete">حذف (Delete)</option>
-                  <option value="grant_pub">منح حق الوصول إلى منشور: (Grant access to publication:)</option>
-                  <option value="grant_doc">منح حق الوصول إلى مستند: (Grant access to document:)</option>
-                  <option value="ResendLicense">إعادة إرسال ملف ترخيص العارض (Resend Viewer License File)</option>
+                  <option value="suspend">تجميد (Suspend)</option>
+                  <option value="activate">تفعيل (Activate)</option>
+                  <option value="delete">حذف (Delete)</option>
+                  <option value="grant_access_to_publication">منح حق الوصول إلى منشور: (Grant access to publication:)</option>
+                  <option value="grant_access_to_documents">منح حق الوصول إلى مستند: (Grant access to document:)</option>
+                  <option value="resend_license">إعادة إرسال ملف ترخيص العارض (Resend Viewer License File)</option>
                 </select>
                 
-                {bulkAction === 'grant_pub' && (
+                {bulkAction === 'grant_access_to_publication' && (
                   <div style={{ marginTop: 6 }}>
                      <a href="#" onClick={e => { e.preventDefault(); setIsPubModalOpen(true) }} style={{ color: TEAL, textDecoration: 'none', fontSize: 13, fontWeight: 'bold' }}>
                         <i className="bi bi-journal-text" style={{ marginRight: 4 }} /> 
                         Select Publication
                      </a>
-                     {selectedResource && bulkAction === 'grant_pub' && <div style={{ color: '#4CAF50', marginTop: 4, fontSize: 12 }}>Selected: {selectedResource.name}</div>}
+                     {selectedResource && <div style={{ color: '#4CAF50', marginTop: 4, fontSize: 12 }}>Selected: {selectedResource.name}</div>}
                   </div>
                 )}
                 
-                {bulkAction === 'grant_doc' && (
+                {bulkAction === 'grant_access_to_documents' && (
                   <div style={{ marginTop: 6 }}>
                      <a href="#" onClick={e => { e.preventDefault(); setIsDocModalOpen(true) }} style={{ color: TEAL, textDecoration: 'none', fontSize: 13, fontWeight: 'bold' }}>
                         <i className="bi bi-file-earmark-text" style={{ marginRight: 4 }} /> 
                         Select Document
                      </a>
-                     {selectedResource && bulkAction === 'grant_doc' && <div style={{ color: '#4CAF50', marginTop: 4, fontSize: 12 }}>Selected: {selectedResource.name}</div>}
+                     {selectedResource && <div style={{ color: '#4CAF50', marginTop: 4, fontSize: 12 }}>Selected: {selectedResource.name}</div>}
                   </div>
                 )}
               </div>
@@ -286,7 +306,7 @@ const UsersListPage = () => {
               display: 'flex', alignItems: 'stretch',
               background: '#f8f8f8',
               marginBottom: 16,
-              borderRight: `8px solid ${borderColor[u.status]}`, /* Right border for RTL */
+              borderRight: `8px solid ${getBorderColor(u.ui_status)}`, /* Right border for RTL */
               borderBottom: '1px solid #eee',
               borderTop: '1px solid #eee',
               borderLeft: '1px solid #eee'
@@ -324,32 +344,29 @@ const UsersListPage = () => {
                     <tr>
                       <td style={fieldLabelStyle}>الحالة:</td>
                       <td style={fieldValueStyle}>
-                        {u.status === 'registered' && (
-                          <span>
-                            <span style={{ color: '#4caf50' }}>مسجل في {u.registered}</span>
-                            <br />
-                            <span style={{ color: '#4caf50' }}>مفعل (enabled)</span>
-                            <br />
-                            <span style={{ color: '#4caf50' }}>وصول عارض الويب: {u.webViewer ? 'نعم' : 'لا'}</span>
-                            {u.validFrom && <><br /><span style={{ color: '#4caf50', fontWeight: 700 }}>صالح من {u.validFrom}</span></>}
-                          </span>
-                        )}
-                        {u.status === 'suspended' && (
-                          <span style={{ color: '#ff9800' }}>موقوف (suspended)</span>
-                        )}
-                        {u.status === 'expired' && (
-                          <span>
-                            <span style={{ color: TEAL }}>غير مسجل (not registered)</span>
-                            <br />
-                            <span style={{ color: '#4caf50' }}>مفعل (enabled)</span>
-                            <br />
-                            <span style={{ color: '#4caf50' }}>وصول عارض الويب: {u.webViewer ? 'نعم' : 'لا'}</span>
-                            {u.expires && <><br /><span style={{ color: '#f44336', fontWeight: 700 }}>انتهى في {u.expires}</span></>}
-                          </span>
-                        )}
-                        {u.status === 'not_registered' && (
-                          <span style={{ color: '#2196f3' }}>غير مسجل</span>
-                        )}
+                        {/* عرض معلومات الحالة المسترجعة من واجهة الباك إند (ui_status) */}
+                        <span>
+                          {u.ui_status?.registration !== 'not registers' ? (
+                            <span style={{ color: '#4caf50' }}>مسجل ({u.ui_status?.registration})<br/></span>
+                          ) : (
+                            <span style={{ color: '#2196f3' }}>غير مسجل (not registers)<br/></span>
+                          )}
+                          
+                          {u.ui_status?.account_status === 'enabled' ? (
+                            <span style={{ color: '#4caf50' }}>مفعل (enabled)<br/></span>
+                          ) : (
+                            <span style={{ color: '#ff9800' }}>موقوف (suspended)<br/></span>
+                          )}
+
+                          {u.ui_status?.expired_on ? (
+                            <span style={{ color: '#f44336', fontWeight: 700 }}>منتهي ({u.ui_status?.expired_on})</span>
+                          ) : (
+                            <>
+                              {u.ui_status?.valid_from && <span style={{ color: '#4caf50', fontWeight: 700 }}>{u.ui_status?.valid_from}<br/></span>}
+                              {u.ui_status?.valid_until && <span style={{ color: TEAL, fontWeight: 700 }}>{u.ui_status?.valid_until}</span>}
+                            </>
+                          )}
+                        </span>
                       </td>
                     </tr>
                   </tbody>
@@ -358,10 +375,12 @@ const UsersListPage = () => {
 
               {/* Action Icons (Top Left corner for RTL) */}
               <div style={{ display: 'flex', gap: 6, padding: '8px 12px', alignItems: 'flex-start', background: '#fff' }}>
-                <ActionIcon icon="bi-slash-circle" color="#ff9800" title="تجميد"
-                  onClick={() => setUsers(us => us.map(x => x.id === u.id ? { ...x, status: 'suspended' } : x))} />
+                <ActionIcon icon={u.ui_status?.account_status === 'suspend' ? "bi-check-circle" : "bi-slash-circle"} 
+                  color={u.ui_status?.account_status === 'suspend' ? "#4caf50" : "#ff9800"} 
+                  title={u.ui_status?.account_status === 'suspend' ? "تفعيل" : "تجميد"}
+                  onClick={() => executeBulkAction([u.id], u.ui_status?.account_status === 'suspend' ? 'activate' : 'suspend')} />
                 <ActionIcon icon="bi-x" color="#f44336" title="حذف" bold={true}
-                  onClick={() => setUsers(us => us.filter(x => x.id !== u.id))} />
+                  onClick={() => { if(window.confirm('هل أنت متأكد من حذف العميل؟')) executeBulkAction([u.id], 'delete') }} />
                 <ActionIcon icon="bi-envelope" color={TEAL} title="إعادة إرسال الترخيص" />
                 <ActionIcon icon="bi-chevron-double-left" color="#fff" bg={TEAL} title="التفاصيل (Details)" onClick={() => navigate(`/users/${u.id}`)} />
               </div>

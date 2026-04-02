@@ -8,12 +8,14 @@
  * - تمت إضافة تعليقات عربية مفصلة فوق كل سطر برمجي لشرح وظيفته.
  */
 
-// استيراد مكتبة React و useState لإدارة حالة المتغيرات
-import React, { useState } from 'react'
+// استيراد مكتبة React و useState وإدارة التأثيرات
+import React, { useState, useEffect } from 'react'
 // استيراد أدوات التوجيه للتنقل بين الصفحات وجلب المعرف من الرابط
 import { useNavigate, useParams } from 'react-router-dom'
 // استيراد مكتبة التنبيهات لإظهار رسائل النجاح والخطأ
 import toast from 'react-hot-toast'
+// استيراد خطافات الواجهة الخلفية
+import { useCustomerDetails, useUpdateCustomer } from '../hooks/useUsers'
 
 // تعريف اللون الأساسي (Teal) المستخدم في تصميم LockLizard
 const TEAL = '#009cad'
@@ -26,20 +28,39 @@ export default function UserDetailPage() {
   // استخراج معرف العميل (id) من متغيرات مسار الرابط (URL params)
   const { id } = useParams()
 
-  // حالة (State) لتخزين نموذج بيانات العميل الافتراضية
+  // جلب بيانات العميل الحالية من الباك إند
+  const { data: customerResponse, isLoading, isError } = useCustomerDetails(id)
+  const updateMutation = useUpdateCustomer()
+
+  // حالة (State) لتخزين نموذج بيانات العميل
   const [form, setForm] = useState({
-    name: 'سارة أحمد',                                 // اسم العميل الأصلي
-    email: 'sara@email.com',                          // بريد العميل
-    company: 'النور تيك',                             // شركة العميل
-    notes: 'عميلة مميزة',                              // ملاحظات على العميل
-    licenses: 2,                                      // عدد التراخيص المسموحة
+    name: '',                                         // اسم العميل
+    email: '',                                        // بريد العميل
+    company: '',                                      // شركة العميل
+    notes: '',                                        // ملاحظات على العميل
+    licenses: 1,                                      // عدد التراخيص المسموحة
     neverExpires: true,                               // هل التراخيص مشروطة بوقت
-    resendLicenseEmail: false,                        // إرسال بريد الترخيص مرة أخرى
-    restrictIp: '',                                   // تقييد عنوان IP
-    autoDetectIp: false,                              // الكشف التلقائي عن IP
-    restrictCountry: '',                              // تقييد الدولة
-    autoDetectCountry: false                          // الكشف التلقائي عن الدولة
+    validUntil: '',                                   // تاريخ الانتهاء (إذا وجد)
+    resendLicenseEmail: false                         // إرسال بريد الترخيص مرة أخرى
   })
+
+  // عند تحميل بيانات العميل من الخادم بنجاح، نقوم بتعبئتها في النموذج (Form)
+  useEffect(() => {
+    if (customerResponse?.data) {
+      // Laravel JsonResource yلف البيانات داخل مفتاح "data" إضافي، فنتأكد من فكه هنا
+      const cust = customerResponse.data.data ? customerResponse.data.data : customerResponse.data
+      setForm({
+        name: cust.name || '',
+        email: cust.email || '',
+        company: cust.company || '',
+        notes: cust.note || '',
+        licenses: cust.count_license || 1, // عدد الرخص يتم إرجاعه باسم count_license
+        neverExpires: Boolean(cust.never_expires),
+        validUntil: cust.valid_until ? cust.valid_until.split(' ')[0] : '',
+        resendLicenseEmail: false
+      })
+    }
+  }, [customerResponse?.data])
 
   // دالة لمعالجة التغييرات في حقول الإدخال بصورة ديناميكية
   const handleChange = (e) => {
@@ -54,11 +75,36 @@ export default function UserDetailPage() {
 
   // دالة لحفظ البيانات عند النقر على الزر حفظ (Save)
   const handleSave = () => {
-    // إظهار تنبيه ناجح للمستخدم
-    toast.success('تم حفظ التعديلات بنجاح!')
-    // الرجوع لصفحة العملاء
-    navigate('/users')
+    updateMutation.mutate({
+      id: id,
+      data: {
+        name: form.name,
+        email: form.email,
+        company: form.company,
+        note: form.notes,
+        never_expires: form.neverExpires,
+        valid_until: form.neverExpires ? null : form.validUntil,
+        // يمكننا إضافة إعادة إرسال الترخيص إذا أردنا: action: resend_license
+      }
+    }, {
+      onSuccess: () => {
+        toast.success('تم حفظ التعديلات بنجاح!')
+        navigate('/users')
+      },
+      onError: (err) => {
+        toast.error('حدث خطأ أثناء حفظ التعديلات!')
+        console.error(err)
+      }
+    })
   }
+
+  // في حالة التحميل أو وجود أخطاء، نعرض رسالة مناسبة قبل الواجهة
+  if (isLoading) return <div style={{ padding: 40, textAlign: 'center', fontSize: 18, color: TEAL }}>جاري تحميل تفاصيل العميل...</div>
+  if (isError) return <div style={{ padding: 40, textAlign: 'center', fontSize: 18, color: 'red' }}>حدث خطأ! لم يتم العثور على العميل.</div>
+
+  // كائن العميل القادم من الباك إند، مع فك التغليف المزدوج إذا وُجد
+  const cust = customerResponse?.data?.data ? customerResponse.data.data : customerResponse?.data
+
 
   // دمج المكونات داخل هيكل الصفحة
   return (
@@ -133,31 +179,37 @@ export default function UserDetailPage() {
             <div>{id || 1}</div>
           </div>
           
-          {/* سطر عرض الحالة (Status) باللون الأخضر المميز */}
+          {/* سطر عرض الحالة (Status) */}
           <div style={rowInfoStyle}>
             <div style={labelInfoStyle}>الحالة (Status)</div>
-            <div style={{ color: '#4caf50', fontWeight: 'bold' }}>مُفعل (enabled)</div>
-          </div>
-
-          {/* سطر عرض تاريخ التسجيل (Registered) باللون الأخضر */}
-          <div style={rowInfoStyle}>
-            <div style={labelInfoStyle}>مُسجل في (Registered)</div>
-            <div style={{ color: '#4caf50' }} dir="ltr">05-26-2016 17:49:52</div>
-          </div>
-
-          {/* سطر تاريخ البدء (مُعطل لأن الحساب مفتوح أبداً) */}
-          <div style={rowStyle}>
-            <div style={labelColStyle}>تاريخ البدء (Start Date)</div>
-            <div style={inputColStyle}>
-              <input type="text" disabled value="05-26-2016" style={{ ...inputStyle, width: 120, backgroundColor: '#f0f0f0' }} dir="ltr" />
+            <div style={{ color: cust?.status === 'enabled' ? '#4caf50' : '#ff9800', fontWeight: 'bold' }}>
+              {cust?.status === 'enabled' ? 'مُفعل (enabled)' : 'مُجمد (suspended)'}
             </div>
           </div>
 
-          {/* سطر تاريخ الانتهاء (مُعطل لوجود تحديد على "لا تنتهي أبداً") */}
+          {/* سطر عرض تاريخ التسجيل (Registered) */}
+          <div style={rowInfoStyle}>
+            <div style={labelInfoStyle}>مُسجل في (Registered)</div>
+            <div style={{ color: '#4caf50' }} dir="ltr">{cust?.registered || '-'}</div>
+          </div>
+
+          {/* سطر تاريخ البدء */}
+          <div style={rowStyle}>
+            <div style={labelColStyle}>تاريخ البدء (Start Date)</div>
+            <div style={inputColStyle}>
+              <input type="text" disabled value={cust?.start_date ? cust.start_date.split(' ')[0] : '-'} style={{ ...inputStyle, width: 120, backgroundColor: '#f0f0f0' }} dir="ltr" />
+            </div>
+          </div>
+
+          {/* سطر تاريخ الانتهاء */}
           <div style={rowStyle}>
             <div style={labelColStyle}>صالح حتى (Valid until)</div>
             <div style={inputColStyle}>
-              <input type="text" disabled value="05-20-2026" style={{ ...inputStyle, width: 120, backgroundColor: '#f0f0f0' }} dir="ltr" />
+              {form.neverExpires ? (
+                <input type="text" disabled value="لا ينتهي" style={{ ...inputStyle, width: 140, backgroundColor: '#f0f0f0' }} dir="ltr" />
+              ) : (
+                <input type="date" name="validUntil" value={form.validUntil} onChange={handleChange} required style={{ ...inputStyle, width: 140 }} dir="ltr" />
+              )}
               {/* مربع تحديد (Checkbox) الخاص بعدم الانتهاء أبداً */}
               <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <input type="checkbox" name="neverExpires" checked={form.neverExpires} onChange={handleChange} id="neverExp" />
@@ -197,54 +249,7 @@ export default function UserDetailPage() {
             </div>
           </div>
 
-          {/* قسم خيارات الأجهزة التابعة للمستخدم */}
-          <div style={rowStyle}>
-            <div style={labelColStyle}>الأجهزة (Device)</div>
-            <div style={inputColStyle}>
-              {/* رابط أزرق لإيقاف كافة أجهزة المستخدم المرتبطة بالترخيص */}
-              <a href="#" style={actionLinkStyle}><i className="bi bi-stop-circle" /> تجميد كافة الأجهزة (Suspend All Devices)</a>
-            </div>
-          </div>
-
-        </div>
-
-        {/* === قسم تقييد المواقع الجغرافية (Restrict Location) === */}
-        <div style={sectionHeaderStyle}>تقييد الموقع (Restrict Location)</div>
-        <div style={{ padding: '12px 15px' }}>
-          
-          {/* سطر تقييد الأي بي (IP) */}
-          <div style={rowStyle}>
-            <div style={labelColStyle}>تتعب الأي بي (IP)</div>
-            <div style={inputColStyle}>
-              {/* شريط يحتوي الحقل النصي وأيقونة الكرة الأرضية (مجرد أيقونة شكلية) */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <input type="text" name="restrictIp" value={form.restrictIp} onChange={handleChange} style={{ ...inputStyle, width: 220 }} dir="ltr" />
-                <i className="bi bi-globe" style={{ color: '#4ba0d1', fontSize: 16 }} />
-              </div>
-              {/* مربع اختيار لكشف وتقييد الأي بي تلقائياً */}
-              <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <input type="checkbox" name="autoDetectIp" checked={form.autoDetectIp} onChange={handleChange} id="adIP" />
-                <label htmlFor="adIP" style={{ fontSize: 12, color: '#333' }}>اكتشاف وتقييد تلقائي (Auto Detect & Restrict)</label>
-              </div>
-            </div>
-          </div>
-
-          {/* سطر تقييد الدولة (Country) */}
-          <div style={rowStyle}>
-            <div style={labelColStyle}>الدولة (Country)</div>
-            <div style={inputColStyle}>
-              {/* شريط يحتوي الحقل النصي وأيقونة الكرة الأرضية */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <input type="text" name="restrictCountry" value={form.restrictCountry} onChange={handleChange} style={{ ...inputStyle, width: 220 }} dir="ltr" />
-                <i className="bi bi-globe" style={{ color: '#4ba0d1', fontSize: 16 }} />
-              </div>
-              {/* مربع اختيار لكشف وتقييد الدولة تلقائياً */}
-              <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <input type="checkbox" name="autoDetectCountry" checked={form.autoDetectCountry} onChange={handleChange} id="adCnty" />
-                <label htmlFor="adCnty" style={{ fontSize: 12, color: '#333' }}>اكتشاف وتقييد تلقائي (Auto Detect & Restrict)</label>
-              </div>
-            </div>
-          </div>
+          {/* قم بإضافة مزيد من المعلومات إذا احتاجها الباك إند هنا مستقبلاً */}
 
         </div>
 
@@ -258,10 +263,7 @@ export default function UserDetailPage() {
           <a href="#" style={actionLinkStyle}><i className="bi bi-journal-text" /> تعيين وصول المنشور (Set Publication Access)</a>
           {/* رابط أزرق لإعطاء حق الوصول للمستندات */}
           <a href="#" style={actionLinkStyle}><i className="bi bi-file-earmark-text" /> تعيين وصول المستند (Set Document Access)</a>
-          {/* رابط أزرق لتغيير عدد المشاهدات المسموح بها للعميل */}
-          <a href="#" style={actionLinkStyle}><i className="bi bi-eye" /> تغيير عدد المشاهدات (Change number of views)</a>
-          {/* رابط أزرق لتغيير عدد الطباعات المسموح بها للعميل */}
-          <a href="#" style={actionLinkStyle}><i className="bi bi-printer" /> تغيير عدد الطابعات (Change number of prints)</a>
+          {/* إزالة الروابط الزائدة بناءً على البنية التحتية للخادم */}
 
         </div>
 
@@ -271,15 +273,16 @@ export default function UserDetailPage() {
         {/* الأزرار الختامية السفلية (Footer Action Buttons) */}
         <div style={{ padding: '15px 20px', display: 'flex', justifyContent: 'flex-start', gap: 10, backgroundColor: '#fff', flexDirection: 'row-reverse' }}>
           {/* زر إلغاء للعودة لصفحة اللستة للعملاء */}
-          <button type="button" onClick={() => navigate('/users')}
-            style={{ backgroundColor: '#888', color: '#fff', border: 'none', padding: '6px 16px', fontSize: 13, cursor: 'pointer', fontWeight: 'bold' }}>
+          {/* زر التراجع */}
+          <button type="button" onClick={() => navigate('/users')} disabled={updateMutation.isPending}
+            style={{ backgroundColor: '#888', color: '#fff', border: 'none', padding: '6px 16px', fontSize: 13, cursor: 'pointer', fontWeight: 'bold', opacity: updateMutation.isPending ? 0.7 : 1 }}>
             إلغاء (Cancel)
           </button>
           
           {/* زر حفظ التعديلات */}
-          <button type="button" onClick={handleSave} 
-            style={{ backgroundColor: TEAL, color: '#fff', border: 'none', padding: '6px 24px', fontSize: 13, cursor: 'pointer', fontWeight: 'bold' }}>
-            حفظ (Save)
+          <button type="button" onClick={handleSave} disabled={updateMutation.isPending}
+            style={{ backgroundColor: TEAL, color: '#fff', border: 'none', padding: '6px 24px', fontSize: 13, cursor: updateMutation.isPending ? 'not-allowed' : 'pointer', fontWeight: 'bold', opacity: updateMutation.isPending ? 0.7 : 1 }}>
+            {updateMutation.isPending ? 'جاري الحفظ...' : 'حفظ (Save)'}
           </button>
         </div>
 

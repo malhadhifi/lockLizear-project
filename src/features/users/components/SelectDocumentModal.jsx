@@ -10,20 +10,28 @@
  *   - أدوات التحقق: روابط (All Check | Uncheck | Invert) كما في الصورة الأصلية.
  * - تمت الإشارة للأزرار بالإنجليزية كالأصل (OK, Cancel) لتشابه النظام الأصلي.
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import api from '../../../lib/axios'
 
 const TEAL = '#009cad'
 
 export default function SelectDocumentModal({ isOpen, onClose, onSelect }) {
-  if (!isOpen) return null
-
-  // Mock data matching the book's screenshot for documents
-  const documents = [
-    { id: 28, name: 'testfile', published: '03-31-2016 10:18:22', status: 'valid' },
-    { id: 35, name: 'blockhouse', published: '05-27-2016 15:10:30', status: 'valid' }
-  ]
-
+  const [documents, setDocuments] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsLoading(true)
+      api.get('/library/documents', { params: { limit: 1000 } })
+        .then(res => {
+          setDocuments(res.data?.data?.items || [])
+        })
+        .finally(() => setIsLoading(false))
+    }
+  }, [isOpen])
+
+  if (!isOpen) return null
 
   return (
     <div style={overlayStyle}>
@@ -70,30 +78,39 @@ export default function SelectDocumentModal({ isOpen, onClose, onSelect }) {
             </div>
           </div>
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 15 }}>
-            <tbody>
-              {documents.map((doc, idx) => (
-                <tr key={doc.id} style={{ borderBottom: '1px solid #eee', backgroundColor: idx % 2 === 0 ? '#fdfdfd' : '#f5f5f5' }}>
-                  <td style={{ padding: '12px 8px', width: 30, verticalAlign: 'top' }}>
-                    <div style={{ width: 14, height: 14, backgroundColor: '#4CAF50', display: 'inline-block' }} />
-                  </td>
-                  <td style={{ padding: '12px 8px' }}>
-                    <div style={{ fontWeight: 'bold', color: TEAL, marginBottom: 4 }}>{doc.name}</div>
-                    <table style={{ fontSize: 12 }}>
-                       <tbody>
-                          <tr><td style={{ width: 80, color: '#555' }}>ID:</td><td>{doc.id}</td></tr>
-                          <tr><td style={{ color: '#555' }}>Published:</td><td>{doc.published}</td></tr>
-                          <tr><td style={{ color: '#555' }}>Status:</td><td style={{ color: '#4CAF50', fontWeight: 'bold' }}>{doc.status}</td></tr>
-                       </tbody>
-                    </table>
-                  </td>
-                  <td style={{ padding: '12px 8px', verticalAlign: 'top', textAlign: 'right' }}>
-                    <input type="radio" name="selectDoc" checked={selectedId === doc.id} onChange={() => setSelectedId(doc.id)} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div style={{ maxHeight: 300, overflowY: 'auto', marginTop: 15, borderBottom: '1px solid #ccc' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <tbody>
+                {isLoading && (
+                  <tr>
+                    <td colSpan={3} style={{ padding: 20, textAlign: 'center', color: TEAL }}>
+                      جاري جلب المستندات... ⏳
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && documents.map((doc, idx) => (
+                  <tr key={doc.id} style={{ borderBottom: '1px solid #eee', backgroundColor: idx % 2 === 0 ? '#fdfdfd' : '#f5f5f5' }}>
+                    <td style={{ padding: '12px 8px', width: 30, verticalAlign: 'top' }}>
+                      <div style={{ width: 14, height: 14, backgroundColor: doc.status === 'valid' ? '#4CAF50' : '#e65100', display: 'inline-block' }} />
+                    </td>
+                    <td style={{ padding: '12px 8px' }}>
+                      <div style={{ fontWeight: 'bold', color: TEAL, marginBottom: 4 }}>{doc.title || doc.name}</div>
+                      <table style={{ fontSize: 12 }}>
+                         <tbody>
+                            <tr><td style={{ width: 80, color: '#555' }}>ID:</td><td>{doc.id}</td></tr>
+                            <tr><td style={{ color: '#555' }}>Published:</td><td>{doc.published || doc.created_at || 'N/A'}</td></tr>
+                            <tr><td style={{ color: '#555' }}>Status:</td><td style={{ color: doc.status === 'valid' ? '#4CAF50' : '#e65100', fontWeight: 'bold' }}>{doc.status}</td></tr>
+                         </tbody>
+                      </table>
+                    </td>
+                    <td style={{ padding: '12px 8px', verticalAlign: 'top', textAlign: 'right' }}>
+                      <input type="radio" name="selectDoc" checked={selectedId === doc.id} onChange={() => setSelectedId(doc.id)} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20, gap: 10 }}>
             <button 

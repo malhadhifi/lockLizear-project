@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom'
 
 const PrivateRoute = ({ children }) => {
-    const token = localStorage.getItem('drm_token')
+    const token = sessionStorage.getItem('auth_token')
     if (!token) return <Navigate to="/login" replace />
     return children
 }

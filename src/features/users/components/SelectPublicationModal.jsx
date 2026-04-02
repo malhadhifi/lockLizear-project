@@ -10,20 +10,17 @@
  * - تمت الإشارة للأزرار بالإنجليزية كالأصل (OK, Cancel) ودمج المسميات العربية بجانبها.
  */
 import { useState } from 'react'
+import { usePublications } from '../../publications/hooks/usePublications'
 
 const TEAL = '#009cad'
 
 export default function SelectPublicationModal({ isOpen, onClose, onSelect }) {
-  if (!isOpen) return null
-
-  // Mock data matching the book's screenshot
-  const publications = [
-    { id: 3, name: 'Finance Weekly', desc: 'A weekly publication with industry notes', obey: 'no' },
-    { id: 4, name: 'Gold Times', desc: 'Monthly gold prices reports', obey: 'no' },
-    { id: 5, name: 'Mortgage Updates', desc: 'Advice on mortgages to choose', obey: 'yes' }
-  ]
+  const { data: pubData, isLoading } = usePublications({ limit: 1000 })
+  const publications = pubData?.data?.items || []
 
   const [selectedId, setSelectedId] = useState(null)
+
+  if (!isOpen) return null
 
   return (
     <div style={overlayStyle}>
@@ -63,38 +60,47 @@ export default function SelectPublicationModal({ isOpen, onClose, onSelect }) {
             </div>
           </div>
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 15 }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #ddd', color: '#555' }}>
-                <th style={{ width: 30, padding: 8 }}></th>
-                <th style={{ textAlign: 'left', padding: 8 }}>ID</th>
-                <th style={{ textAlign: 'left', padding: 8 }}>Name</th>
-                <th style={{ textAlign: 'left', padding: 8 }}>Description</th>
-                <th style={{ textAlign: 'center', padding: 8 }}>Obey</th>
-                <th style={{ textAlign: 'center', padding: 8 }}>Customers</th>
-                <th style={{ textAlign: 'center', padding: 8 }}>Documents</th>
-              </tr>
-            </thead>
-            <tbody>
-              {publications.map((pub, idx) => (
-                <tr key={pub.id} style={{ borderBottom: '1px solid #eee', backgroundColor: idx % 2 === 0 ? '#fdfdfd' : '#fff' }}>
-                  <td style={{ padding: 8, textAlign: 'center' }}>
-                    <input type="radio" name="selectPub" checked={selectedId === pub.id} onChange={() => setSelectedId(pub.id)} />
-                  </td>
-                  <td style={{ padding: 8 }}>{pub.id}</td>
-                  <td style={{ padding: 8 }}>{pub.name}</td>
-                  <td style={{ padding: 8, color: '#666' }}>{pub.desc}</td>
-                  <td style={{ padding: 8, textAlign: 'center' }}>{pub.obey}</td>
-                  <td style={{ padding: 8, textAlign: 'center' }}>
-                    <a href="#" style={{ color: TEAL, textDecoration: 'none' }}><i className="bi bi-people" /> show</a>
-                  </td>
-                  <td style={{ padding: 8, textAlign: 'center' }}>
-                     <a href="#" style={{ color: TEAL, textDecoration: 'none' }}><i className="bi bi-file-earmark" /> show</a>
-                  </td>
+          <div style={{ maxHeight: 300, overflowY: 'auto', marginTop: 15, borderBottom: '1px solid #ccc' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead style={{ position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                <tr style={{ borderBottom: '2px solid #ddd', color: '#555' }}>
+                  <th style={{ width: 30, padding: 8 }}></th>
+                  <th style={{ textAlign: 'left', padding: 8 }}>ID</th>
+                  <th style={{ textAlign: 'left', padding: 8 }}>Name</th>
+                  <th style={{ textAlign: 'left', padding: 8 }}>Description</th>
+                  <th style={{ textAlign: 'center', padding: 8 }}>Obey</th>
+                  <th style={{ textAlign: 'center', padding: 8 }}>Customers</th>
+                  <th style={{ textAlign: 'center', padding: 8 }}>Documents</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {isLoading && (
+                  <tr>
+                    <td colSpan={7} style={{ padding: 20, textAlign: 'center', color: TEAL }}>
+                      جاري جلب المنشورات... ⏳
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && publications.map((pub, idx) => (
+                  <tr key={pub.id} style={{ borderBottom: '1px solid #eee', backgroundColor: idx % 2 === 0 ? '#fdfdfd' : '#fff' }}>
+                    <td style={{ padding: 8, textAlign: 'center' }}>
+                      <input type="radio" name="selectPub" checked={selectedId === pub.id} onChange={() => setSelectedId(pub.id)} />
+                    </td>
+                    <td style={{ padding: 8 }}>{pub.id}</td>
+                    <td style={{ padding: 8 }}>{pub.name}</td>
+                    <td style={{ padding: 8, color: '#666' }}>{pub.description || pub.desc}</td>
+                    <td style={{ padding: 8, textAlign: 'center' }}>{pub.obey ? 'yes' : 'no'}</td>
+                    <td style={{ padding: 8, textAlign: 'center' }}>
+                      {pub.customersCount ?? 0}
+                    </td>
+                    <td style={{ padding: 8, textAlign: 'center' }}>
+                      {pub.docsCount ?? 0}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20, gap: 10 }}>
             <button 
