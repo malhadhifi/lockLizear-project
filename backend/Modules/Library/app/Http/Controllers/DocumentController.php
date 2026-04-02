@@ -1,12 +1,13 @@
 <?php
-namespace Modules\Library\Http\Controllers;
+namespace Modules\Library\App\Http\Controllers;
+
 use App\Http\Controllers\Controller;
-use Modules\Library\Transformers\DocumentDetailsResource;
-use Modules\Library\Transformers\DocumentResource;
-use Modules\Library\Http\Requests\Documents\DocumentActionRequest;
-use Modules\Library\Http\Requests\Documents\IndexDocumentRequest;
-use Modules\Library\Http\Requests\Documents\UpdateDocumentRequest;
-use Modules\Library\Services\DocumentService;
+use Modules\Library\App\Transformers\DocumentDetailsResource;
+use Modules\Library\App\Transformers\DocumentResource;
+use Modules\Library\App\Http\Requests\Documents\DocumentActionRequest;
+use Modules\Library\App\Http\Requests\Documents\IndexDocumentRequest;
+use Modules\Library\App\Http\Requests\Documents\UpdateDocumentRequest;
+use Modules\Library\App\Services\DocumentService;
 use App\Traits\ApiResponseTrait;
 
 class DocumentController extends Controller
@@ -20,6 +21,10 @@ class DocumentController extends Controller
         $this->documentService = $documentService;
     }
 
+    /**
+     * جلب قائمة المستندات مع الفلاتر والترتيب
+     * GET /api/library/documents
+     */
     public function index(IndexDocumentRequest $request)
     {
         try {
@@ -28,10 +33,10 @@ class DocumentController extends Controller
             $responseData = [
                 'items' => DocumentResource::collection($paginator),
                 'pagination' => [
-                    'total' => $paginator->total(),
+                    'total'        => $paginator->total(),
                     'current_page' => $paginator->currentPage(),
-                    'last_page' => $paginator->lastPage(),
-                    'per_page' => $paginator->perPage(),
+                    'last_page'    => $paginator->lastPage(),
+                    'per_page'     => $paginator->perPage(),
                 ]
             ];
 
@@ -41,24 +46,20 @@ class DocumentController extends Controller
             return $this->sendResponse(false, 5000, null, 500);
         }
     }
+
     /**
      * جلب تفاصيل ملف واحد
-     * الرابط: GET /api/library/documents/{id}
+     * GET /api/library/documents/{id}
      */
     public function show($id)
     {
         try {
-            // جلب البيانات من الخدمة
-            $document = $this->documentService->getDocumentDetails($id);
-
-            // تشكيل البيانات باستخدام الـ Resource
+            $document    = $this->documentService->getDocumentDetails($id);
             $responseData = new DocumentDetailsResource($document);
 
-            // 1001 => 'تم جلب البيانات بنجاح.'
             return $this->sendResponse(true, 1001, $responseData, 200);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            // كود 4001: الملف غير موجود في النظام (حسب ملف الـ config الخاص بك)
             return $this->sendResponse(false, 4001, null, 404);
         } catch (\Exception $e) {
             return $this->sendResponse(false, 5000, null, 500);
@@ -67,7 +68,7 @@ class DocumentController extends Controller
 
     /**
      * تغيير حالة المستندات (حذف أو إيقاف أو تفعيل)
-     * الرابط: POST /api/library/documents/action
+     * POST /api/library/documents/action
      */
     public function executeAction(DocumentActionRequest $request)
     {
@@ -77,7 +78,6 @@ class DocumentController extends Controller
                 $request->action
             );
 
-            // 1000 => 'تمت العملية بنجاح.'
             return $this->sendResponse(true, 1000, null, 200);
 
         } catch (\Exception $e) {
@@ -86,19 +86,14 @@ class DocumentController extends Controller
     }
 
     /**
-     * تعديل بيانات ملف محدد
-     * الرابط: PUT /api/library/documents/{id}
-     */
-    /**
      * تعديل بيانات ملف محدد (الوصف وتاريخ الانتهاء فقط)
-     * الرابط: PUT /api/library/documents/{id}
+     * PUT /api/library/documents/{id}
      */
     public function update(UpdateDocumentRequest $request, $id)
     {
         try {
             $this->documentService->updateDocument($id, $request->validated());
 
-            // 1000 => 'تمت العملية بنجاح.'
             return $this->sendResponse(true, 1000, null, 200);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -108,4 +103,3 @@ class DocumentController extends Controller
         }
     }
 }
-?>
