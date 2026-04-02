@@ -1,16 +1,16 @@
 <?php
-namespace Modules\Library\App\Http\Controllers;
+namespace Modules\Library\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Modules\Library\App\Transformers\DocumentResource;
-use Modules\Library\App\Transformers\PublicationResource;
-use Modules\Library\App\Http\Requests\Publications\BulkActionRequest;
-use Modules\Library\App\Http\Requests\Publications\IndexPublicationRequest;
-use Modules\Library\App\Http\Requests\Publications\StorePublicationRequest;
-use Modules\Library\App\Http\Requests\Publications\UpdatePublicationRequest;
-use Modules\Library\App\Models\Document;
-use Modules\Library\App\Services\PublicationService;
-use Modules\Library\App\Models\Publication;
+use Modules\Library\Transformers\DocumentResource;
+use Modules\Library\Transformers\PublicationResource;
+use Modules\Library\Http\Requests\Publications\BulkActionRequest;
+use Modules\Library\Http\Requests\Publications\IndexPublicationRequest;
+use Modules\Library\Http\Requests\Publications\StorePublicationRequest;
+use Modules\Library\Http\Requests\Publications\UpdatePublicationRequest;
+use Modules\Library\Models\Document;
+use Modules\Library\Services\PublicationService;
+use Modules\Library\Models\Publication;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
 
@@ -25,9 +25,6 @@ class PublicationController extends Controller
         $this->publicationService = $publicationService;
     }
 
-    /**
-     * إضافة منشور جديد
-     */
     public function store(StorePublicationRequest $request)
     {
         try {
@@ -38,9 +35,6 @@ class PublicationController extends Controller
         }
     }
 
-    /**
-     * تعديل منشور موجود
-     */
     public function update(UpdatePublicationRequest $request, Publication $publication)
     {
         try {
@@ -51,14 +45,10 @@ class PublicationController extends Controller
         }
     }
 
-    /**
-     * عرض المنشورات مع الفلترة
-     */
     public function index(IndexPublicationRequest $request)
     {
         try {
             $paginator = $this->publicationService->getPublications($request->validated());
-
             $responseData = [
                 'items' => PublicationResource::collection($paginator),
                 'pagination' => [
@@ -68,16 +58,12 @@ class PublicationController extends Controller
                     'per_page'     => $paginator->perPage(),
                 ]
             ];
-
             return $this->sendResponse(true, 1001, $responseData, 200);
         } catch (\Exception $e) {
             return $this->sendResponse(false, 5000, null, 500);
         }
     }
 
-    /**
-     * الإجراءات الجماعية
-     */
     public function bulkAction(BulkActionRequest $request)
     {
         try {
@@ -91,16 +77,12 @@ class PublicationController extends Controller
         }
     }
 
-    /**
-     * جلب الملفات التابعة لمنشور محدد
-     */
     public function getDocuments($publicationId)
     {
         try {
             $documents = Document::with('securityControls')
                 ->where('publication_id', $publicationId)
                 ->get();
-
             $responseData = DocumentResource::collection($documents);
             return $this->sendResponse(true, 1001, $responseData, 200);
         } catch (\Exception $e) {
@@ -108,9 +90,6 @@ class PublicationController extends Controller
         }
     }
 
-    /**
-     * عرض تفاصيل منشور فردي
-     */
     public function show($id)
     {
         try {
@@ -122,9 +101,6 @@ class PublicationController extends Controller
         }
     }
 
-    /**
-     * إرفاق مستندات متعددة بالمنشور
-     */
     public function attachDocuments(Request $request, $id)
     {
         try {
@@ -137,9 +113,6 @@ class PublicationController extends Controller
         }
     }
 
-    /**
-     * إزالة مستند معين من المنشور
-     */
     public function detachDocument($id, $document_id)
     {
         try {
@@ -153,9 +126,6 @@ class PublicationController extends Controller
         }
     }
 
-    /**
-     * جلب العملاء المشتركين في المنشور
-     */
     public function getSubscribers($id)
     {
         try {
@@ -177,9 +147,6 @@ class PublicationController extends Controller
         }
     }
 
-    /**
-     * إلغاء وصول مجموعة عملاء من هذا المنشور
-     */
     public function revokeSubscriberAccess(Request $request, $id)
     {
         try {

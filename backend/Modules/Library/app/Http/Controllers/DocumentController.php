@@ -1,13 +1,13 @@
 <?php
-namespace Modules\Library\App\Http\Controllers;
+namespace Modules\Library\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Modules\Library\App\Transformers\DocumentDetailsResource;
-use Modules\Library\App\Transformers\DocumentResource;
-use Modules\Library\App\Http\Requests\Documents\DocumentActionRequest;
-use Modules\Library\App\Http\Requests\Documents\IndexDocumentRequest;
-use Modules\Library\App\Http\Requests\Documents\UpdateDocumentRequest;
-use Modules\Library\App\Services\DocumentService;
+use Modules\Library\Transformers\DocumentDetailsResource;
+use Modules\Library\Transformers\DocumentResource;
+use Modules\Library\Http\Requests\Documents\DocumentActionRequest;
+use Modules\Library\Http\Requests\Documents\IndexDocumentRequest;
+use Modules\Library\Http\Requests\Documents\UpdateDocumentRequest;
+use Modules\Library\Services\DocumentService;
 use App\Traits\ApiResponseTrait;
 
 class DocumentController extends Controller
@@ -54,7 +54,7 @@ class DocumentController extends Controller
     public function show($id)
     {
         try {
-            $document    = $this->documentService->getDocumentDetails($id);
+            $document     = $this->documentService->getDocumentDetails($id);
             $responseData = new DocumentDetailsResource($document);
 
             return $this->sendResponse(true, 1001, $responseData, 200);

@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Library\App\Http\Controllers\PublicationController;
-use Modules\Library\App\Http\Controllers\DocumentController;
+use Modules\Library\Http\Controllers\PublicationController;
+use Modules\Library\Http\Controllers\DocumentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,27 +17,19 @@ Route::middleware(['auth:publisher_api', 'ability:panel-access'])->group(functio
         // ==================== Publications ====================
         Route::prefix('publications')->group(function () {
 
-            // جلب المنشورات مع الفلاتر والبحث
-            Route::get('/',  [PublicationController::class, 'index']);
+            Route::get('/',                                                    [PublicationController::class, 'index']);
+            Route::post('/',                                                   [PublicationController::class, 'store']);
+            Route::put('/{publication}',                                       [PublicationController::class, 'update']);
 
-            // إضافة منشور جديد
-            Route::post('/', [PublicationController::class, 'store']);
+            // bulk-action يجب أن يكون قبل /{publication} لتجنب تعارض المسارات
+            Route::post('/bulk-action',                                        [PublicationController::class, 'bulkAction']);
 
-            // تعديل منشور موجود
-            Route::put('/{publication}', [PublicationController::class, 'update']);
+            Route::get('/{publication}',                                       [PublicationController::class, 'show']);
 
-            // إجراءات جماعية - يجب أن يكون قبل /{publication}
-            Route::post('/bulk-action', [PublicationController::class, 'bulkAction']);
-
-            // جلب تفاصيل منشور فردي
-            Route::get('/{publication}', [PublicationController::class, 'show']);
-
-            // مسارات المستندات
             Route::get('/{publication_id}/documents',                          [PublicationController::class, 'getDocuments']);
             Route::post('/{publication_id}/documents/attach',                  [PublicationController::class, 'attachDocuments']);
             Route::delete('/{publication_id}/documents/{document_id}',         [PublicationController::class, 'detachDocument']);
 
-            // مسارات عملاء المنشور
             Route::get('/{publication_id}/subscribers',                        [PublicationController::class, 'getSubscribers']);
             Route::post('/{publication_id}/subscribers/revoke',                [PublicationController::class, 'revokeSubscriberAccess']);
         });
@@ -45,17 +37,13 @@ Route::middleware(['auth:publisher_api', 'ability:panel-access'])->group(functio
         // ==================== Documents ====================
         Route::prefix('documents')->group(function () {
 
-            // جلب كل الملفات مع الفلاتر
-            Route::get('/',  [DocumentController::class, 'index']);
+            Route::get('/',            [DocumentController::class, 'index']);
 
-            // تغيير حالة ملفات (deleted, suspended, active) - يجب أن يكون قبل /{id}
-            Route::post('/action', [DocumentController::class, 'executeAction']);
+            // action يجب أن يكون قبل /{id} لتجنب تعارض المسارات
+            Route::post('/action',     [DocumentController::class, 'executeAction']);
 
-            // جلب تفاصيل ملف واحد
-            Route::get('/{id}',  [DocumentController::class, 'show']);
-
-            // تعديل وصف أو تاريخ الانتهاء
-            Route::put('/{id}',  [DocumentController::class, 'update']);
+            Route::get('/{id}',        [DocumentController::class, 'show']);
+            Route::put('/{id}',        [DocumentController::class, 'update']);
         });
     });
 });
