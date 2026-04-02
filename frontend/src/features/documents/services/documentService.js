@@ -17,7 +17,11 @@ const documentService = {
   update: (id, data) => api.put(`/library/documents/${id}`, data),
 
   // ✅ تنفيذ إجراء جماعي (Suspend / Activate / Delete)
-  executeAction: (ids, action) => api.post('/library/documents/action', { ids, action }),
+  // إصلاح: تحويل action لحروف صغيرة ليطابق الباك إند + استخدام document_ids
+  executeAction: (ids, action) => api.post('/library/documents/action', {
+    document_ids: ids,
+    action: action.toLowerCase(), // Suspend→suspended | Activate→active | Delete→deleted
+  }),
 
   // ✅ جلب قائمة العملاء المربطين بمستند (Access List)
   getDocumentAccessList: (id) => api.get(`/library/documents/${id}/access`),
