@@ -1,18 +1,29 @@
 import api from '../../../services/api';
 
-const documentService = {
-  getAll:                (params = {}) => api.get('/documents', { params }),
-  getById:              (id)          => api.get(`/documents/${id}`),
-  create:               (data)        => api.post('/documents', data),
-  update:               (id, data)    => api.put(`/documents/${id}`, data),
-  delete:               (id)          => api.delete(`/documents/${id}`),
-  suspend:              (id)          => api.put(`/documents/${id}/suspend`),
-  activate:             (id)          => api.put(`/documents/${id}/activate`),
-  exportCSV:            (params = {}) => api.get('/documents/export', { params }),
-  getDocumentAccessList:(id)          => api.get(`/documents/${id}/access`),
+// ✅ المسارات الحقيقية من باك إند Laravel:
+// GET    /api/library/documents          ← قائمة المستندات
+// GET    /api/library/documents/{id}     ← تفاصيل مستند
+// PUT    /api/library/documents/{id}     ← تحديث مستند
+// POST   /api/library/documents/action   ← إجراءات جماعية
 
-  // ✅ تنفيذ إجراء جماعي (suspend / activate / delete)
-  executeAction: (ids, action) => api.post('/documents/bulk-action', { ids, action }),
+const documentService = {
+  // ✅ جلب قائمة المستندات مع دعم الفلاتر (sort_by, per_page, show)
+  getAll: (params = {}) => api.get('/library/documents', { params }),
+
+  // ✅ جلب تفاصيل مستند واحد
+  getById: (id) => api.get(`/library/documents/${id}`),
+
+  // ✅ تحديث بيانات مستند (description, expired, status)
+  update: (id, data) => api.put(`/library/documents/${id}`, data),
+
+  // ✅ تنفيذ إجراء جماعي (Suspend / Activate / Delete)
+  executeAction: (ids, action) => api.post('/library/documents/action', { ids, action }),
+
+  // ✅ جلب قائمة العملاء المربطين بمستند (Access List)
+  getDocumentAccessList: (id) => api.get(`/library/documents/${id}/access`),
+
+  // ✅ تصدير السجلات
+  exportCSV: (params = {}) => api.get('/library/documents/export', { params }),
 };
 
 export default documentService;
