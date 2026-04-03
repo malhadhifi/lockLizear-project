@@ -1,7 +1,22 @@
 /**
  * ملف: DocumentsListPage.jsx
  * الوظيفة: لوحة إدارة المستندات
- * النمط: موحّد مع PublicationsListPage — data من useQuery = Laravel body مباشرةً
+ * النمط: موحّد مع PublicationsListPage
+ *
+ * بنية استجابة الباك إند (Laravel):
+ *   {
+ *     data: {
+ *       items: Document[],
+ *       total: number,
+ *       per_page: number,
+ *       current_page: number,
+ *       last_page: number
+ *     }
+ *   }
+ *
+ * لذلك:
+ *   documents  = data?.data?.items  (مثل publicationsResponse?.data?.items)
+ *   pagination = data?.data         (يحتوي على total/current_page/last_page)
  */
 
 import { useState, useMemo } from 'react'
@@ -48,11 +63,17 @@ const DocumentsListPage = () => {
   const actionMutation = useDocumentAction()
   const exportMutation = useDocumentExport()
 
-  // ✅ نفس نمط المنشورات تماماً:
-  // documentService.getAll يرجع data مباشرةً (بعد فك axios wrapper)
-  // فـ data هنا = Laravel response body = { data: [...], meta: {...} }
-  const documents  = data?.data  ?? []
-  const pagination = data?.meta  ?? null
+  // ─── استخراج البيانات ────────────────────────────────────────────────────────
+  // الباك إند يرجع: { data: { items: [...], total, current_page, last_page, per_page } }
+  // مثل publicationsResponse?.data?.items في PublicationsListPage
+  const rawData   = data?.data            // = { items, total, current_page, last_page }
+  const documents = Array.isArray(rawData?.items)
+    ? rawData.items
+    : Array.isArray(rawData)
+      ? rawData          // fallback: لو الباك إند أرجع array مباشرة
+      : []
+  const pagination = rawData ?? null
+  // ─────────────────────────────────────────────────────────────────────────────
 
   const toggleSelect    = (id) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
   const checkAll        = ()   => setSelected(documents.map(d => d.id))
@@ -298,7 +319,7 @@ const DocumentsListPage = () => {
                         <td style={fieldValueStyle}>
                           <a href="#" onClick={e => { e.preventDefault(); navigate(`/documents/${doc.id}`, { state: { tab: 'access' } }) }}
                             style={{ color: TEAL, fontWeight: 'bold' }}>
-                            {doc.customers_count}
+                            {doc.customers_count ?? 0}
                           </a>
                         </td>
                       </tr>
