@@ -43,6 +43,7 @@ class DocumentController extends Controller
             return $this->sendResponse(true, 1001, $responseData, 200);
 
         } catch (\Exception $e) {
+            \Log::error('DocumentController@index: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return $this->sendResponse(false, 5000, null, 500);
         }
     }

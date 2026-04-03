@@ -1,4 +1,5 @@
 <?php
+
 namespace Modules\Library\Services;
 
 
@@ -12,7 +13,7 @@ class DocumentService
         // نحمل إعدادات الحماية مع الملف لتجنب مشكلة 
         // الجديد اضافه عدد العملا والمنشورات 
         $query = Document::with('securityControls')
-            ->withCount(['customerLicenses', 'publications']);
+            ->withCount(['customerlicense', 'publication']);
 
 
         // 1. فلتر البحث
@@ -58,7 +59,6 @@ class DocumentService
             case 'valid':
                 $query->where('status', 'valid');
                 break;
-
         }
 
         // 3. الترتيب
@@ -146,4 +146,3 @@ class DocumentService
         return true;
     }
 }
-?>

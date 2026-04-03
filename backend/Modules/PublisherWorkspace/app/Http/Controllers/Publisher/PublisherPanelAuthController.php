@@ -59,6 +59,7 @@ class PublisherPanelAuthController extends Controller
             throw $e;
         } catch (\Exception $e) {
             // 5000 => خطأ داخلي في الخادم
+            \Log::error('Login Error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return $this->sendResponse(false, 5000, null, 500);
         }
     }
