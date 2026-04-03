@@ -23,24 +23,23 @@ class DocumentController extends Controller
     }
 
     /**
-     * جلب قائمة المستندات مع الفلاتر والترتيب
+     * جلب قائمة المستندات
      * GET /api/library/documents
      */
     public function index(IndexDocumentRequest $request)
     {
         try {
             $paginator = $this->documentService->getDocuments($request->validated());
-
             $responseData = [
                 'items' => DocumentResource::collection($paginator),
-                'total'        => $paginator->total(),
-                'current_page' => $paginator->currentPage(),
-                'last_page'    => $paginator->lastPage(),
-                'per_page'     => $paginator->perPage(),
+                'pagination' => [
+                    'total'        => $paginator->total(),
+                    'current_page' => $paginator->currentPage(),
+                    'last_page'    => $paginator->lastPage(),
+                    'per_page'     => $paginator->perPage(),
+                ],
             ];
-
             return $this->sendResponse(true, 1001, $responseData, 200);
-
         } catch (\Exception $e) {
             \Log::error('DocumentController@index: ' . $e->getMessage());
             return $this->sendResponse(false, 5000, null, 500);
@@ -54,11 +53,9 @@ class DocumentController extends Controller
     public function show($id)
     {
         try {
-            $document     = $this->documentService->getDocumentDetails($id);
+            $document     = $this->documentService->getDocumentDetails((int) $id);
             $responseData = new DocumentDetailsResource($document);
-
             return $this->sendResponse(true, 1001, $responseData, 200);
-
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return $this->sendResponse(false, 4001, null, 404);
         } catch (\Exception $e) {
@@ -67,7 +64,7 @@ class DocumentController extends Controller
     }
 
     /**
-     * تغيير حالة المستندات (حذف أو إيقاف أو تفعيل)
+     * تغيير حالة المستندات
      * POST /api/library/documents/action
      */
     public function executeAction(DocumentActionRequest $request)
@@ -77,25 +74,21 @@ class DocumentController extends Controller
                 $request->document_ids,
                 $request->action
             );
-
             return $this->sendResponse(true, 1000, null, 200);
-
         } catch (\Exception $e) {
             return $this->sendResponse(false, 5000, null, 500);
         }
     }
 
     /**
-     * تعديل بيانات ملف محدد (الوصف + تاريخ الانتهاء + حقول DRM)
+     * تعديل بيانات ملف (وصف + إعدادات DRM)
      * PUT /api/library/documents/{id}
      */
     public function update(UpdateDocumentRequest $request, $id)
     {
         try {
-            $this->documentService->updateDocument($id, $request->validated());
-
+            $this->documentService->updateDocument((int) $id, $request->validated());
             return $this->sendResponse(true, 1000, null, 200);
-
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return $this->sendResponse(false, 4001, null, 404);
         } catch (\Exception $e) {
@@ -104,15 +97,14 @@ class DocumentController extends Controller
     }
 
     /**
-     * قائمة العملاء المصرح لهم بالوصول لمستند معين
+     * قائمة العملاء المصرح لهم بالوصول
      * GET /api/library/documents/{id}/access
      */
     public function accessList($id)
     {
         try {
-            $list = $this->documentService->getDocumentAccessList((int) $id);
-            return $this->sendResponse(true, 1001, $list, 200);
-
+            $data = $this->documentService->getDocumentAccessList((int) $id);
+            return $this->sendResponse(true, 1001, $data, 200);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return $this->sendResponse(false, 4001, null, 404);
         } catch (\Exception $e) {
@@ -122,19 +114,17 @@ class DocumentController extends Controller
     }
 
     /**
-     * تصدير قائمة المستندات بصيغة CSV
+     * تصدير CSV
      * GET /api/library/documents/export
      */
     public function export(Request $request)
     {
         try {
             $csv = $this->documentService->exportDocuments($request->all());
-
             return response($csv, 200, [
                 'Content-Type'        => 'text/csv; charset=UTF-8',
                 'Content-Disposition' => 'attachment; filename="documents-' . now()->format('Y-m-d') . '.csv"',
             ]);
-
         } catch (\Exception $e) {
             \Log::error('DocumentController@export: ' . $e->getMessage());
             return $this->sendResponse(false, 5000, null, 500);
