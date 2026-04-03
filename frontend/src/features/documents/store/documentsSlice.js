@@ -1,140 +1,227 @@
-/**
- * ملف: documentsSlice.js
- * المسار: frontend/src/features/documents/store/documentsSlice.js
- *
- * ملاحظة: هذا الـ slice أصبح احتياطياً (legacy) بعد الترحيل لـ React Query.
- * يُبقى هنا فقط إذا احتاجت مكونات أخرى لـ Redux state من المستندات.
- * الصفحات الرئيسية (DocumentsListPage, DocumentDetailPage) تستخدم الآن
- * hooks من useDocuments.js مباشرةً.
- *
- * FIX 1: fetchDocuments.fulfilled — دعم بنية الاستجابة الحقيقية من Laravel:
- *   { data: { data: [...], meta: { current_page, last_page, total, ... } } }
- *   أو مصفوفة مباشرة للتوافق العكسي.
- *
- * FIX 2: executeDocumentAction — يُرجع الآن قيمة صريحة ليعمل مع .unwrap()
- */
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import documentService from '../services/documentService';
 
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import documentService from '../services/documentService'
-
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================
 // Thunks
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================
 
 export const fetchDocuments = createAsyncThunk(
   'documents/fetchAll',
-  async (params, { rejectWithValue }) => {
+  async (filters = {}, { rejectWithValue }) => {
     try {
-      const res = await documentService.getAll(params)
-      const payload = res.data?.data ?? res.data ?? {}
-
-      // FIX: الاستجابة من Laravel تأتي بشكل { data: [...], meta: {...} }
-      // وليس { items: [...], pagination: {...} }
-      if (Array.isArray(payload)) {
-        // مصفوفة مباشرة (بدون pagination)
-        return { items: payload, pagination: null }
-      }
+      const res = await documentService.getAll(filters);
+      // الباك اند يرجع: { data: { items: [...], total, current_page, last_page, per_page } }
+      const payload = res.data?.data ?? res.data ?? {};
       return {
-        items:      payload.data       ?? payload.items ?? [],
-        pagination: payload.meta       ?? payload.pagination ?? null,
-      }
+        items:        Array.isArray(payload.items) ? payload.items
+                    : Array.isArray(payload)       ? payload
+                    : [],
+        total:        payload.total        ?? 0,
+        current_page: payload.current_page ?? 1,
+        last_page:    payload.last_page    ?? 1,
+        per_page:     payload.per_page     ?? 25,
+      };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'حدث خطأ في جلب المستندات')
+      return rejectWithValue(
+        err.response?.data?.message ?? 'Failed to fetch documents'
+      );
     }
   }
-)
+);
 
-export const fetchDocumentById = createAsyncThunk(
-  'documents/fetchById',
+export const fetchDocumentDetails = createAsyncThunk(
+  'documents/fetchDetails',
   async (id, { rejectWithValue }) => {
     try {
-      const res = await documentService.getById(id)
-      return res.data?.data ?? res.data
+      const res = await documentService.getById(id);
+      return res.data?.data ?? res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'حدث خطأ في جلب تفاصيل المستند')
+      return rejectWithValue(
+        err.response?.data?.message ?? 'Failed to fetch document details'
+      );
     }
   }
-)
-
-export const updateDocument = createAsyncThunk(
-  'documents/update',
-  async ({ id, data }, { rejectWithValue }) => {
-    try {
-      const res = await documentService.update(id, data)
-      return res.data?.data ?? res.data
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'حدث خطأ في تحديث المستند')
-    }
-  }
-)
+);
 
 export const executeDocumentAction = createAsyncThunk(
   'documents/executeAction',
   async ({ ids, action }, { dispatch, getState, rejectWithValue }) => {
     try {
-      const res = await documentService.executeAction(ids, action)
-      // FIX: dispatch إعادة الجلب ثم إرجاع قيمة صريحة لدعم .unwrap()
-      const filters = getState().documents.currentFilters
-      dispatch(fetchDocuments(filters))
-      return res.data ?? { success: true }
+      await documentService.executeAction(ids, action);
+      // إعادة جلب القائمة بنفس الفلاتر الحالية
+      const filters = getState().documents.activeFilters;
+      dispatch(fetchDocuments(filters));
+      return { ids, action };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'حدث خطأ في تنفيذ الإجراء')
+      return rejectWithValue(
+        err.response?.data?.message ?? 'Action failed'
+      );
     }
   }
-)
+);
 
-// ─────────────────────────────────────────────────────────────────────────────
+export const exportDocumentsCSV = createAsyncThunk(
+  'documents/exportCSV',
+  async (filters = {}, { rejectWithValue }) => {
+    try {
+      const res = await documentService.exportCSV(filters);
+      const blob = new Blob([res.data], { type: 'text/csv' });
+      const url  = window.URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `documents-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      return true;
+    } catch (err) {
+      return rejectWithValue('Export failed');
+    }
+  }
+);
+
+export const fetchDocumentAccessList = createAsyncThunk(
+  'documents/fetchAccessList',
+  async (id, { rejectWithValue }) => {
+    try {
+      const res = await documentService.getAccessList(id);
+      return res.data?.data ?? [];
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message ?? 'Failed to fetch access list'
+      );
+    }
+  }
+);
+
+// =============================================
 // Slice
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================
 
 const documentsSlice = createSlice({
   name: 'documents',
   initialState: {
-    list:            [],
-    currentDocument: null,
-    pagination:      null,
-    loading:         false,
-    detailLoading:   false,
-    error:           null,
-    detailError:     null,
-    currentFilters:  {},
+    list:    [],
+    loading: false,
+    error:   null,
+    pagination: {
+      total:        0,
+      current_page: 1,
+      last_page:    1,
+      per_page:     25,
+    },
+    activeFilters: {},
+
+    detail:        null,
+    detailLoading: false,
+    detailError:   null,
+
+    accessList:        [],
+    accessListLoading: false,
+    accessListError:   null,
+
+    exportLoading: false,
+    actionLoading: false,
+    actionError:   null,
   },
+
   reducers: {
-    setFilters: (state, action) => {
-      state.currentFilters = action.payload
+    clearDocumentDetail(state) {
+      state.detail      = null;
+      state.detailError = null;
     },
-    clearCurrentDocument: (state) => {
-      state.currentDocument = null
-      state.detailError     = null
+    clearActionError(state) {
+      state.actionError = null;
+    },
+    setActiveFilters(state, action) {
+      state.activeFilters = action.payload;
     },
   },
+
   extraReducers: (builder) => {
+
+    // fetchDocuments
     builder
-      // fetchDocuments
-      .addCase(fetchDocuments.pending,   (state) => { state.loading = true;  state.error = null })
-      .addCase(fetchDocuments.fulfilled, (state, action) => {
-        state.loading    = false
-        state.list       = action.payload.items      // ✅ دائماً مصفوفة
-        state.pagination = action.payload.pagination // ✅ meta أو null
+      .addCase(fetchDocuments.pending, (state) => {
+        state.loading = true;
+        state.error   = null;
       })
-      .addCase(fetchDocuments.rejected,  (state, action) => { state.loading = false; state.error = action.payload })
+      .addCase(fetchDocuments.fulfilled, (state, action) => {
+        state.loading        = false;
+        state.list           = action.payload.items;
+        state.pagination     = {
+          total:        action.payload.total,
+          current_page: action.payload.current_page,
+          last_page:    action.payload.last_page,
+          per_page:     action.payload.per_page,
+        };
+      })
+      .addCase(fetchDocuments.rejected, (state, action) => {
+        state.loading = false;
+        state.error   = action.payload;
+      });
 
-      // fetchDocumentById
-      .addCase(fetchDocumentById.pending,   (state) => { state.detailLoading = true; state.detailError = null; state.currentDocument = null })
-      .addCase(fetchDocumentById.fulfilled, (state, action) => { state.detailLoading = false; state.currentDocument = action.payload })
-      .addCase(fetchDocumentById.rejected,  (state, action) => { state.detailLoading = false; state.detailError = action.payload })
+    // fetchDocumentDetails
+    builder
+      .addCase(fetchDocumentDetails.pending, (state) => {
+        state.detailLoading = true;
+        state.detailError   = null;
+      })
+      .addCase(fetchDocumentDetails.fulfilled, (state, action) => {
+        state.detailLoading = false;
+        state.detail        = action.payload;
+      })
+      .addCase(fetchDocumentDetails.rejected, (state, action) => {
+        state.detailLoading = false;
+        state.detailError   = action.payload;
+      });
 
-      // updateDocument
-      .addCase(updateDocument.pending,   (state) => { state.detailLoading = true })
-      .addCase(updateDocument.fulfilled, (state, action) => { state.detailLoading = false; state.currentDocument = action.payload })
-      .addCase(updateDocument.rejected,  (state, action) => { state.detailLoading = false; state.detailError = action.payload })
+    // executeDocumentAction
+    builder
+      .addCase(executeDocumentAction.pending, (state) => {
+        state.actionLoading = true;
+        state.actionError   = null;
+      })
+      .addCase(executeDocumentAction.fulfilled, (state) => {
+        state.actionLoading = false;
+      })
+      .addCase(executeDocumentAction.rejected, (state, action) => {
+        state.actionLoading = false;
+        state.actionError   = action.payload;
+      });
 
-      // executeDocumentAction
-      .addCase(executeDocumentAction.pending,   (state) => { state.loading = true })
-      .addCase(executeDocumentAction.fulfilled, (state) => { state.loading = false })
-      .addCase(executeDocumentAction.rejected,  (state, action) => { state.loading = false; state.error = action.payload })
+    // exportDocumentsCSV
+    builder
+      .addCase(exportDocumentsCSV.pending, (state) => {
+        state.exportLoading = true;
+      })
+      .addCase(exportDocumentsCSV.fulfilled, (state) => {
+        state.exportLoading = false;
+      })
+      .addCase(exportDocumentsCSV.rejected, (state) => {
+        state.exportLoading = false;
+      });
+
+    // fetchDocumentAccessList
+    builder
+      .addCase(fetchDocumentAccessList.pending, (state) => {
+        state.accessListLoading = true;
+        state.accessListError   = null;
+      })
+      .addCase(fetchDocumentAccessList.fulfilled, (state, action) => {
+        state.accessListLoading = false;
+        state.accessList        = Array.isArray(action.payload) ? action.payload : [];
+      })
+      .addCase(fetchDocumentAccessList.rejected, (state, action) => {
+        state.accessListLoading = false;
+        state.accessListError   = action.payload;
+      });
   },
-})
+});
 
-export const { setFilters, clearCurrentDocument } = documentsSlice.actions
-export default documentsSlice.reducer
+export const {
+  clearDocumentDetail,
+  clearActionError,
+  setActiveFilters,
+} = documentsSlice.actions;
+
+export default documentsSlice.reducer;
