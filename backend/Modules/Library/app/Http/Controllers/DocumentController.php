@@ -2,6 +2,7 @@
 namespace Modules\Library\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Modules\Library\Transformers\DocumentDetailsResource;
 use Modules\Library\Transformers\DocumentResource;
 use Modules\Library\Http\Requests\Documents\DocumentActionRequest;
@@ -32,18 +33,16 @@ class DocumentController extends Controller
 
             $responseData = [
                 'items' => DocumentResource::collection($paginator),
-                'pagination' => [
-                    'total'        => $paginator->total(),
-                    'current_page' => $paginator->currentPage(),
-                    'last_page'    => $paginator->lastPage(),
-                    'per_page'     => $paginator->perPage(),
-                ]
+                'total'        => $paginator->total(),
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
             ];
 
             return $this->sendResponse(true, 1001, $responseData, 200);
 
         } catch (\Exception $e) {
-            \Log::error('DocumentController@index: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            \Log::error('DocumentController@index: ' . $e->getMessage());
             return $this->sendResponse(false, 5000, null, 500);
         }
     }
@@ -87,7 +86,7 @@ class DocumentController extends Controller
     }
 
     /**
-     * تعديل بيانات ملف محدد (الوصف وتاريخ الانتهاء فقط)
+     * تعديل بيانات ملف محدد (الوصف + تاريخ الانتهاء + حقول DRM)
      * PUT /api/library/documents/{id}
      */
     public function update(UpdateDocumentRequest $request, $id)
@@ -100,6 +99,44 @@ class DocumentController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return $this->sendResponse(false, 4001, null, 404);
         } catch (\Exception $e) {
+            return $this->sendResponse(false, 5000, null, 500);
+        }
+    }
+
+    /**
+     * قائمة العملاء المصرح لهم بالوصول لمستند معين
+     * GET /api/library/documents/{id}/access
+     */
+    public function accessList($id)
+    {
+        try {
+            $list = $this->documentService->getDocumentAccessList((int) $id);
+            return $this->sendResponse(true, 1001, $list, 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->sendResponse(false, 4001, null, 404);
+        } catch (\Exception $e) {
+            \Log::error('DocumentController@accessList: ' . $e->getMessage());
+            return $this->sendResponse(false, 5000, null, 500);
+        }
+    }
+
+    /**
+     * تصدير قائمة المستندات بصيغة CSV
+     * GET /api/library/documents/export
+     */
+    public function export(Request $request)
+    {
+        try {
+            $csv = $this->documentService->exportDocuments($request->all());
+
+            return response($csv, 200, [
+                'Content-Type'        => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="documents-' . now()->format('Y-m-d') . '.csv"',
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('DocumentController@export: ' . $e->getMessage());
             return $this->sendResponse(false, 5000, null, 500);
         }
     }
