@@ -32,11 +32,10 @@ export const DOCUMENTS_KEYS = {
  */
 export const useDocuments = (params = {}) => {
   return useQuery({
-    queryKey:  DOCUMENTS_KEYS.list(params),
-    queryFn:   () => documentService.getAll(params),
-    keepPreviousData: true,   // يُبقي البيانات القديمة أثناء جلب الصفحة الجديدة
-    staleTime: 1000 * 60 * 2, // 2 دقائق قبل إعادة الجلب
-    onError:   (err) => toast.error(err?.response?.data?.message || 'خطأ في جلب المستندات'),
+    queryKey:         DOCUMENTS_KEYS.list(params),
+    queryFn:          () => documentService.getAll(params),
+    keepPreviousData: true,        // يُبقي البيانات القديمة أثناء جلب الصفحة الجديدة
+    staleTime:        1000 * 60 * 2, // 2 دقائق قبل إعادة الجلب
   })
 }
 
@@ -51,9 +50,8 @@ export const useDocumentDetail = (id) => {
   return useQuery({
     queryKey:  DOCUMENTS_KEYS.detail(id),
     queryFn:   () => documentService.getById(id),
-    enabled:   !!id,          // لا يعمل إذا كان id فارغاً
-    staleTime: 1000 * 60 * 5, // 5 دقائق
-    onError:   (err) => toast.error(err?.response?.data?.message || 'خطأ في جلب تفاصيل المستند'),
+    enabled:   !!id,           // لا يعمل إذا كان id فارغاً أو null
+    staleTime: 1000 * 60 * 5,  // 5 دقائق
   })
 }
 
@@ -63,14 +61,15 @@ export const useDocumentDetail = (id) => {
 /**
  * useDocumentAccessList
  * @param {number|null} id - معرف المستند (null يُعطّل الـ query)
+ * FIX: كان يستدعي documentService.getAccessList (غير موجود)
+ *      الصحيح: documentService.getDocumentAccessList
  */
 export const useDocumentAccessList = (id) => {
   return useQuery({
     queryKey:  DOCUMENTS_KEYS.accessList(id),
-    queryFn:   () => documentService.getAccessList(id),
+    queryFn:   () => documentService.getDocumentAccessList(id), // ✅ الاسم الصحيح
     enabled:   !!id,
-    staleTime: 1000 * 60 * 3, // 3 دقائق
-    onError:   (err) => toast.error(err?.response?.data?.message || 'خطأ في جلب قائمة الوصول'),
+    staleTime: 1000 * 60 * 3,  // 3 دقائق
   })
 }
 
@@ -144,7 +143,6 @@ export const useDocumentExport = () => {
   return useMutation({
     mutationFn: (params) => documentService.exportCSV(params),
     onSuccess: (response) => {
-      // إنشاء رابط تنزيل من الـ blob
       const url  = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')
       link.href  = url
