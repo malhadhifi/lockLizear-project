@@ -39,11 +39,15 @@ Route::middleware(['auth:publisher_api', 'ability:panel-access'])->group(functio
 
             Route::get('/',            [DocumentController::class, 'index']);
 
-            // action يجب أن يكون قبل /{id} لتجنب تعارض المسارات
+            // ⚠️ هذه المسارات يجب أن تكون قبل /{id} لتجنب تعارض المسارات
             Route::post('/action',     [DocumentController::class, 'executeAction']);
+            Route::get('/export',      [DocumentController::class, 'export']);
 
             Route::get('/{id}',        [DocumentController::class, 'show']);
             Route::put('/{id}',        [DocumentController::class, 'update']);
+
+            // قائمة العملاء المصرح لهم بالوصول لمستند معين
+            Route::get('/{id}/access', [DocumentController::class, 'accessList']);
         });
     });
 });
