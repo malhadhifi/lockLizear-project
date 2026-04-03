@@ -15,7 +15,10 @@ import { useNavigate, useParams } from 'react-router-dom'
 // استيراد مكتبة التنبيهات لإظهار رسائل النجاح والخطأ
 import toast from 'react-hot-toast'
 // استيراد خطافات الواجهة الخلفية
-import { useCustomerDetails, useUpdateCustomer } from '../hooks/useUsers'
+import { useCustomerDetails, useUpdateCustomer, useCustomerBulkAction, useDownloadLicense } from '../hooks/useUsers'
+import SelectPublicationModal from '../components/SelectPublicationModal'
+import SelectDocumentModal from '../components/SelectDocumentModal'
+import ConfirmAccessModal from '../components/ConfirmAccessModal'
 
 // تعريف اللون الأساسي (Teal) المستخدم في تصميم LockLizard
 const TEAL = '#009cad'
@@ -43,6 +46,16 @@ export default function UserDetailPage() {
     validUntil: '',                                   // تاريخ الانتهاء (إذا وجد)
     resendLicenseEmail: false                         // إرسال بريد الترخيص مرة أخرى
   })
+
+  // حالات النوافذ المنبثقة لإعطاء الصلاحيات (Manage Access)
+  const [isPubModalOpen, setIsPubModalOpen] = useState(false)
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false)
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const [selectedResource, setSelectedResource] = useState(null)
+  const [accessActionType, setAccessActionType] = useState('')
+
+  const bulkMutation = useCustomerBulkAction()
+  const downloadMutation = useDownloadLicense()
 
   // عند تحميل بيانات العميل من الخادم بنجاح، نقوم بتعبئتها في النموذج (Form)
   useEffect(() => {
@@ -96,6 +109,64 @@ export default function UserDetailPage() {
         console.error(err)
       }
     })
+  }
+
+  // الدالة التي يتم استدعاؤها بعد الموافقة من نافذة ConfirmAccessModal
+  const confirmGrantAccess = () => {
+    if (!selectedResource) return;
+    
+    // إرفاق مُعَرّف المورد المختار بناءً على نوع العملية المختارة
+    const extraPayload = {};
+    if (accessActionType === 'grant_access_to_publication') {
+      extraPayload.publication_ids = [selectedResource.id];
+    } else if (accessActionType === 'grant_access_to_documents') {
+      extraPayload.document_ids = [selectedResource.id];
+    }
+    
+    bulkMutation.mutate({
+      license_ids: [id],
+      action: accessActionType,
+      ...extraPayload
+    }, {
+      onSuccess: () => {
+        toast.success(`تم منح حقوق الوصول بنجاح!`);
+        setSelectedResource(null);
+        setIsConfirmOpen(false);
+        setAccessActionType('');
+      },
+      onError: (error) => {
+        toast.error('حدث خطأ أثناء التنفيذ!');
+        console.error('Bulk Action Error:', error);
+      }
+    });
+  }
+
+  // دالة تحميل ملف الترخيص
+  const handleDownloadLicense = async (e) => {
+    e.preventDefault();
+    try {
+      const blob = await downloadMutation.mutateAsync(id);
+      
+      // الحصول على اسم الملف المتوقع حسب نوع الترخيص من الباك إند أو الافتراضي
+      const extension = cust?.type === 'group' ? 'xlsx' : 'lzpk';
+      const fileName = `license_${id}.${extension}`;
+      
+      // إنشاء رابط مؤقت وتنزيل الملف
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      
+      // تنظيف الرابط
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('تم تحميل الترخيص بنجاح');
+    } catch (error) {
+      toast.error('فشل تحميل ملف الترخيص، قد يكون غير موجود');
+      console.error(error);
+    }
   }
 
   // في حالة التحميل أو وجود أخطاء، نعرض رسالة مناسبة قبل الواجهة
@@ -237,7 +308,10 @@ export default function UserDetailPage() {
             <div style={labelColStyle}>الترخيص (License)</div>
             <div style={{ ...inputColStyle, display: 'flex', flexDirection: 'column', gap: 6 }}>
               {/* رابط أزرق لحفظ الترخيص إلى ملف محلي */}
-              <a href="#" style={actionLinkStyle}><i className="bi bi-download" /> حفظ إلى ملف (Save to file)</a>
+              <a href="#" onClick={handleDownloadLicense} style={{...actionLinkStyle, opacity: downloadMutation.isPending ? 0.5 : 1, pointerEvents: downloadMutation.isPending ? 'none' : 'auto'}}>
+                <i className={`bi ${downloadMutation.isPending ? 'bi-hourglass-split' : 'bi-download'}`} /> 
+                {downloadMutation.isPending ? ' جاري التحميل...' : ' حفظ إلى ملف (Save to file)'}
+              </a>
               {/* رابط أزرق لإرسال الترخيص عبر الإيميل للمستخدم */}
               <a href="#" style={actionLinkStyle}><i className="bi bi-envelope" /> إرسال إيميل (Send email)</a>
               
@@ -260,10 +334,14 @@ export default function UserDetailPage() {
         <div style={{ padding: '12px 15px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           
           {/* رابط أزرق لإعطاء حق الوصول للمنشورات */}
-          <a href="#" style={actionLinkStyle}><i className="bi bi-journal-text" /> تعيين وصول المنشور (Set Publication Access)</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setAccessActionType('grant_access_to_publication'); setIsPubModalOpen(true); }} style={actionLinkStyle}>
+            <i className="bi bi-journal-text" style={{ marginLeft: 4 }} /> تعيين وصول المنشور (Set Publication Access)
+          </a>
+          
           {/* رابط أزرق لإعطاء حق الوصول للمستندات */}
-          <a href="#" style={actionLinkStyle}><i className="bi bi-file-earmark-text" /> تعيين وصول المستند (Set Document Access)</a>
-          {/* إزالة الروابط الزائدة بناءً على البنية التحتية للخادم */}
+          <a href="#" onClick={(e) => { e.preventDefault(); setAccessActionType('grant_access_to_documents'); setIsDocModalOpen(true); }} style={actionLinkStyle}>
+            <i className="bi bi-file-earmark-text" style={{ marginLeft: 4 }} /> تعيين وصول المستند (Set Document Access)
+          </a>
 
         </div>
 
@@ -307,6 +385,28 @@ export default function UserDetailPage() {
         </div>
 
       </div>
+
+      {/* نوافذ تحديد الوصول المخفية افتراضياً */}
+      <SelectPublicationModal 
+        isOpen={isPubModalOpen} 
+        onClose={() => setIsPubModalOpen(false)} 
+        onSelect={(pub) => { setSelectedResource(pub); setIsPubModalOpen(false); setIsConfirmOpen(true); }} 
+      />
+      
+      <SelectDocumentModal 
+        isOpen={isDocModalOpen} 
+        onClose={() => setIsDocModalOpen(false)} 
+        onSelect={(doc) => { setSelectedResource(doc); setIsDocModalOpen(false); setIsConfirmOpen(true); }} 
+      />
+      
+      <ConfirmAccessModal 
+        isOpen={isConfirmOpen} 
+        onClose={() => setIsConfirmOpen(false)} 
+        onConfirm={confirmGrantAccess}
+        actionText="GRANT ACCESS"
+        customers={[{ id: id, name: form.name, email: form.email, company: form.company }]}
+        resourceName={selectedResource?.name || selectedResource?.title}
+      />
     </div>
   )
 }

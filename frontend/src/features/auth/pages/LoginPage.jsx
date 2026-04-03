@@ -23,7 +23,8 @@ const LoginPage = () => {
         password: form.password 
       })
       
-      const resData = response.data?.data;
+      // Axios interceptor returns the data directly
+      const resData = response;
       
       if (resData?.token) {
         sessionStorage.setItem('auth_token', resData.token)
@@ -34,12 +35,17 @@ const LoginPage = () => {
           user: resData.publisher
         }))
         
-        toast.success(response.data.message || 'تم تسجيل الدخول بنجاح')
-        navigate('/publications') 
+        toast.success(resData?.message || 'تم تسجيل الدخول بنجاح')
+        
+        setTimeout(() => {
+          navigate('/publications')
+        }, 100)
+      } else {
+        toast.error('حدث خطأ غير متوقع، لم يتم استلام التوكن')
       }
     } catch (error) {
       console.error('Login error:', error)
-      const errRes = error.response?.data;
+      const errRes = error.response?.data || error.response;
       toast.error(errRes?.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة')
     } finally {
       setLoading(false)

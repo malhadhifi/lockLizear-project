@@ -39,14 +39,16 @@ const PublicationsListPage = () => {
   const bulkMutation = usePublicationBulkAction()
   
   // استخراج قائمة المنشورات الحقيقية من كائن البيانات (Items)
-  const publications = publicationsResponse?.data?.items || []
+  const publications = publicationsResponse?.items || publicationsResponse?.data?.items || []
 
   // حالة (State) للبحث النصي الحر
   const [filter, setFilter] = useState('')
   // حالة (State) لتحديد بناءً على أي حقل يتم الفرز
   const [sortBy, setSortBy] = useState('name')
   // حالة (State) لعدد السجلات المعروضة بحد أدنى كصفحات
-  const [showAtLeast, setShowAtLeast] = useState(25)
+  const [showAtLeast, setShowAtLeast] = useState(2)
+  // رقم الصفحة الحالية
+  const [currentPage, setCurrentPage] = useState(1)
   // حالة (State) للفلترة حسب نوع المنشور (الكل، ملتزم بالتاريخ، لا يلتزم)
   const [showFilter, setShowFilter] = useState('all')
   // حالة (State) لتخزين معرفات (IDs) المنشورات المحددة عبر مربعات الاختيار
@@ -200,7 +202,7 @@ const PublicationsListPage = () => {
                 {/* أيقونة العدسة للمظهر الجميل */}
                 <span style={{ color: TEAL, fontSize: 16, padding: '0 8px', border: '1px solid #ccc', borderLeft: 'none', height: 28, display: 'flex', alignItems: 'center', background: '#fafafa' }}>🔍</span>
                 {/* حقل الإدخال لربط القيمة بحالة الفلتر الخاصة بـ React */}
-                <input type="text" value={filter} onChange={e => setFilter(e.target.value)}
+                <input type="text" value={filter} onChange={e => { setFilter(e.target.value); setCurrentPage(1); }}
                   style={{ ...filterInputStyle, borderRight: 'none', borderTopRightRadius: 0, borderBottomRightRadius: 0, flex: 1, height: 28 }} />
               </div>
             </div>
@@ -211,7 +213,7 @@ const PublicationsListPage = () => {
               {/* فرز حسب (Sort by) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <label style={{ fontWeight: 600 }}>فرز حسب (Sort by)</label>
-                <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={filterSelectStyle}>
+                <select value={sortBy} onChange={e => { setSortBy(e.target.value); setCurrentPage(1); }} style={filterSelectStyle}>
                   <option value="name">الاسم (Name)</option>
                   <option value="id">المعرف (ID)</option>
                 </select>
@@ -220,7 +222,8 @@ const PublicationsListPage = () => {
               {/* عرض على الأقل (Show at least) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <label style={{ fontWeight: 600 }}>عرض على الأقل (Show at least)</label>
-                <select value={showAtLeast} onChange={e => setShowAtLeast(Number(e.target.value))} style={filterSelectStyle}>
+                <select value={showAtLeast} onChange={e => { setShowAtLeast(Number(e.target.value)); setCurrentPage(1); }} style={filterSelectStyle}>
+                  <option value={2}>2</option>
                   <option value={10}>10</option>
                   <option value={25}>25</option>
                   <option value={50}>50</option>
@@ -230,7 +233,7 @@ const PublicationsListPage = () => {
               {/* عرض فلتر الحالة (Show) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <label style={{ fontWeight: 600 }}>عرض (Show)</label>
-                <select value={showFilter} onChange={e => setShowFilter(e.target.value)} style={filterSelectStyle}>
+                <select value={showFilter} onChange={e => { setShowFilter(e.target.value); setCurrentPage(1); }} style={filterSelectStyle}>
                   <option value="all">الكل (All)</option>
                   <option value="obey">الالتزام بالتاريخ (Obey)</option>
                   <option value="no-obey">عدم الالتزام بالتاريخ (Don't Obey)</option>
@@ -290,8 +293,8 @@ const PublicationsListPage = () => {
           {!isLoading && !isError && filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 40, color: '#888' }}>لا توجد منشورات (No publications found)</div>
           ) : 
-            // عمل دوران (Mapping) لجميع المنشورات المتطابقة بعد تقليمها بناءً لمقدار العرض المطلوب
-            filtered.slice(0, showAtLeast).map((pub) => (
+            // عمل دوران (Mapping) لجميع المنشورات المتطابقة بعد تقليمها بناءً لمقدار العرض المطلوب والصفحة
+            filtered.slice((currentPage - 1) * showAtLeast, currentPage * showAtLeast).map((pub) => (
             
             // بداية تصميم البطاقة (Card) الشبيهة بأسطر الجدول الأنيقة، لكل منشور
             <div key={pub.id} style={{
@@ -382,6 +385,30 @@ const PublicationsListPage = () => {
             </div>
           ))}
         </div>
+
+        {/* أزرار صفحات النتائج (Pagination) تعتمد أسهماً صغيرة */}
+        {!isLoading && filtered.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, padding: '10px 0' }}>
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              title="السابق (Previous)"
+              style={{ background: currentPage === 1 ? '#eee' : '#fff', color: currentPage === 1 ? '#999' : TEAL, border: `1px solid ${currentPage === 1 ? '#ccc' : TEAL}`, padding: '2px 12px', borderRadius: 3, cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: 14 }}>
+              &lt;&lt;
+            </button>
+            <span style={{ fontSize: 13, fontWeight: 700, color: TEAL }}>
+              [ {currentPage} / {Math.ceil(filtered.length / showAtLeast)} ]
+            </span>
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(Math.ceil(filtered.length / showAtLeast), p + 1))}
+              disabled={currentPage === Math.ceil(filtered.length / showAtLeast)}
+              title="التالي (Next)"
+              style={{ background: currentPage === Math.ceil(filtered.length / showAtLeast) ? '#eee' : '#fff', color: currentPage === Math.ceil(filtered.length / showAtLeast) ? '#999' : TEAL, border: `1px solid ${currentPage === Math.ceil(filtered.length / showAtLeast) ? '#ccc' : TEAL}`, padding: '2px 12px', borderRadius: 3, cursor: currentPage === Math.ceil(filtered.length / showAtLeast) ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: 14 }}>
+              &gt;&gt;
+            </button>
+          </div>
+        )}
+
       </div>
     </div>
   )

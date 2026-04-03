@@ -1,6 +1,4 @@
 import { useState } from 'react';
-
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../../lib/axios';
@@ -13,22 +11,30 @@ function LoginForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('1. Form submitted');
     
     if (!email || !password) {
+      console.log('2. Missing email or password');
       toast.error('يرجى إدخال البريد الإلكتروني وكلمة المرور');
       return;
     }
 
     setIsLoading(true);
+    console.log('3. Proceeding to API call with:', email);
     try {
       const response = await api.post('/saas/login', { email, password });
+      console.log('4. API Response:', response);
       
       // حفظ التوكن وبيانات المستخدم في الجلسة (session storage)
-      if (response.data?.token) {
-        sessionStorage.setItem('auth_token', response.data.token);
-        sessionStorage.setItem('admin_user', JSON.stringify(response.data.admin));
+      // بسبب الـ Interceptor، قد يكون الرد هو البيانات مباشرة (response.token) أو (response.data.token)
+      const token = response?.token || response?.data?.token;
+      const admin = response?.admin || response?.data?.admin;
+
+      if (token) {
+        sessionStorage.setItem('auth_token', token);
+        sessionStorage.setItem('admin_user', JSON.stringify(admin));
         
-        toast.success(response.data.message || 'تم تسجيل الدخول بنجاح');
+        toast.success(response?.message || response?.data?.message || 'تم تسجيل الدخول بنجاح');
         
         // إعادة التوجيه إلى لوحة التحكم (المنشورات كصفحة رئيسية حالياً)
         navigate('/publications');
@@ -37,11 +43,15 @@ function LoginForm() {
         setTimeout(() => {
            window.location.reload();
         }, 100);
+      } else {
+        console.log('5. Token missing from response!');
+        toast.error('لم يتم العثور على توكن في الاستجابة!');
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login error (caught):', error);
       toast.error(error.response?.data?.message || 'فشل تسجيل الدخول. يرجى التأكد من صحة البيانات.');
     } finally {
+      console.log('6. Finally block reached');
       setIsLoading(false);
     }
   };

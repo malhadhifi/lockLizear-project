@@ -34,7 +34,7 @@ const DocumentsListPage = () => {
 
   const [searchInput,   setSearchInput]   = useState('')
   const [sortBy,        setSortBy]        = useState('title')
-  const [perPage,       setPerPage]       = useState(25)
+  const [perPage,       setPerPage]       = useState(2)
   const [showFilter,    setShowFilter]    = useState('all')
   const [page,          setPage]          = useState(1)
   const [selected,      setSelected]      = useState([])
@@ -60,9 +60,11 @@ const DocumentsListPage = () => {
   //   data = محتوى "data" من الباك إند مباشرة
   //   = { items: [...], total, current_page, last_page, per_page }
   const documents  = Array.isArray(data?.items) ? data.items
-                   : Array.isArray(data)         ? data
+                   : Array.isArray(data?.data?.items) ? data.data.items
+                   : Array.isArray(data) ? data
                    : []
-  const pagination = data ?? null
+  // استخراج كائن التقليب (pagination) بذكاء من الرد بناءً للاعتراضات
+  const pagination = data?.pagination || data?.data?.pagination || null
   // ──────────────────────────────────────────────────────────────────────────
 
   const toggleSelect    = (id) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
@@ -188,6 +190,7 @@ const DocumentsListPage = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <label style={{ fontWeight: 600 }}>عرض (Show)</label>
               <select value={perPage} onChange={e => handleFilterChange(setPerPage)(Number(e.target.value))} style={filterSelectStyle}>
+                <option value={2}>2</option>
                 <option value={10}>10</option>
                 <option value={25}>25</option>
                 <option value={50}>50</option>
@@ -330,34 +333,35 @@ const DocumentsListPage = () => {
           </div>
         )}
 
-        {/* أزرار Pagination */}
-        {pagination && pagination.last_page > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 20, fontSize: 13 }}>
+        {/* أزرار Pagination تعتمد أسهماً صغيرة */}
+        {pagination && pagination.total > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, padding: '10px 0' }}>
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page <= 1 || isFetching}
+              title="السابق (Previous)"
               style={{
-                background: page <= 1 ? '#eee' : TEAL, color: page <= 1 ? '#999' : '#fff',
-                border: 'none', borderRadius: 3, padding: '6px 20px', cursor: page <= 1 ? 'not-allowed' : 'pointer',
-                fontWeight: 600
+                background: page <= 1 ? '#eee' : '#fff', color: page <= 1 ? '#999' : TEAL,
+                border: `1px solid ${page <= 1 ? '#ccc' : TEAL}`, borderRadius: 3, padding: '2px 12px', cursor: page <= 1 ? 'not-allowed' : 'pointer',
+                fontWeight: 'bold', fontSize: 14
               }}>
-              ‹ السابق (Prev)
+              &lt;&lt;
             </button>
-            <span style={{ fontWeight: 700, color: TEAL }}>
-              صفحة {pagination.current_page} من {pagination.last_page}
-              <span style={{ color: '#999', fontWeight: 400, marginRight: 8 }}>| إجمالي: {pagination.total}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: TEAL }}>
+              [ {pagination.current_page} / {pagination.last_page} ]
             </span>
             <button
               onClick={() => setPage(p => Math.min(pagination.last_page, p + 1))}
               disabled={page >= pagination.last_page || isFetching}
+              title="التالي (Next)"
               style={{
-                background: page >= pagination.last_page ? '#eee' : TEAL,
-                color: page >= pagination.last_page ? '#999' : '#fff',
-                border: 'none', borderRadius: 3, padding: '6px 20px',
+                background: page >= pagination.last_page ? '#eee' : '#fff',
+                color: page >= pagination.last_page ? '#999' : TEAL,
+                border: `1px solid ${page >= pagination.last_page ? '#ccc' : TEAL}`, borderRadius: 3, padding: '2px 12px',
                 cursor: page >= pagination.last_page ? 'not-allowed' : 'pointer',
-                fontWeight: 600
+                fontWeight: 'bold', fontSize: 14
               }}>
-              التالي (Next) ›
+              &gt;&gt;
             </button>
           </div>
         )}

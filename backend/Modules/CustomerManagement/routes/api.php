@@ -27,6 +27,9 @@ group(function () {
     // عرض تفاصيل رخصة محددة
     Route::get('/{id}', [CustomerLicenseController::class, 'show']);
 
+    // تحميل ملف الرخصة المولد
+    Route::get('/{id}/download', [CustomerLicenseController::class, 'download']);
+
     // تحديث بيانات رخصة (مع دعم تحديث صلاحيات المنشورات والملفات المدمجة)
     Route::put('/{id}', [CustomerLicenseController::class, 'update']);
 

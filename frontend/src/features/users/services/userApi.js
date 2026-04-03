@@ -10,14 +10,14 @@ export const userApi = {
   fetchCustomers: async () => {
     // بناءً على راوتر لارافيل: Route::get('/customer-licenses', [CustomerLicenseController::class, 'index']);
     const response = await api.get('/customer-management/customer-licenses')
-    return response.data
+    return response
   },
   
   // 2. إضافة عميل جديد
   createCustomer: async (customerData) => {
     // Route::post('/customer-licenses', [CustomerLicenseController::class, 'store']);
     const response = await api.post('/customer-management/customer-licenses', customerData)
-    return response.data
+    return response
   },
 
   // 3. الإجراءات الجماعية (إيقاف، حذف، تفعيل، إلخ)
@@ -25,20 +25,28 @@ export const userApi = {
     // Route::post('/customer-licenses/bulk-action', ...);
     // يتوقع الباك إند: { license_ids: [], action: 'suspend' | 'activate' ... }
     const response = await api.post('/customer-management/customer-licenses/bulk-action', data)
-    return response.data
+    return response
   },
 
   // 4. جلب تفاصيل عميل محدد
   getCustomerDetails: async (id) => {
     // Route::get('/customer-licenses/{id}', ...);
     const response = await api.get(`/customer-management/customer-licenses/${id}`)
-    return response.data
+    return response
   },
 
   // 5. تعديل بيانات عميل
   updateCustomer: async ({ id, data }) => {
     // يتوقع الباك إند طلب PUT
     const response = await api.put(`/customer-management/customer-licenses/${id}`, data)
-    return response.data
+    return response
+  },
+
+  // 6. تحميل ملف الرخصة
+  downloadLicense: async (id) => {
+    const response = await api.get(`/customer-management/customer-licenses/${id}/download`, {
+      responseType: 'blob'
+    })
+    return response
   }
 }

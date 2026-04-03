@@ -17,6 +17,8 @@ export const useCustomerBulkAction = () => {
     onSuccess: () => {
       // إجبار الجدول على إعادة تعبئة نفسه بالبيانات الجديدة بعد التحديث
       queryClient.invalidateQueries({ queryKey: ['customers'] })
+      queryClient.invalidateQueries({ queryKey: ['publication-subscribers'] })
+      queryClient.invalidateQueries({ queryKey: ['document-access-list'] })
     }
   })
 }
@@ -40,5 +42,13 @@ export const useUpdateCustomer = () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] })
       queryClient.invalidateQueries({ queryKey: ['customers', variables.id] })
     }
+  })
+}
+
+// خطاف تحميل الرخصة
+export const useDownloadLicense = () => {
+  return useMutation({
+    mutationFn: userApi.downloadLicense,
+    // معالجة الناجح تتم في الواجهة لتحويل الـ blob إلى رابط وتحميله
   })
 }

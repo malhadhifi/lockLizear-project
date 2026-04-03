@@ -35,9 +35,9 @@ const UsersListPage = () => {
   
   // حالات الفلترة (Filters States) المذكورة في دليل الاستخدام
   const [filter, setFilter] = useState('')                       // صندوق البحث النصي
-  const [sortBy, setSortBy] = useState('name')                   // الفرز حسب (الاسم، الشركة، المعرف)
-  const [showAtLeast, setShowAtLeast] = useState(25)             // عدد النتائج المعروضة (10, 25, 50, 100)
+  const [showAtLeast, setShowAtLeast] = useState(2)             // عدد النتائج المعروضة (2, 10, 25, 50, 100)
   const [showFilter, setShowFilter] = useState('all')            // فلتر الحالة (الكل، مسجل، موقوف، الخ..)
+  const [currentPage, setCurrentPage] = useState(1)              // صفحة النتائج الحالية
   
   // حالة الأزرار واختيار العناصر المتعددة
   const [selected, setSelected] = useState([])                   // المصفوفة التي تحتوي على معرفات العملاء المحددين
@@ -207,7 +207,7 @@ const UsersListPage = () => {
               <label style={{ fontWeight: 600, minWidth: 40 }}>تصفية</label>
               <div style={{ display: 'flex', alignItems: 'center', flex: 1, maxWidth: 400 }}>
                 <span style={{ color: TEAL, fontSize: 16, borderLeft: '1px solid #ccc', padding: '0 8px', border: '1px solid #ccc', height: 28, display: 'flex', alignItems: 'center', background: '#fafafa' }}>🔍</span>
-                <input type="text" value={filter} onChange={e => setFilter(e.target.value)}
+                <input type="text" value={filter} onChange={e => { setFilter(e.target.value); setCurrentPage(1); }}
                   style={{ ...filterInputStyle, borderRight: 'none', borderTopRightRadius: 0, borderBottomRightRadius: 0, flex: 1, height: 28 }} />
               </div>
             </div>
@@ -215,7 +215,7 @@ const UsersListPage = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13, flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <label style={{ fontWeight: 600 }}>فرز حسب</label>
-                <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={filterSelectStyle}>
+                <select value={sortBy} onChange={e => { setSortBy(e.target.value); setCurrentPage(1); }} style={filterSelectStyle}>
                   <option value="name">الاسم</option>
                   <option value="company">الشركة</option>
                   <option value="id">المعرف</option>
@@ -223,7 +223,8 @@ const UsersListPage = () => {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <label style={{ fontWeight: 600 }}>عرض على الأقل</label>
-                <select value={showAtLeast} onChange={e => setShowAtLeast(Number(e.target.value))} style={filterSelectStyle}>
+                <select value={showAtLeast} onChange={e => { setShowAtLeast(Number(e.target.value)); setCurrentPage(1); }} style={filterSelectStyle}>
+                  <option value={2}>2</option>
                   <option value={10}>10</option>
                   <option value={25}>25</option>
                   <option value={50}>50</option>
@@ -232,7 +233,7 @@ const UsersListPage = () => {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <label style={{ fontWeight: 600 }}>عرض</label>
-                <select value={showFilter} onChange={e => setShowFilter(e.target.value)} style={filterSelectStyle}>
+                <select value={showFilter} onChange={e => { setShowFilter(e.target.value); setCurrentPage(1); }} style={filterSelectStyle}>
                   <option value="all">الكل</option>
                   <option value="registered">مسجل</option>
                   <option value="not_registered">غير مسجل</option>
@@ -301,7 +302,7 @@ const UsersListPage = () => {
         <div>
           {filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 40, color: '#888' }}>لا يوجد عملاء</div>
-          ) : filtered.slice(0, showAtLeast).map((u) => (
+          ) : filtered.slice((currentPage - 1) * showAtLeast, currentPage * showAtLeast).map((u) => (
             <div key={u.id} style={{
               display: 'flex', alignItems: 'stretch',
               background: '#f8f8f8',
@@ -387,6 +388,29 @@ const UsersListPage = () => {
             </div>
           ))}
         </div>
+
+        {/* أزرار صفحات النتائج (Pagination) تعتمد أسهماً صغيرة */}
+        {!isLoading && filtered.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, padding: '10px 0' }}>
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              title="السابق (Previous)"
+              style={{ background: currentPage === 1 ? '#eee' : '#fff', color: currentPage === 1 ? '#999' : TEAL, border: `1px solid ${currentPage === 1 ? '#ccc' : TEAL}`, padding: '2px 12px', borderRadius: 3, cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: 14 }}>
+              &lt;&lt;
+            </button>
+            <span style={{ fontSize: 13, fontWeight: 700, color: TEAL }}>
+              [ {currentPage} / {Math.ceil(filtered.length / showAtLeast)} ]
+            </span>
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(Math.ceil(filtered.length / showAtLeast), p + 1))}
+              disabled={currentPage === Math.ceil(filtered.length / showAtLeast)}
+              title="التالي (Next)"
+              style={{ background: currentPage === Math.ceil(filtered.length / showAtLeast) ? '#eee' : '#fff', color: currentPage === Math.ceil(filtered.length / showAtLeast) ? '#999' : TEAL, border: `1px solid ${currentPage === Math.ceil(filtered.length / showAtLeast) ? '#ccc' : TEAL}`, padding: '2px 12px', borderRadius: 3, cursor: currentPage === Math.ceil(filtered.length / showAtLeast) ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: 14 }}>
+              &gt;&gt;
+            </button>
+          </div>
+        )}
       </div>
 
       <SelectPublicationModal 

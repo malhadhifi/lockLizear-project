@@ -16,7 +16,7 @@ const TEAL = '#009cad'
 
 export default function SelectPublicationModal({ isOpen, onClose, onSelect }) {
   const { data: pubData, isLoading } = usePublications({ limit: 1000 })
-  const publications = pubData?.data?.items || []
+  const publications = pubData?.items || pubData?.data?.items || []
 
   const [selectedId, setSelectedId] = useState(null)
 

@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { usePublicationSubscribers, useRevokeSubscriberAccess } from '../hooks/usePublications'
+import { useCustomerBulkAction } from '../../users/hooks/useUsers'
+import SelectCustomerModal from '../../users/components/SelectCustomerModal'
+import ConfirmAccessModal from '../../users/components/ConfirmAccessModal'
 
 const PublicationAccessList = ({ publicationId }) => {
   const { data: subsRes, isLoading } = usePublicationSubscribers(publicationId)
@@ -12,6 +15,35 @@ const PublicationAccessList = ({ publicationId }) => {
   const [sortBy, setSortBy] = useState('name')
   const [showFilter, setShowFilter] = useState('all')
   const [bulkAction, setBulkAction] = useState('')
+
+  const bulkMutation = useCustomerBulkAction()
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false)
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const [selectedCustomersList, setSelectedCustomersList] = useState([])
+
+  const confirmGrantAccess = () => {
+    if (!selectedCustomersList.length) return;
+    
+    const customerIds = selectedCustomersList.map(c => c.id);
+    
+    bulkMutation.mutate({
+      license_ids: customerIds,
+      action: 'grant_access_to_publication',
+      publication_ids: [publicationId]
+    }, {
+      onSuccess: () => {
+        toast.success(`تم منح حقوق الوصول لـ ${customerIds.length} عميل بنجاح!`);
+        setSelectedCustomersList([]);
+        setIsConfirmOpen(false);
+        // إعادة جلب لیست العملاء للمنشور الحالي لاحقاً، حالياً الكاش رح يتحدث من الـ hook لو ربطناه صح 
+        // الأفضل أن نُشغل تحديث واجهة المشتركين
+      },
+      onError: (error) => {
+        toast.error('حدث خطأ أثناء التنفيذ!');
+        console.error('Bulk Action Error:', error);
+      }
+    });
+  }
 
   const filtered = customers.filter(c => {
     const s = filter.toLowerCase()
@@ -56,6 +88,13 @@ const PublicationAccessList = ({ publicationId }) => {
       </div>
 
       {isLoading && <div style={{ textAlign: 'center', padding: 20, color: '#0078d4' }}>جارٍ جلب عملاء المنشور... ⏳</div>}
+
+      {/* روابط الوصول السريع لإضافة عملاء */}
+      <div style={{ marginBottom: 16, marginTop: 16, display: 'flex', gap: 15, padding: '10px 15px', backgroundColor: '#f0f4f8', border: '1px solid #dce2e8', borderRadius: 4, marginLeft: 16, marginRight: 16 }}>
+        <a href="#" onClick={(e) => { e.preventDefault(); setIsCustomerModalOpen(true); }} style={{ color: '#0078d4', textDecoration: 'none', fontWeight: 'bold', fontSize: 13, display: 'flex', alignItems: 'center' }}>
+          <i className="bi bi-person-plus-fill" style={{ marginRight: 6, fontSize: 16 }} /> إضافة عملاء (Add Customers)
+        </a>
+      </div>
 
       {/* الفلاتر */}
       <div style={{
@@ -149,6 +188,23 @@ const PublicationAccessList = ({ publicationId }) => {
         </button>
         {selected.length > 0 && <span style={{ color: '#555' }}>({selected.length} محدد)</span>}
       </div>
+
+      {/* نوافذ تحديد الوصول المخفية افتراضياً */}
+      <SelectCustomerModal 
+        isOpen={isCustomerModalOpen} 
+        onClose={() => setIsCustomerModalOpen(false)} 
+        onSelect={(customers) => { setSelectedCustomersList(customers); setIsCustomerModalOpen(false); setIsConfirmOpen(true); }} 
+        multiple={true}
+      />
+      
+      <ConfirmAccessModal 
+        isOpen={isConfirmOpen} 
+        onClose={() => setIsConfirmOpen(false)} 
+        onConfirm={confirmGrantAccess}
+        actionText="GRANT ACCESS TO PUBLICATION"
+        customers={selectedCustomersList}
+        resourceName={`Publication #${publicationId}`}
+      />
     </div>
   )
 }

@@ -49,9 +49,12 @@ api.interceptors.response.use(
     return body;
   },
   (error) => {
-    if (error.response?.status === 401) {
+    const isLoginRequest = error.config?.url?.includes('/login');
+
+    if (error.response?.status === 401 && !isLoginRequest) {
       sessionStorage.removeItem('auth_token');
-      // window.location.href = '/login';
+      // توجيه المستخدم لصفحة الدخول إذا انتهت الجلسة لمنع الأخطاء الوهمية
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

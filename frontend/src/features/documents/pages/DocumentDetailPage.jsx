@@ -11,6 +11,9 @@ import {
   useUpdateDocument,
   useDocumentAccessList,
 } from '../hooks/useDocuments'
+import { useCustomerBulkAction } from '../../users/hooks/useUsers'
+import SelectCustomerModal from '../../users/components/SelectCustomerModal'
+import ConfirmAccessModal from '../../users/components/ConfirmAccessModal'
 
 const TEAL = '#009cad'
 
@@ -53,6 +56,35 @@ const DocumentDetailPage = () => {
     : Array.isArray(accessData)
       ? accessData
       : []
+      
+  const bulkMutation = useCustomerBulkAction()
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false)
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const [selectedCustomers, setSelectedCustomers] = useState([])
+
+  // دالة تأكيد إضافة العملاء إلى المستند
+  const confirmGrantAccess = () => {
+    if (!selectedCustomers.length) return;
+    
+    const customerIds = selectedCustomers.map(c => c.id);
+    
+    bulkMutation.mutate({
+      license_ids: customerIds,
+      action: 'grant_access_to_documents',
+      document_ids: [document.id]
+    }, {
+      onSuccess: () => {
+        toast.success(`تم منح حقوق الوصول لـ ${customerIds.length} عميل بنجاح!`);
+        setSelectedCustomers([]);
+        setIsConfirmOpen(false);
+        refetch(); // إعادة جلب قائمة الوصول
+      },
+      onError: (error) => {
+        toast.error('حدث خطأ أثناء التنفيذ!');
+        console.error('Bulk Action Error:', error);
+      }
+    });
+  }
 
   // ── مزامنة State مع البيانات ─────────────────────────────────────
   useEffect(() => {
@@ -163,28 +195,15 @@ const DocumentDetailPage = () => {
                   <DataRow label="العنوان (Title)"         value={document.title} />
                   <DataRow label="المعرف (ID)"             value={document.id} />
                   <DataRow label="تاريخ النشر (Published)" value={document.published} />
-                  <tr style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={labelTd}>الوصف / الملاحظة (Note)</td>
-                    <td style={{ padding: '10px 0' }}>
-                      <textarea value={note} onChange={e => setNote(e.target.value)} rows={4}
-                        style={{ width: '100%', border: '1px solid #ccc', borderRadius: 3, padding: '6px 8px', fontSize: 13, resize: 'vertical' }} />
-                    </td>
-                  </tr>
-                  <tr style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={labelTd}>تاريخ الانتهاء (Expiry Date)</td>
-                    <td style={{ padding: '10px 0' }}>
-                      <input type="date" value={expiryDate} onChange={e => setExpiryDate(e.target.value)}
-                        style={{ border: '1px solid #ccc', borderRadius: 3, padding: '4px 8px', fontSize: 13 }} />
-                      {expiryDate && (
-                        <button type="button" onClick={() => setExpiryDate('')}
-                          style={{ marginRight: 8, background: 'none', border: 'none', color: '#f44336', cursor: 'pointer', fontSize: 12 }}>
-                          ✕ مسح التاريخ
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                    <tr style={{ borderBottom: '1px solid #eee' }}>
+                      <td style={labelTd}>الوصف / الملاحظة (Note)</td>
+                      <td style={{ padding: '10px 0' }}>
+                        <textarea value={note} onChange={e => setNote(e.target.value)} rows={4}
+                          style={{ width: '100%', border: '1px solid #ccc', borderRadius: 3, padding: '6px 8px', fontSize: 13, resize: 'vertical' }} />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               <div style={{ marginTop: 20 }}>
                 <button type="button" onClick={handleSaveDetails} disabled={updateMutation.isPending} style={btnStyle(TEAL, '#fff', 'none', updateMutation.isPending)}>
                   {updateMutation.isPending ? 'جاري الحفظ...' : 'حفظ التغييرات (Save)'}
@@ -296,6 +315,13 @@ const DocumentDetailPage = () => {
           ════════════════════════════════════════════════════════════════ */}
           {activeTab === 'access' && (
             <div>
+              {/* روابط الوصول السريع لإضافة عملاء */}
+              <div style={{ marginBottom: 16, display: 'flex', gap: 15, padding: '10px 15px', backgroundColor: '#f0f4f8', border: '1px solid #dce2e8', borderRadius: 4 }}>
+                <a href="#" onClick={(e) => { e.preventDefault(); setIsCustomerModalOpen(true); }} style={{ color: TEAL, textDecoration: 'none', fontWeight: 'bold', fontSize: 13, display: 'flex', alignItems: 'center' }}>
+                  <i className="bi bi-person-plus-fill" style={{ marginRight: 6, fontSize: 16 }} /> إضافة عملاء (Add Customers)
+                </a>
+              </div>
+
               {accessLoading ? (
                 <div style={{ textAlign: 'center', padding: 30, color: TEAL }}>جاري تحميل قائمة الوصول...</div>
               ) : accessList.length === 0 ? (
@@ -331,6 +357,23 @@ const DocumentDetailPage = () => {
           )}
         </div>
       </div>
+
+      {/* نوافذ تحديد الوصول المخفية افتراضياً */}
+      <SelectCustomerModal 
+        isOpen={isCustomerModalOpen} 
+        onClose={() => setIsCustomerModalOpen(false)} 
+        onSelect={(customers) => { setSelectedCustomers(customers); setIsCustomerModalOpen(false); setIsConfirmOpen(true); }} 
+        multiple={true}
+      />
+      
+      <ConfirmAccessModal 
+        isOpen={isConfirmOpen} 
+        onClose={() => setIsConfirmOpen(false)} 
+        onConfirm={confirmGrantAccess}
+        actionText="GRANT ACCESS TO DOCUMENT"
+        customers={selectedCustomers}
+        resourceName={document?.title}
+      />
     </div>
   )
 }
