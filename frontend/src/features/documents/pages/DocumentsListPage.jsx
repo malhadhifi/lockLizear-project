@@ -1,18 +1,18 @@
 /**
  * ملف: DocumentsListPage.jsx
- * الوظيفة: لوحة إدارة المستندات (Manage Documents)
- * النسخة: حقيقية تجلب من الباك إند + أسماء حقول صحيحة
+ * الوظيفة: لوحة إدارة المستندات
+ * تم الترحيل: من Redux Thunks → React Query hooks
  */
 
-import { useState, useEffect, useMemo } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { useDebounce } from '../../../hooks/useDebounce'
 import {
-  fetchDocuments,
-  executeDocumentAction,
-  setFilters,
-} from '../store/documentsSlice'
+  useDocuments,
+  useDocumentAction,
+  useDocumentExport,
+} from '../hooks/useDocuments'
 
 const TEAL = '#009cad'
 
@@ -24,67 +24,85 @@ const borderColor = {
 
 const DocumentsListPage = () => {
   const navigate = useNavigate()
-  const dispatch = useDispatch()
-
-  // ✅ من Redux الحقيقي (مش Mock)
-  const { list: documents, loading, error, pagination } = useSelector(s => s.documents)
 
   // حالات الفلاتر
-  const [filter,      setFilter]      = useState('')
-  const [sortBy,      setSortBy]      = useState('title')
-  const [showAtLeast, setShowAtLeast] = useState(25)
-  const [showFilter,  setShowFilter]  = useState('all')
-  const [selected,    setSelected]    = useState([])
-  const [bulkAction,  setBulkAction]  = useState('')
+  const [searchInput,   setSearchInput]   = useState('')
+  const [sortBy,        setSortBy]        = useState('title')
+  const [perPage,       setPerPage]       = useState(25)
+  const [showFilter,    setShowFilter]    = useState('all')
+  const [page,          setPage]          = useState(1)
+  const [selected,      setSelected]      = useState([])
+  const [bulkAction,    setBulkAction]    = useState('')
   const [activeSideNav, setActiveSideNav] = useState('manage')
 
-  // ✅ جلب البيانات عند التحميل وعند تغيّر الفلاتر
-  useEffect(() => {
-    const params = {
-      show:    showFilter !== 'all' ? showFilter : undefined,
-      sort_by: sortBy,
-      per_page: showAtLeast,
-    }
-    dispatch(setFilters(params))
-    dispatch(fetchDocuments(params))
-  }, [showFilter, sortBy, showAtLeast, dispatch])
+  // تأخير البحث النصي لمنع طلبات متكررة
+  const debouncedSearch = useDebounce(searchInput, 300)
 
-  // ✅ فلترة نصية محلية فقط (title)
-  const filtered = useMemo(() => {
-    if (!filter) return documents
-    const s = filter.toLowerCase()
-    // ✅ اسم الحقل الحقيقي: title ليس name
-    return documents.filter(d => d.title?.toLowerCase().includes(s))
-  }, [documents, filter])
+  // بناء params للـ API — يشكل جزءاً من الـ queryKey فيُعيد الجلب عند التغيير
+  const params = useMemo(() => ({
+    ...(showFilter !== 'all'  && { show: showFilter }),
+    ...(debouncedSearch       && { search: debouncedSearch }),
+    sort_by:  sortBy,
+    per_page: perPage,
+    page,
+  }), [showFilter, debouncedSearch, sortBy, perPage, page])
+
+  // ✔️ React Query hooks
+  const { data, isLoading, isError, error, isFetching } = useDocuments(params)
+  const actionMutation  = useDocumentAction()
+  const exportMutation  = useDocumentExport()
+
+  // استخراج البيانات من استجابة الـ API
+  const documents  = data?.data?.data  ?? data?.data  ?? []
+  const pagination = data?.data?.meta  ?? data?.meta  ?? null
 
   // دوال التحديد
-  const toggleSelect   = (id) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
-  const checkAll       = () => setSelected(filtered.map(d => d.id))
-  const uncheckAll     = () => setSelected([])
-  const invertSelection= () => setSelected(filtered.map(d => d.id).filter(id => !selected.includes(id)))
+  const toggleSelect    = (id) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
+  const checkAll        = ()   => setSelected(documents.map(d => d.id))
+  const uncheckAll      = ()   => setSelected([])
+  const invertSelection = ()   => setSelected(documents.map(d => d.id).filter(id => !selected.includes(id)))
 
-  // ✅ العمليات الجماعية عبر الباك إند
+  // عملية فردية سريعة
+  const handleSingleAction = async (ids, action, successMsg) => {
+    if (action === 'Delete' && !window.confirm('هل أنت متأكد؟')) return
+    try {
+      await actionMutation.mutateAsync({ ids, action })
+      toast.success(successMsg)
+    } catch {}
+  }
+
+  // عملية جماعية
   const handleBulkAction = async () => {
     if (!selected.length || !bulkAction) return
-    if (bulkAction === 'Delete') {
-      if (!window.confirm(`هل أنت متأكد من حذف ${selected.length} مستند؟`)) return
-    }
+    if (bulkAction === 'Delete' && !window.confirm(`هل أنت متأكد من حذف ${selected.length} مستند؟`)) return
     try {
-      await dispatch(executeDocumentAction({ ids: selected, action: bulkAction })).unwrap()
+      await actionMutation.mutateAsync({ ids: selected, action: bulkAction })
       toast.success(`تم تنفيذ ${bulkAction} على ${selected.length} مستند`)
-    } catch (e) {
-      toast.error(e || 'حدث خطأ')
-    }
+      setSelected([])
+      setBulkAction('')
+    } catch {}
+  }
+
+  // تصدير CSV
+  const handleExport = async () => {
+    try {
+      await exportMutation.mutateAsync(params)
+      toast.success('تم تصدير الملف بنجاح')
+    } catch {}
+  }
+
+  // تغيير الفلتر يعيد الصفحة للأول
+  const handleFilterChange = (setter) => (val) => {
+    setter(val)
+    setPage(1)
     setSelected([])
-    setBulkAction('')
   }
 
   const sideNavItems = [
-    { id: 'manage', label: 'إدارة (Manage)',       icon: 'bi-file-earmark-text-fill', action: () => setActiveSideNav('manage') },
-    { id: 'export', label: 'تصدير (Export CSV)', icon: 'bi-box-arrow-up',            action: () => toast('تصدير السجلات') },
+    { id: 'manage', label: 'إدارة (Manage)',     icon: 'bi-file-earmark-text-fill', action: () => setActiveSideNav('manage') },
+    { id: 'export', label: 'تصدير (Export CSV)', icon: 'bi-box-arrow-up',            action: handleExport },
   ]
 
-  // === Render ===
   return (
     <div style={{ display: 'flex', gap: 20 }}>
 
@@ -99,10 +117,11 @@ const DocumentsListPage = () => {
                   background: activeSideNav === item.id ? TEAL : '#fafafa',
                   color: activeSideNav === item.id ? '#fff' : TEAL,
                   border: '1px solid #ddd', borderBottom: 'none', cursor: 'pointer',
-                  fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 10
+                  fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 10,
+                  opacity: item.id === 'export' && exportMutation.isPending ? 0.6 : 1,
                 }}>
                 <i className={`bi ${item.icon}`} />
-                {item.label}
+                {item.id === 'export' && exportMutation.isPending ? 'جاري...' : item.label}
               </button>
             </li>
           ))}
@@ -120,7 +139,9 @@ const DocumentsListPage = () => {
           display: 'flex', justifyContent: 'space-between', borderRadius: '2px 2px 0 0'
         }}>
           <span>إدارة المستندات المحمية (Manage Documents)</span>
-          <span><i className="bi bi-file-earmark-lock-fill" /></span>
+          {isFetching && !isLoading && (
+            <span style={{ fontSize: 11, opacity: 0.85 }}>⚡ جاري التحديث...</span>
+          )}
         </div>
 
         {/* صندوق الفلاتر */}
@@ -131,18 +152,21 @@ const DocumentsListPage = () => {
             <label style={{ fontWeight: 600, minWidth: 40 }}>تصفية (Filter)</label>
             <div style={{ display: 'flex', alignItems: 'center', flex: 1, maxWidth: 400 }}>
               <span style={{ color: TEAL, fontSize: 16, padding: '0 8px', border: '1px solid #ccc', borderLeft: 'none', height: 28, display: 'flex', alignItems: 'center', background: '#fafafa' }}>🔍</span>
-              <input type="text" value={filter} onChange={e => setFilter(e.target.value)}
-                style={{ ...filterInputStyle, borderRight: 'none', borderTopRightRadius: 0, borderBottomRightRadius: 0, flex: 1, height: 28 }} />
+              <input
+                type="text"
+                value={searchInput}
+                onChange={e => { setSearchInput(e.target.value); setPage(1) }}
+                placeholder="بحث بالعنوان..."
+                style={{ ...filterInputStyle, borderRight: 'none', borderTopRightRadius: 0, borderBottomRightRadius: 0, flex: 1, height: 28 }}
+              />
             </div>
           </div>
 
           {/* قوائم الفرز والحالة */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13, flexWrap: 'wrap' }}>
-
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <label style={{ fontWeight: 600 }}>فرز حسب (Sort by)</label>
-              <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={filterSelectStyle}>
-                {/* ✅ title هو اسم الحقل الحقيقي من الباك إند */}
+              <select value={sortBy} onChange={e => handleFilterChange(setSortBy)(e.target.value)} style={filterSelectStyle}>
                 <option value="title">الاسم (Name)</option>
                 <option value="id">المعرف (ID)</option>
                 <option value="published">تاريخ النشر (Published Date)</option>
@@ -150,8 +174,8 @@ const DocumentsListPage = () => {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <label style={{ fontWeight: 600 }}>عرض على الأقل (Show at least)</label>
-              <select value={showAtLeast} onChange={e => setShowAtLeast(Number(e.target.value))} style={filterSelectStyle}>
+              <label style={{ fontWeight: 600 }}>عرض (Show)</label>
+              <select value={perPage} onChange={e => handleFilterChange(setPerPage)(Number(e.target.value))} style={filterSelectStyle}>
                 <option value={10}>10</option>
                 <option value={25}>25</option>
                 <option value={50}>50</option>
@@ -159,8 +183,8 @@ const DocumentsListPage = () => {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <label style={{ fontWeight: 600 }}>عرض (Show)</label>
-              <select value={showFilter} onChange={e => setShowFilter(e.target.value)} style={filterSelectStyle}>
+              <label style={{ fontWeight: 600 }}>حالة (Status)</label>
+              <select value={showFilter} onChange={e => handleFilterChange(setShowFilter)(e.target.value)} style={filterSelectStyle}>
                 <option value="all">الكل (All)</option>
                 <option value="valid">صالح (Valid)</option>
                 <option value="suspended">موقوف (Suspended)</option>
@@ -174,9 +198,9 @@ const DocumentsListPage = () => {
           {/* تحديد شامل */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13 }}>
             <span style={{ fontWeight: 600 }}>الكل (All)</span>
-            <a href="#" onClick={e => { e.preventDefault(); checkAll() }}        style={{ color: TEAL }}>تحديد (Check)</a>     <span style={{ color: '#ccc' }}>|</span>
-            <a href="#" onClick={e => { e.preventDefault(); uncheckAll() }}      style={{ color: TEAL }}>إلغاء التحديد (Uncheck)</a> <span style={{ color: '#ccc' }}>|</span>
-            <a href="#" onClick={e => { e.preventDefault(); invertSelection() }} style={{ color: TEAL }}>عكس التحديد (Invert)</a>
+            <a href="#" onClick={e => { e.preventDefault(); checkAll() }}         style={{ color: TEAL }}>تحديد (Check)</a>     <span style={{ color: '#ccc' }}>|</span>
+            <a href="#" onClick={e => { e.preventDefault(); uncheckAll() }}       style={{ color: TEAL }}>إلغاء (Uncheck)</a>    <span style={{ color: '#ccc' }}>|</span>
+            <a href="#" onClick={e => { e.preventDefault(); invertSelection() }} style={{ color: TEAL }}>عكس (Invert)</a>
           </div>
 
           {/* عمليات جماعية */}
@@ -190,54 +214,53 @@ const DocumentsListPage = () => {
               <option value="Delete">حذف (Delete)</option>
             </select>
             <button type="button" onClick={handleBulkAction}
-              disabled={!bulkAction || selected.length === 0 || loading}
+              disabled={!bulkAction || selected.length === 0 || actionMutation.isPending}
               style={{
                 background: TEAL, color: '#fff', border: 'none', borderRadius: 2,
                 padding: '6px 30px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                opacity: (!bulkAction || selected.length === 0 || loading) ? 0.5 : 1
+                opacity: (!bulkAction || selected.length === 0 || actionMutation.isPending) ? 0.5 : 1
               }}>
-              {loading ? 'جاري...' : 'موافق (OK)'}
+              {actionMutation.isPending ? 'جاري...' : 'موافق (OK)'}
             </button>
           </div>
         </div>
 
-        {/* ✅ مؤشر التحميل */}
-        {loading && (
+        {/* ✔️ مؤشر التحميل */}
+        {isLoading && (
           <div style={{ textAlign: 'center', padding: '30px 0', color: TEAL, fontSize: 14, fontWeight: 600 }}>
             <i className="bi bi-arrow-repeat" style={{ marginLeft: 8, animation: 'spin 1s linear infinite' }} />
             جاري تحميل المستندات...
+            <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
           </div>
         )}
 
-        {/* ✅ رسالة الخطأ + زر إعادة المحاولة */}
-        {!loading && error && (
+        {/* ✔️ رسالة الخطأ + زر إعادة المحاولة */}
+        {!isLoading && isError && (
           <div style={{ textAlign: 'center', padding: '30px 0' }}>
-            <p style={{ color: '#f44336', marginBottom: 12, fontSize: 14 }}>⚠️ {error}</p>
-            <button onClick={() => dispatch(fetchDocuments({}))} style={{
-              background: TEAL, color: '#fff', border: 'none', borderRadius: 3,
-              padding: '8px 24px', cursor: 'pointer', fontWeight: 600, fontSize: 13
-            }}>
+            <p style={{ color: '#f44336', marginBottom: 12, fontSize: 14 }}>&#9888;&#65039; {error?.message || 'حدث خطأ في جلب البيانات'}</p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{ background: TEAL, color: '#fff', border: 'none', borderRadius: 3, padding: '8px 24px', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>
               إعادة المحاولة (Retry)
             </button>
           </div>
         )}
 
         {/* عداد النتائج */}
-        {!loading && !error && (
+        {!isLoading && !isError && (
           <div style={{ textAlign: 'center', color: TEAL, fontSize: 13, fontWeight: 700, margin: '20px 0' }} dir="ltr">
-            {'>> '}<span>[{filtered.length}]</span>{' <<'}
+            {'>> '}<span>[{pagination?.total ?? documents.length}]</span>{' <<'}
           </div>
         )}
 
         {/* بطاقات المستندات */}
-        {!loading && !error && (
+        {!isLoading && !isError && (
           <div>
-            {filtered.length === 0 ? (
+            {documents.length === 0 ? (
               <div style={{ textAlign: 'center', padding: 40, color: '#888' }}>
                 لا توجد مستندات مطابقة (No documents found)
               </div>
-            ) : filtered.slice(0, showAtLeast).map(doc => (
-
+            ) : documents.map(doc => (
               <div key={doc.id} style={{
                 display: 'flex', alignItems: 'stretch',
                 background: '#f8f8f8', marginBottom: 16,
@@ -252,15 +275,12 @@ const DocumentsListPage = () => {
 
                 {/* بيانات المستند */}
                 <div style={{ flex: 1, padding: '10px 16px', fontSize: 13 }}>
-
-                  {/* ✅ doc.title ليس doc.name */}
                   <div style={{ marginBottom: 8 }}>
                     <a href="#" onClick={e => { e.preventDefault(); navigate(`/documents/${doc.id}`) }}
                       style={{ color: TEAL, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
                       {doc.title}
                     </a>
                   </div>
-
                   <table style={{ fontSize: 13, lineHeight: 1.6 }}>
                     <tbody>
                       <tr>
@@ -268,7 +288,6 @@ const DocumentsListPage = () => {
                         <td style={fieldValueStyle}>{doc.id}</td>
                       </tr>
                       <tr>
-                        {/* ✅ doc.published ليس doc.publishedDate */}
                         <td style={fieldLabelStyle}>تاريخ النشر (Published)</td>
                         <td style={fieldValueStyle}>{doc.published}</td>
                       </tr>
@@ -281,7 +300,6 @@ const DocumentsListPage = () => {
                         </td>
                       </tr>
                       <tr>
-                        {/* ✅ doc.customers_count ليس doc.customersCount */}
                         <td style={fieldLabelStyle}>العملاء (Customers)</td>
                         <td style={fieldValueStyle}>
                           <a href="#" onClick={e => { e.preventDefault(); navigate(`/documents/${doc.id}`, { state: { tab: 'access' } }) }}
@@ -297,16 +315,9 @@ const DocumentsListPage = () => {
                 {/* أزرار الإجراءات السريعة */}
                 <div style={{ display: 'flex', gap: 6, padding: '8px 12px', alignItems: 'flex-start', background: '#fff' }}>
                   <ActionIcon icon="bi-slash-circle" color="#ff9800" title="إيقاف (Suspend)"
-                    onClick={() => {
-                      dispatch(executeDocumentAction({ ids: [doc.id], action: 'Suspend' }))
-                        .then(() => toast.success('تم إيقاف المستند'))
-                    }} />
+                    onClick={() => handleSingleAction([doc.id], 'Suspend', 'تم إيقاف المستند')} />
                   <ActionIcon icon="bi-x" color="#f44336" title="حذف (Delete)" bold
-                    onClick={() => {
-                      if (!window.confirm('هل أنت متأكد؟')) return
-                      dispatch(executeDocumentAction({ ids: [doc.id], action: 'Delete' }))
-                        .then(() => toast.success('تم حذف المستند'))
-                    }} />
+                    onClick={() => handleSingleAction([doc.id], 'Delete', 'تم حذف المستند')} />
                   <ActionIcon icon="bi-chevron-double-left" color="#fff" bg={TEAL} title="عرض التفاصيل (View Details)"
                     onClick={() => navigate(`/documents/${doc.id}`)} />
                 </div>
@@ -315,10 +326,37 @@ const DocumentsListPage = () => {
           </div>
         )}
 
-        {/* باجيناشن إذا كان في الباك إند */}
-        {pagination && (
-          <div style={{ textAlign: 'center', color: '#888', fontSize: 12, marginTop: 8 }}>
-            صفحة {pagination.current_page} من {pagination.last_page} | إجمالي: {pagination.total} مستند
+        {/* ✔️ أزرار Pagination حقيقية */}
+        {pagination && pagination.last_page > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 20, fontSize: 13 }}>
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page <= 1 || isFetching}
+              style={{
+                background: page <= 1 ? '#eee' : TEAL, color: page <= 1 ? '#999' : '#fff',
+                border: 'none', borderRadius: 3, padding: '6px 20px', cursor: page <= 1 ? 'not-allowed' : 'pointer',
+                fontWeight: 600, fontSize: 13
+              }}>
+              ‹ السابق (Prev)
+            </button>
+
+            <span style={{ fontWeight: 700, color: TEAL }}>
+              صفحة {pagination.current_page} من {pagination.last_page}
+              <span style={{ color: '#999', fontWeight: 400, marginRight: 8 }}>| إجمالي: {pagination.total}</span>
+            </span>
+
+            <button
+              onClick={() => setPage(p => Math.min(pagination.last_page, p + 1))}
+              disabled={page >= pagination.last_page || isFetching}
+              style={{
+                background: page >= pagination.last_page ? '#eee' : TEAL,
+                color: page >= pagination.last_page ? '#999' : '#fff',
+                border: 'none', borderRadius: 3, padding: '6px 20px',
+                cursor: page >= pagination.last_page ? 'not-allowed' : 'pointer',
+                fontWeight: 600, fontSize: 13
+              }}>
+              التالي (Next) ›
+            </button>
           </div>
         )}
       </div>
@@ -326,7 +364,6 @@ const DocumentsListPage = () => {
   )
 }
 
-// مكون الأيقونة
 const ActionIcon = ({ icon, color, bg = 'transparent', bold = false, title, onClick }) => (
   <button type="button" onClick={onClick} title={title}
     style={{
