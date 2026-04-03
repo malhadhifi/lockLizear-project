@@ -1,36 +1,57 @@
 import axios from 'axios';
 
-// إنشاء نسخة مخصصة من المفاوض (Axios Instance)
-// للتواصل الدائم مع الباك إند المركزي الخاص بمشروعك (Laravel)
 export const api = axios.create({
-  // تحديد رابط الـ API الأساسي، سيتم تغييره لاحقاً إذا رفعناه على استضافة
   baseURL: 'http://localhost:8000/api',
-  // ضبط الرؤوس الأساسية لقبول وإرسال بيانات من نوع JSON
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
 });
 
-// إضافة معرّض للطلبات (Interceptor) لزرع التوكن في كل طلب
-api.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem('auth_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
+// زرع التوكن في كل طلب
+api.interceptors.request.use(
+  (config) => {
+    const token = sessionStorage.getItem('auth_token');
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
-// التعامل مع أخطاء الـ Token منتهي الصلاحية (401)
+// ───────────────────────────────────────────────────────────────────────
+// Response Interceptor — يفك تغليف Laravel مرة واحدة لكل الفيتشرز
+//
+// كل استجابة باك إند تأتي بهذا الشكل:
+//   { success: true, message: '...', data: <البيانات> }
+//
+// بعد هذا الفك:
+//   useQuery data → البيانات مباشرة (بدون حاجة لـ .data، .data.data)
+//
+// مثال: مستندات→ data = { items:[...], pagination:{...} }
+//          تفاصيل → data = { id, title, ... }
+//          الوصول → data = [ { id, name, ... }, ... ]
+// ───────────────────────────────────────────────────────────────────────
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // إذا كان responseType: 'blob' (تصدير CSV/PDF) — لا تفك التغليف
+    if (response.config?.responseType === 'blob') {
+      return response;
+    }
+
+    const body = response.data;
+
+    // إذا كان هيكل Laravel ({ success, data }) — ارجع البيانات مباشرة
+    if (body && typeof body === 'object' && 'data' in body) {
+      return body.data;
+    }
+
+    // فول باك — ارجع كما هو
+    return body;
+  },
   (error) => {
     if (error.response?.status === 401) {
       sessionStorage.removeItem('auth_token');
-      // تحويل المستخدم لصفحة الدخول إذا رغبت
-      // window.location.href = '/login'; 
+      // window.location.href = '/login';
     }
     return Promise.reject(error);
   }
