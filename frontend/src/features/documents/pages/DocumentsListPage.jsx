@@ -3,20 +3,12 @@
  * الوظيفة: لوحة إدارة المستندات
  * النمط: موحّد مع PublicationsListPage
  *
- * بنية استجابة الباك إند (Laravel):
- *   {
- *     data: {
- *       items: Document[],
- *       total: number,
- *       per_page: number,
- *       current_page: number,
- *       last_page: number
- *     }
- *   }
+ * بنية البيانات بعد فك تغليف axios interceptor:
+ *   useQuery data = { items: Document[], total, per_page, current_page, last_page }
  *
  * لذلك:
- *   documents  = data?.data?.items  (مثل publicationsResponse?.data?.items)
- *   pagination = data?.data         (يحتوي على total/current_page/last_page)
+ *   documents  = data?.items   ← مباشرة بدون .data إضافية
+ *   pagination = data
  */
 
 import { useState, useMemo } from 'react'
@@ -63,17 +55,15 @@ const DocumentsListPage = () => {
   const actionMutation = useDocumentAction()
   const exportMutation = useDocumentExport()
 
-  // ─── استخراج البيانات ────────────────────────────────────────────────────────
-  // الباك إند يرجع: { data: { items: [...], total, current_page, last_page, per_page } }
-  // مثل publicationsResponse?.data?.items في PublicationsListPage
-  const rawData   = data?.data            // = { items, total, current_page, last_page }
-  const documents = Array.isArray(rawData?.items)
-    ? rawData.items
-    : Array.isArray(rawData)
-      ? rawData          // fallback: لو الباك إند أرجع array مباشرة
-      : []
-  const pagination = rawData ?? null
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ─── استخراج البيانات ──────────────────────────────────────────────────────
+  // axios interceptor يفك تغليف Laravel تلقائياً:
+  //   data = محتوى "data" من الباك إند مباشرة
+  //   = { items: [...], total, current_page, last_page, per_page }
+  const documents  = Array.isArray(data?.items) ? data.items
+                   : Array.isArray(data)         ? data
+                   : []
+  const pagination = data ?? null
+  // ──────────────────────────────────────────────────────────────────────────
 
   const toggleSelect    = (id) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
   const checkAll        = ()   => setSelected(documents.map(d => d.id))
@@ -101,6 +91,7 @@ const DocumentsListPage = () => {
 
   const handleExport = async () => {
     try {
+      // responseType='blob' → interceptor يرجع axios response كاملاً
       const res = await exportMutation.mutateAsync(params)
       const url  = window.URL.createObjectURL(new Blob([res.data]))
       const link = document.createElement('a')
