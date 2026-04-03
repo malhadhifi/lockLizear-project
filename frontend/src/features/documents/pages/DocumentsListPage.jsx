@@ -1,7 +1,7 @@
 /**
  * ملف: DocumentsListPage.jsx
  * الوظيفة: لوحة إدارة المستندات
- * تم الترحيل: من Redux Thunks → React Query hooks
+ * النمط: موحّد مع PublicationsListPage — data من useQuery = Laravel body مباشرةً
  */
 
 import { useState, useMemo } from 'react'
@@ -25,7 +25,6 @@ const borderColor = {
 const DocumentsListPage = () => {
   const navigate = useNavigate()
 
-  // حالات الفلاتر
   const [searchInput,   setSearchInput]   = useState('')
   const [sortBy,        setSortBy]        = useState('title')
   const [perPage,       setPerPage]       = useState(25)
@@ -35,34 +34,31 @@ const DocumentsListPage = () => {
   const [bulkAction,    setBulkAction]    = useState('')
   const [activeSideNav, setActiveSideNav] = useState('manage')
 
-  // تأخير البحث النصي لمنع طلبات متكررة
   const debouncedSearch = useDebounce(searchInput, 300)
 
-  // بناء params للـ API — يشكل جزءاً من الـ queryKey فيُعيد الجلب عند التغيير
   const params = useMemo(() => ({
-    ...(showFilter !== 'all'  && { show: showFilter }),
-    ...(debouncedSearch       && { search: debouncedSearch }),
+    ...(showFilter !== 'all' && { show: showFilter }),
+    ...(debouncedSearch      && { search: debouncedSearch }),
     sort_by:  sortBy,
     per_page: perPage,
     page,
   }), [showFilter, debouncedSearch, sortBy, perPage, page])
 
-  // ✔️ React Query hooks
   const { data, isLoading, isError, error, isFetching } = useDocuments(params)
-  const actionMutation  = useDocumentAction()
-  const exportMutation  = useDocumentExport()
+  const actionMutation = useDocumentAction()
+  const exportMutation = useDocumentExport()
 
-  // استخراج البيانات من استجابة الـ API
-  const documents  = data?.data?.data  ?? data?.data  ?? []
-  const pagination = data?.data?.meta  ?? data?.meta  ?? null
+  // ✅ نفس نمط المنشورات تماماً:
+  // documentService.getAll يرجع data مباشرةً (بعد فك axios wrapper)
+  // فـ data هنا = Laravel response body = { data: [...], meta: {...} }
+  const documents  = data?.data  ?? []
+  const pagination = data?.meta  ?? null
 
-  // دوال التحديد
   const toggleSelect    = (id) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
   const checkAll        = ()   => setSelected(documents.map(d => d.id))
   const uncheckAll      = ()   => setSelected([])
   const invertSelection = ()   => setSelected(documents.map(d => d.id).filter(id => !selected.includes(id)))
 
-  // عملية فردية سريعة
   const handleSingleAction = async (ids, action, successMsg) => {
     if (action === 'Delete' && !window.confirm('هل أنت متأكد؟')) return
     try {
@@ -71,7 +67,6 @@ const DocumentsListPage = () => {
     } catch {}
   }
 
-  // عملية جماعية
   const handleBulkAction = async () => {
     if (!selected.length || !bulkAction) return
     if (bulkAction === 'Delete' && !window.confirm(`هل أنت متأكد من حذف ${selected.length} مستند؟`)) return
@@ -83,15 +78,21 @@ const DocumentsListPage = () => {
     } catch {}
   }
 
-  // تصدير CSV
   const handleExport = async () => {
     try {
-      await exportMutation.mutateAsync(params)
+      const res = await exportMutation.mutateAsync(params)
+      const url  = window.URL.createObjectURL(new Blob([res.data]))
+      const link = document.createElement('a')
+      link.href  = url
+      link.setAttribute('download', `documents-${Date.now()}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
       toast.success('تم تصدير الملف بنجاح')
     } catch {}
   }
 
-  // تغيير الفلتر يعيد الصفحة للأول
   const handleFilterChange = (setter) => (val) => {
     setter(val)
     setPage(1)
@@ -162,7 +163,7 @@ const DocumentsListPage = () => {
             </div>
           </div>
 
-          {/* قوائم الفرز والحالة */}
+          {/* قوائم الفرز والحالة وعدد النتائج */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <label style={{ fontWeight: 600 }}>فرز حسب (Sort by)</label>
@@ -172,7 +173,6 @@ const DocumentsListPage = () => {
                 <option value="published">تاريخ النشر (Published Date)</option>
               </select>
             </div>
-
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <label style={{ fontWeight: 600 }}>عرض (Show)</label>
               <select value={perPage} onChange={e => handleFilterChange(setPerPage)(Number(e.target.value))} style={filterSelectStyle}>
@@ -181,7 +181,6 @@ const DocumentsListPage = () => {
                 <option value={50}>50</option>
               </select>
             </div>
-
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <label style={{ fontWeight: 600 }}>حالة (Status)</label>
               <select value={showFilter} onChange={e => handleFilterChange(setShowFilter)(e.target.value)} style={filterSelectStyle}>
@@ -199,7 +198,7 @@ const DocumentsListPage = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13 }}>
             <span style={{ fontWeight: 600 }}>الكل (All)</span>
             <a href="#" onClick={e => { e.preventDefault(); checkAll() }}         style={{ color: TEAL }}>تحديد (Check)</a>     <span style={{ color: '#ccc' }}>|</span>
-            <a href="#" onClick={e => { e.preventDefault(); uncheckAll() }}       style={{ color: TEAL }}>إلغاء (Uncheck)</a>    <span style={{ color: '#ccc' }}>|</span>
+            <a href="#" onClick={e => { e.preventDefault(); uncheckAll() }}       style={{ color: TEAL }}>إلغاء (Uncheck)</a>   <span style={{ color: '#ccc' }}>|</span>
             <a href="#" onClick={e => { e.preventDefault(); invertSelection() }} style={{ color: TEAL }}>عكس (Invert)</a>
           </div>
 
@@ -225,7 +224,7 @@ const DocumentsListPage = () => {
           </div>
         </div>
 
-        {/* ✔️ مؤشر التحميل */}
+        {/* مؤشر التحميل */}
         {isLoading && (
           <div style={{ textAlign: 'center', padding: '30px 0', color: TEAL, fontSize: 14, fontWeight: 600 }}>
             <i className="bi bi-arrow-repeat" style={{ marginLeft: 8, animation: 'spin 1s linear infinite' }} />
@@ -234,12 +233,11 @@ const DocumentsListPage = () => {
           </div>
         )}
 
-        {/* ✔️ رسالة الخطأ + زر إعادة المحاولة */}
+        {/* رسالة الخطأ */}
         {!isLoading && isError && (
           <div style={{ textAlign: 'center', padding: '30px 0' }}>
             <p style={{ color: '#f44336', marginBottom: 12, fontSize: 14 }}>&#9888;&#65039; {error?.message || 'حدث خطأ في جلب البيانات'}</p>
-            <button
-              onClick={() => window.location.reload()}
+            <button onClick={() => window.location.reload()}
               style={{ background: TEAL, color: '#fff', border: 'none', borderRadius: 3, padding: '8px 24px', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>
               إعادة المحاولة (Retry)
             </button>
@@ -267,13 +265,9 @@ const DocumentsListPage = () => {
                 borderRight: `8px solid ${borderColor[doc.status] || '#ccc'}`,
                 borderBottom: '1px solid #eee', borderTop: '1px solid #eee', borderLeft: '1px solid #eee'
               }}>
-
-                {/* Checkbox */}
                 <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'flex-start' }}>
                   <input type="checkbox" checked={selected.includes(doc.id)} onChange={() => toggleSelect(doc.id)} />
                 </div>
-
-                {/* بيانات المستند */}
                 <div style={{ flex: 1, padding: '10px 16px', fontSize: 13 }}>
                   <div style={{ marginBottom: 8 }}>
                     <a href="#" onClick={e => { e.preventDefault(); navigate(`/documents/${doc.id}`) }}
@@ -311,8 +305,6 @@ const DocumentsListPage = () => {
                     </tbody>
                   </table>
                 </div>
-
-                {/* أزرار الإجراءات السريعة */}
                 <div style={{ display: 'flex', gap: 6, padding: '8px 12px', alignItems: 'flex-start', background: '#fff' }}>
                   <ActionIcon icon="bi-slash-circle" color="#ff9800" title="إيقاف (Suspend)"
                     onClick={() => handleSingleAction([doc.id], 'Suspend', 'تم إيقاف المستند')} />
@@ -326,7 +318,7 @@ const DocumentsListPage = () => {
           </div>
         )}
 
-        {/* ✔️ أزرار Pagination حقيقية */}
+        {/* أزرار Pagination */}
         {pagination && pagination.last_page > 1 && (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 20, fontSize: 13 }}>
             <button
@@ -335,16 +327,14 @@ const DocumentsListPage = () => {
               style={{
                 background: page <= 1 ? '#eee' : TEAL, color: page <= 1 ? '#999' : '#fff',
                 border: 'none', borderRadius: 3, padding: '6px 20px', cursor: page <= 1 ? 'not-allowed' : 'pointer',
-                fontWeight: 600, fontSize: 13
+                fontWeight: 600
               }}>
               ‹ السابق (Prev)
             </button>
-
             <span style={{ fontWeight: 700, color: TEAL }}>
               صفحة {pagination.current_page} من {pagination.last_page}
               <span style={{ color: '#999', fontWeight: 400, marginRight: 8 }}>| إجمالي: {pagination.total}</span>
             </span>
-
             <button
               onClick={() => setPage(p => Math.min(pagination.last_page, p + 1))}
               disabled={page >= pagination.last_page || isFetching}
@@ -353,7 +343,7 @@ const DocumentsListPage = () => {
                 color: page >= pagination.last_page ? '#999' : '#fff',
                 border: 'none', borderRadius: 3, padding: '6px 20px',
                 cursor: page >= pagination.last_page ? 'not-allowed' : 'pointer',
-                fontWeight: 600, fontSize: 13
+                fontWeight: 600
               }}>
               التالي (Next) ›
             </button>

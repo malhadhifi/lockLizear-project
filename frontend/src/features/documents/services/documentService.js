@@ -2,49 +2,59 @@ import { api } from '../../../lib/axios';
 
 /**
  * documentService.js
- * خدمة المستندات — كل طلبات HTTP الخاصة بـ feature المستندات.
+ * نمط موحّد مع publicationApi.js:
+ *   كل دالة تفكّ axios wrapper وترجع data مباشرةً
+ *   حتى تكون data من useQuery = Laravel response body مباشرةً
  *
- * المسارات الحقيقية من باك إند Laravel:
- *   GET  /api/library/documents           ← قائمة المستندات (مع فلاتر + pagination)
- *   GET  /api/library/documents/{id}      ← تفاصيل مستند
- *   PUT  /api/library/documents/{id}      ← تحديث مستند
- *   POST /api/library/documents/action    ← إجراءات جماعية (suspend/activate/delete)
- *   GET  /api/library/documents/{id}/access ← قائمة الوصول (العملاء)
- *   GET  /api/library/documents/export    ← تصدير CSV
+ * المسارات:
+ *   GET  /api/library/documents             ← قائمة + pagination
+ *   GET  /api/library/documents/{id}        ← تفاصيل مستند
+ *   PUT  /api/library/documents/{id}        ← تحديث مستند
+ *   POST /api/library/documents/action      ← إجراءات جماعية
+ *   GET  /api/library/documents/{id}/access ← قائمة الوصول
+ *   GET  /api/library/documents/export      ← تصدير CSV (blob)
  */
 
 const documentService = {
-  // جلب قائمة المستندات مع دعم الفلاتر
-  getAll: (params = {}) =>
-    api.get('/library/documents', { params }),
-
-  // جلب تفاصيل مستند واحد
-  getById: (id) =>
-    api.get(`/library/documents/${id}`),
-
-  // تحديث بيانات مستند
-  update: (id, data) =>
-    api.put(`/library/documents/${id}`, data),
-
-  // تنفيذ إجراء جماعي
-  // FIX: action يُحوَّل لأحرف صغيرة هنا — Suspend→suspend، Activate→activate، Delete→delete
-  executeAction: (ids, action) =>
-    api.post('/library/documents/action', {
-      document_ids: ids,
-      action: action.toLowerCase(),
-    }),
-
-  // جلب قائمة الوصول (العملاء المصرح لهم) لمستند معين
-  // FIX: أُضيف alias getAccessList لتوافق useDocuments.js القديم
-  getDocumentAccessList: (id) =>
-    api.get(`/library/documents/${id}/access`),
-
-  // alias للتوافق مع أي كود قديم يستدعي getAccessList
-  get getAccessList() {
-    return this.getDocumentAccessList
+  // جلب القائمة — يرجع data مباشرةً (مثل publicationApi)
+  getAll: async (params = {}) => {
+    const { data } = await api.get('/library/documents', { params });
+    return data;
   },
 
-  // تصدير السجلات CSV
+  // تفاصيل مستند واحد
+  getById: async (id) => {
+    const { data } = await api.get(`/library/documents/${id}`);
+    return data;
+  },
+
+  // تحديث مستند
+  update: async (id, payload) => {
+    const { data } = await api.put(`/library/documents/${id}`, payload);
+    return data;
+  },
+
+  // إجراء جماعي — action يُحوَّل لأحرف صغيرة دائماً
+  executeAction: async (ids, action) => {
+    const { data } = await api.post('/library/documents/action', {
+      document_ids: ids,
+      action: action.toLowerCase(),
+    });
+    return data;
+  },
+
+  // قائمة الوصول
+  getDocumentAccessList: async (id) => {
+    const { data } = await api.get(`/library/documents/${id}/access`);
+    return data;
+  },
+
+  // alias للتوافق مع أي كود قديم
+  get getAccessList() {
+    return this.getDocumentAccessList;
+  },
+
+  // تصدير CSV — يرجع axios response كاملاً لأن responseType blob
   exportCSV: (params = {}) =>
     api.get('/library/documents/export', { params, responseType: 'blob' }),
 };
