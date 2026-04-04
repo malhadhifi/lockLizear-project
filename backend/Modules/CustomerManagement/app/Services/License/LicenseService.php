@@ -15,16 +15,13 @@ class LicenseService
 {
     protected $publicationService;
     protected $documentService;
-    protected $createFileService;
 
     public function __construct(
         LicensePublicationService $publicationService,
-        LicenseDocumentService $documentService,
-        CreateFileLicenseService $createFileService
+        LicenseDocumentService $documentService
     ) {
         $this->publicationService = $publicationService;
         $this->documentService = $documentService;
-        $this->createFileService = $createFileService;
     }
     public function createLicense(array $data)
     {
@@ -196,7 +193,8 @@ class LicenseService
                     $licenses = CustomerLicense::whereIn('id', $ids)->get();
                     foreach ($licenses as $license) {
                         try {
-                            $licenseData = $this->createFileService->createLicenseFile($license);
+                            $createFileService = app(CreateFileLicenseService::class);
+                            $licenseData = $createFileService->createLicenseFile($license);
                             Notification::route('mail', $license->email)
                                 ->notify(new SendLicenseEmailNotification(
                                     $license,
