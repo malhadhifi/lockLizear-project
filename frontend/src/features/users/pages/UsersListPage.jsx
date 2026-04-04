@@ -386,7 +386,8 @@ const UsersListPage = () => {
                   onClick={() => executeBulkAction([u.id], u.ui_status?.account_status === 'suspend' ? 'activate' : 'suspend')} />
                 <ActionIcon icon="bi-x" color="#f44336" title="حذف" bold={true}
                   onClick={() => { if(window.confirm('هل أنت متأكد من حذف العميل؟')) executeBulkAction([u.id], 'delete') }} />
-                <ActionIcon icon="bi-envelope" color={TEAL} title="إعادة إرسال الترخيص" />
+                <ActionIcon icon="bi-envelope" color={TEAL} title="إعادة إرسال الترخيص" 
+                  onClick={() => { if(window.confirm('هل أنت متأكد من رسال رخصة العارض بالبريد مرة أخرى؟')) executeBulkAction([u.id], 'resend_license') }} />
                 <ActionIcon icon="bi-chevron-double-left" color="#fff" bg={TEAL} title="التفاصيل (Details)" onClick={() => navigate(`/users/${u.id}`)} />
               </div>
             </div>

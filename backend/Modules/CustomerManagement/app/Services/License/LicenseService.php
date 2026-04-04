@@ -7,18 +7,24 @@ use Modules\CustomerManagement\Models\CustomerLicense;
 use Modules\CustomerManagement\Models\Voucher;
 use Modules\CustomerManagement\Services\LicenseDocuments\LicenseDocumentService;
 use Modules\CustomerManagement\Services\LicensePublications\LicensePublicationService;
+use Modules\CustomerManagement\Services\License\CreateFileLicenseService;
+use Modules\CustomerManagement\Notifications\SendLicenseEmailNotification;
+use Illuminate\Support\Facades\Notification;
 
 class LicenseService
 {
     protected $publicationService;
     protected $documentService;
+    protected $createFileService;
 
     public function __construct(
         LicensePublicationService $publicationService,
-        LicenseDocumentService $documentService
+        LicenseDocumentService $documentService,
+        CreateFileLicenseService $createFileService
     ) {
         $this->publicationService = $publicationService;
         $this->documentService = $documentService;
+        $this->createFileService = $createFileService;
     }
     public function createLicense(array $data)
     {
@@ -184,6 +190,23 @@ class LicenseService
                         'status' => 'active',
                         'access_mode' => 'baselimited'
                     ]);
+                    break;
+
+                case 'resend_license':
+                    $licenses = CustomerLicense::whereIn('id', $ids)->get();
+                    foreach ($licenses as $license) {
+                        try {
+                            $licenseData = $this->createFileService->createLicenseFile($license);
+                            Notification::route('mail', $license->email)
+                                ->notify(new SendLicenseEmailNotification(
+                                    $license,
+                                    base64_encode($licenseData['binary_file']),
+                                    $license->name . '_' . time() . '.llv'
+                                ));
+                        } catch (\Exception $e) {
+                            \Illuminate\Support\Facades\Log::error("Failed to resend email for license ID {$license->id}: " . $e->getMessage());
+                        }
+                    }
                     break;
             }
             return true;
