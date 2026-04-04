@@ -1,32 +1,40 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
-
-const ALL_DOCS = [
-  { id: 1, name: 'دورة React الكاملة', status: 'valid' },
-  { id: 2, name: 'احتراف Laravel', status: 'valid' },
-  { id: 3, name: 'JavaScript المتقدم', status: 'valid' },
-  { id: 4, name: 'دليل تصميم قواعد البيانات', status: 'valid' },
-  { id: 5, name: 'Python للمبتدئين', status: 'valid' },
-  { id: 6, name: 'TypeScript الشامل', status: 'valid' },
-  { id: 7, name: 'Vue.js 3 من الصفر', status: 'valid' },
-  { id: 8, name: 'دليل CSS المتقدم', status: 'valid' },
-]
+import api from '../../../lib/axios'
 
 const DocumentSelector = ({ isOpen, onClose, existingDocIds = [], onDocumentsAdded }) => {
   const [filter, setFilter] = useState('')
   const [selected, setSelected] = useState([])
+  const [documents, setDocuments] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsLoading(true)
+      api.get('/library/documents', { params: { limit: 1000 } })
+        .then(res => {
+          const docs = res?.items || res?.data?.items || res?.data?.data?.items || res?.data || []
+          setDocuments(docs)
+        })
+        .finally(() => setIsLoading(false))
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
-  const available = ALL_DOCS.filter(d => !existingDocIds.includes(d.id))
-  const filtered = available.filter(d => !filter || d.name.toLowerCase().includes(filter.toLowerCase()))
+  const available = documents.filter(d => !existingDocIds.includes(d.id))
+  // المستندات قد يكون لها title بدلاً من name في الباك إند!
+  const filtered = available.filter(d => {
+    const docName = d.name || d.title || ''
+    return !filter || docName.toLowerCase().includes(filter.toLowerCase())
+  })
 
   const toggleSelect = (id) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
   const toggleAll = () => setSelected(selected.length === filtered.length ? [] : filtered.map(d => d.id))
 
   const handleAdd = () => {
     if (!selected.length) return
-    const addedDocs = ALL_DOCS.filter(d => selected.includes(d.id))
+    const addedDocs = documents.filter(d => selected.includes(d.id))
     onDocumentsAdded(addedDocs)
     toast.success(`تم إضافة ${selected.length} مستند`)
     setSelected([])
@@ -75,7 +83,9 @@ const DocumentSelector = ({ isOpen, onClose, existingDocIds = [], onDocumentsAdd
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {isLoading ? (
+                <tr><td colSpan={4} style={{ textAlign: 'center', padding: 20, color: '#0078d4' }}>جارٍ جلب المستندات...</td></tr>
+              ) : filtered.length === 0 ? (
                 <tr><td colSpan={4} style={{ textAlign: 'center', padding: 20, color: '#888' }}>لا توجد مستندات متاحة</td></tr>
               ) : filtered.map((d, idx) => (
                 <tr key={d.id} style={{
@@ -84,8 +94,8 @@ const DocumentSelector = ({ isOpen, onClose, existingDocIds = [], onDocumentsAdd
                 }} onClick={() => toggleSelect(d.id)}>
                   <td style={tdStyle}><input type="checkbox" checked={selected.includes(d.id)} onChange={() => {}} /></td>
                   <td style={tdStyle}>{d.id}</td>
-                  <td style={{ ...tdStyle, fontWeight: 600 }}>{d.name}</td>
-                  <td style={tdStyle}><span style={{ color: '#2e7d32', fontWeight: 600 }}>صالح ✓</span></td>
+                  <td style={{ ...tdStyle, fontWeight: 600 }}>{d.name || d.title}</td>
+                  <td style={tdStyle}><span style={{ color: d.status === 'suspended' ? '#e65100' : '#2e7d32', fontWeight: 600 }}>{d.status || 'صالح'}</span></td>
                 </tr>
               ))}
             </tbody>

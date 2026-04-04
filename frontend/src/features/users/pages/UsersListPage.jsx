@@ -30,11 +30,15 @@ const UsersListPage = () => {
   
   // جلب البيانات الحقيقية من الخادم (Laravel API)
   const { data: usersResponse, isLoading, isError } = useCustomers()
-  const users = usersResponse?.data?.items || [] // استخراج مصفوفة العملاء الآتية من لارافيل
+  const users = Array.isArray(usersResponse?.items) ? usersResponse.items 
+              : Array.isArray(usersResponse?.data?.items) ? usersResponse.data.items 
+              : Array.isArray(usersResponse) ? usersResponse 
+              : []
   const bulkMutation = useCustomerBulkAction()
   
   // حالات الفلترة (Filters States) المذكورة في دليل الاستخدام
   const [filter, setFilter] = useState('')                       // صندوق البحث النصي
+  const [sortBy, setSortBy] = useState('name')                   // حقل الفرز
   const [showAtLeast, setShowAtLeast] = useState(2)             // عدد النتائج المعروضة (2, 10, 25, 50, 100)
   const [showFilter, setShowFilter] = useState('all')            // فلتر الحالة (الكل، مسجل، موقوف، الخ..)
   const [currentPage, setCurrentPage] = useState(1)              // صفحة النتائج الحالية

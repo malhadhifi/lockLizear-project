@@ -17,7 +17,6 @@ import { usePublicationDetails, useUpdatePublication } from '../hooks/usePublica
 // استيراد المكونات الفرعية التي ستُعرض داخل التبويبات الأخرى
 import PublicationAccessList from '../components/PublicationAccessList'
 import PublicationDocumentsList from '../components/PublicationDocumentsList'
-import DocumentSelector from '../components/DocumentSelector'
 // استيراد أداة التنبيهات المنبثقة لإظهار رسائل النجاح
 import toast from 'react-hot-toast'
 
@@ -37,16 +36,12 @@ const EditPublicationPage = () => {
   const updateMutation = useUpdatePublication()
   
   // استخراج بيانات المنشور من الرد الخادم
-  const publication = pubData?.data
+  const publication = pubData
 
   // تحديد التبويبة الافتراضية (إما ممررة عبر الرابط أو التبويبة الأولى 'details')
   const initialTab = location.state?.tab || 'details'
   // حالة (State) لحفظ التبويبة النشطة حالياً
   const [activeTab, setActiveTab] = useState(initialTab)
-  
-  // حالة (State) لفتح وإغلاق نافذة إضافة مستند جديد
-  const [showDocSelector, setShowDocSelector] = useState(false)
-
   // حالة (State) لحفظ اسم المنشور مع وضع القيمة الحالية كقيمة مبدئية
   const [name, setName] = useState('')
   // حالة (State) لحفظ الوصف مع وضع القيمة الحالية كقيمة مبدئية
@@ -246,10 +241,7 @@ const EditPublicationPage = () => {
           {activeTab === 'documents' && (
             <div style={{ padding: '20px' }}>
               {/* استدعاء مكون لائحة المستندات الخاصة بالمنشور وتمرير دالة فتح نافذة إضافة مستند جديد */}
-              <PublicationDocumentsList publicationId={id} onAddDocument={() => setShowDocSelector(true)} />
-              {/* استدعاء المودال (النافذة المنبثقة) لاختيار المستندات ليظهر فقط حين النقر */}
-              <DocumentSelector isOpen={showDocSelector} onClose={() => setShowDocSelector(false)}
-                existingDocIds={[1, 2, 4]} onDocumentsAdded={() => {}} />
+              <PublicationDocumentsList publicationId={id} />
             </div>
           )}
 

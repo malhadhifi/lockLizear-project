@@ -7,7 +7,7 @@ import ConfirmAccessModal from '../../users/components/ConfirmAccessModal'
 
 const PublicationAccessList = ({ publicationId }) => {
   const { data: subsRes, isLoading } = usePublicationSubscribers(publicationId)
-  const customers = subsRes?.data || []
+  const customers = Array.isArray(subsRes?.data) ? subsRes.data : Array.isArray(subsRes) ? subsRes : []
   
   const revokeMutation = useRevokeSubscriberAccess()
   const [selected, setSelected] = useState([])

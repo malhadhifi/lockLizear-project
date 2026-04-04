@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { publicationApi } from '../services/publicationApi';
 import toast from 'react-hot-toast';
 
@@ -19,7 +19,7 @@ export const usePublications = (params) => {
   return useQuery({
     queryKey: ['publications', params], // يعيد الجلب تلقائياً عند تغيير params
     queryFn: () => publicationApi.getPublications(params),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 };
 

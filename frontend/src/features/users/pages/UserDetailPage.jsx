@@ -59,9 +59,10 @@ export default function UserDetailPage() {
 
   // عند تحميل بيانات العميل من الخادم بنجاح، نقوم بتعبئتها في النموذج (Form)
   useEffect(() => {
-    if (customerResponse?.data) {
-      // Laravel JsonResource yلف البيانات داخل مفتاح "data" إضافي، فنتأكد من فكه هنا
-      const cust = customerResponse.data.data ? customerResponse.data.data : customerResponse.data
+    // Laravel JsonResource يلف البيانات، والـ Axios interceptor يفك التغليف الأول
+    // لذلك customerResponse قد يكون العنصر مباشرة أو بداخله data
+    const cust = customerResponse?.data || customerResponse
+    if (cust && cust.id) {
       setForm({
         name: cust.name || '',
         email: cust.email || '',
@@ -73,7 +74,7 @@ export default function UserDetailPage() {
         resendLicenseEmail: false
       })
     }
-  }, [customerResponse?.data])
+  }, [customerResponse])
 
   // دالة لمعالجة التغييرات في حقول الإدخال بصورة ديناميكية
   const handleChange = (e) => {
@@ -173,9 +174,8 @@ export default function UserDetailPage() {
   if (isLoading) return <div style={{ padding: 40, textAlign: 'center', fontSize: 18, color: TEAL }}>جاري تحميل تفاصيل العميل...</div>
   if (isError) return <div style={{ padding: 40, textAlign: 'center', fontSize: 18, color: 'red' }}>حدث خطأ! لم يتم العثور على العميل.</div>
 
-  // كائن العميل القادم من الباك إند، مع فك التغليف المزدوج إذا وُجد
-  const cust = customerResponse?.data?.data ? customerResponse.data.data : customerResponse?.data
-
+  // كائن العميل القادم من الباك إند، وقد تم فك تغليفه في الـ Interceptor (أو داخلياً)
+  const cust = customerResponse?.data || customerResponse
 
   // دمج المكونات داخل هيكل الصفحة
   return (

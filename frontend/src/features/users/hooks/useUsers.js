@@ -1,11 +1,12 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { userApi } from '../services/userApi'
 
 // خطاف جلب قائمة العملاء وعرضهم في الجدول
 export const useCustomers = () => {
   return useQuery({
     queryKey: ['customers'],          // اسم الكاش
-    queryFn: userApi.fetchCustomers   // الدالة التي ستتصل بالباك إند
+    queryFn: userApi.fetchCustomers,   // الدالة التي ستتصل بالباك إند
+    placeholderData: keepPreviousData
   })
 }
 

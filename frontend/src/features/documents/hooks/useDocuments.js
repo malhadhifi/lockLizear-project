@@ -3,7 +3,7 @@
  * React Query hooks لـ feature المستندات.
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import documentService from '../services/documentService'
 
@@ -20,7 +20,7 @@ export const useDocuments = (params = {}) =>
   useQuery({
     queryKey:         DOCUMENTS_KEYS.list(params),
     queryFn:          () => documentService.getAll(params),
-    keepPreviousData: true,
+    placeholderData:  keepPreviousData,
     staleTime:        1000 * 60 * 2,
   })
 

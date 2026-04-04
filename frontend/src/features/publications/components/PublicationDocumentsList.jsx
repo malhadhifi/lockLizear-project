@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { usePublicationDocuments, useDetachDocument } from '../hooks/usePublications'
+import { usePublicationDocuments, useDetachDocument, useAttachDocuments } from '../hooks/usePublications'
+import DocumentSelector from './DocumentSelector'
 
-const PublicationDocumentsList = ({ publicationId, onAddDocument }) => {
+const PublicationDocumentsList = ({ publicationId }) => {
   const { data: docsRes, isLoading } = usePublicationDocuments(publicationId)
-  const docs = docsRes?.data || []
+  const docs = Array.isArray(docsRes?.data) ? docsRes.data : Array.isArray(docsRes) ? docsRes : []
   
   const detachMutation = useDetachDocument()
+  const attachMutation = useAttachDocuments()
+  const [showDocSelector, setShowDocSelector] = useState(false)
   const [selected, setSelected] = useState([])
   const [bulkAction, setBulkAction] = useState('')
 
@@ -43,7 +46,7 @@ const PublicationDocumentsList = ({ publicationId, onAddDocument }) => {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between'
       }}>
         <span>المستندات في المنشور (Documents) — {docs.length} مستند</span>
-        <button onClick={onAddDocument}
+        <button onClick={() => setShowDocSelector(true)}
           style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 3, padding: '3px 10px', fontSize: 12, cursor: 'pointer' }}>
           + إضافة مستند
         </button>
@@ -74,10 +77,10 @@ const PublicationDocumentsList = ({ publicationId, onAddDocument }) => {
               <tr key={d.id} style={{ background: idx % 2 === 0 ? '#fff' : '#f5f5f5', borderBottom: '1px solid #ddd' }}>
                 <td style={tdStyle}><input type="checkbox" checked={selected.includes(d.id)} onChange={() => toggleSelect(d.id)} /></td>
                 <td style={tdStyle}>{d.id}</td>
-                <td style={{ ...tdStyle, fontWeight: 600, color: '#0078d4' }}>{d.name}</td>
+                <td style={{ ...tdStyle, fontWeight: 600, color: '#0078d4' }}>{d.name || d.title}</td>
                 <td style={tdStyle}>{statusLabel(d.status)}</td>
-                <td style={tdStyle}>{d.publishedDate}</td>
-                <td style={tdStyle}>{d.webViewer}</td>
+                <td style={tdStyle}>{d.publishedDate || d.created_at || '—'}</td>
+                <td style={tdStyle}>{d.webViewer || '—'}</td>
                 <td style={tdStyle}>
                   <button onClick={() => handleRemove(d.id)} title="إزالة" disabled={detachMutation.isPending}
                     style={{ background: 'none', border: '1px solid #d32f2f', color: '#d32f2f', borderRadius: 3, padding: '2px 6px', cursor: 'pointer', fontSize: 11, opacity: detachMutation.isPending ? 0.5 : 1 }}>
@@ -113,6 +116,21 @@ const PublicationDocumentsList = ({ publicationId, onAddDocument }) => {
         </button>
         {selected.length > 0 && <span style={{ color: '#555' }}>({selected.length} محدد)</span>}
       </div>
+
+      {/* مودال اختيار المستندات لإضافتها */}
+      <DocumentSelector 
+        isOpen={showDocSelector} 
+        onClose={() => setShowDocSelector(false)}
+        existingDocIds={docs.map(d => d.id)} 
+        onDocumentsAdded={(addedDocs) => {
+          const ids = addedDocs.map(d => d.id)
+          attachMutation.mutate({ id: publicationId, document_ids: ids }, {
+            onSuccess: () => {
+              toast.success(`تم إرفاق ${ids.length} مستند بنجاح!`)
+            }
+          })
+        }} 
+      />
     </div>
   )
 }

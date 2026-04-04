@@ -13,7 +13,8 @@ export default function SelectCustomerModal({ isOpen, onClose, onSelect, multipl
       setIsLoading(true)
       api.get('/customer-management/customer-licenses', { params: { limit: 1000 } })
         .then(res => {
-          setCustomers(res.data?.data?.items || [])
+          const items = Array.isArray(res?.items) ? res.items : Array.isArray(res?.data?.items) ? res.data.items : Array.isArray(res) ? res : []
+          setCustomers(items)
         })
         .finally(() => setIsLoading(false))
     } else {

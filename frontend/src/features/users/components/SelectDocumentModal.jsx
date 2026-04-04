@@ -26,7 +26,7 @@ export default function SelectDocumentModal({ isOpen, onClose, onSelect }) {
       api.get('/library/documents', { params: { limit: 1000 } })
         .then(res => {
           // التعامل مع هيكلية البيانات بعد الفك من الإنترسبتر بشكل آمن
-          const docs = res?.items || res?.data?.items || res?.data?.data?.items || []
+          const docs = Array.isArray(res?.items) ? res.items : Array.isArray(res?.data?.items) ? res.data.items : Array.isArray(res) ? res : []
           setDocuments(docs)
         })
         .finally(() => setIsLoading(false))
