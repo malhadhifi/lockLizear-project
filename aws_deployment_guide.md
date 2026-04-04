@@ -39,7 +39,9 @@ sudo usermod -aG docker $USER
 ### 1️⃣ سحب المشروع عبر Git
 افتح السيرفر المضيف ونفذ الأمر بمستودعك (مع استخدام الـ Token الشخصي لو كان مخفياً):
 ```bash
-git clone https://github.com/Osama-Al-Baadani/drm-admin-panel.git
+# ✅ صحيح
+git clone https://github.com/osama841/drm-admin-panel.git
+
 cd drm-admin-panel
 ```
 
