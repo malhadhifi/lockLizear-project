@@ -15,6 +15,8 @@ const navItems = [
             { to: '/publications', icon: 'bi-collection-fill', label: 'المنشورات', badge: '89' },
         ]
     },
+    /* 
+    // التبويبات التالية محظورة (معلقة) حالياً بناءً على طلب المستخدم
     {
         section: 'الوصول',
         items: [
@@ -30,6 +32,7 @@ const navItems = [
             { to: '/settings', icon: 'bi-gear-fill', label: 'الإعدادات' },
         ]
     }
+    */
 ]
 
 const Sidebar = () => {

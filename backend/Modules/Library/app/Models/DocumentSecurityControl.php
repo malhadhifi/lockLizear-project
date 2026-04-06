@@ -15,6 +15,10 @@ class DocumentSecurityControl extends Model
         'verify_frequency_days',
         'grace_period_days',
         'max_views_allowed',
+        'print_mode',
+        'max_prints_allowed',
+        'log_views',
+        'log_prints',
     ];
 
     protected $casts = [
@@ -26,6 +30,9 @@ class DocumentSecurityControl extends Model
         'verify_frequency_days' => 'integer',
         'grace_period_days' => 'integer',
         'max_views_allowed' => 'integer',
+        'max_prints_allowed' => 'integer',
+        'log_views' => 'boolean',
+        'log_prints' => 'boolean',
     ];
 
     public function document()

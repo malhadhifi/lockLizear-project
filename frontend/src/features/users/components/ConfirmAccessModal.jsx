@@ -54,11 +54,12 @@ export default function ConfirmAccessModal({ isOpen, onClose, onConfirm, actionT
 const overlayStyle = {
   position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
   backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
-  display: 'flex', alignItems: 'center', justifyContent: 'center'
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  padding: '10px'
 }
 const modalStyle = {
-  width: 500, backgroundColor: '#fff', border: `1px solid ${TEAL}`,
-  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+  width: '100%', maxWidth: 500, backgroundColor: '#fff', border: `1px solid ${TEAL}`,
+  boxShadow: '0 4px 12px rgba(0,0,0,0.15)', maxHeight: '90vh', overflowY: 'auto'
 }
 const headerStyle = {
   backgroundColor: TEAL, color: '#fff', padding: '10px 16px',

@@ -236,7 +236,7 @@ class LicenseService
     public function getLicenseDetails(int $id)
     {
         // نستخدم withCount لجلب عدد الكروت وتجهيزها للـ Resource
-        return CustomerLicense::withCount('vouchers')->findOrFail($id);
+        return CustomerLicense::with(['publications', 'documents'])->withCount('vouchers')->findOrFail($id);
     }
 
     /**

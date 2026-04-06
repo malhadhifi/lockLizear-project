@@ -643,3 +643,291 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #a0a3b8;
 }
+
+/* ===== Mobile Responsiveness & Layout Classes ===== */
+/* Layout wrappers to replace inline styles that were breaking on mobile */
+.page-layout {
+  display: flex;
+  gap: 20px;
+}
+
+.page-sidebar {
+  width: 180px;
+  flex-shrink: 0;
+}
+
+.page-content {
+  flex: 1;
+  min-width: 0; /* Prevents flex items from overflowing when content is too wide */
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  width: 100%;
+}
+
+.form-row {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.form-label-col {
+  width: 140px;
+  padding-top: 6px;
+  font-weight: 700;
+  color: #111;
+  flex-shrink: 0;
+}
+
+.form-input-col {
+  display: flex;
+  flex: 1;
+  gap: 10px;
+}
+
+/* ===== Tablet breakpoint (768px) ===== */
+@media (max-width: 768px) {
+  /* Sidebar toggle logic */
+  .drm-sidebar {
+    transform: translateX(100%);
+    width: 260px;
+    box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+  }
+  
+  .drm-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .drm-main {
+    margin-right: 0 !important;
+  }
+
+  /* Hamburger Menu Button */
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  /* Main content area – reduce padding on mobile */
+  .main-content-area {
+    padding: 0 8px 16px 8px !important;
+  }
+
+  /* Layout Breakpoints – stack sidebar above content */
+  .page-layout {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .page-sidebar {
+    width: 100% !important;
+  }
+
+  .page-sidebar ul {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+
+  .page-sidebar ul li {
+    flex: 1 !important;
+    min-width: 120px !important;
+    border-bottom: none !important;
+  }
+
+  .page-sidebar ul li button {
+    width: 100% !important;
+    font-size: 12px !important;
+    padding: 8px 10px !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  /* Form breakpoints – stack label above input */
+  .form-row {
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+  
+  .form-label-col {
+    width: 100% !important;
+    padding-top: 0 !important;
+    font-size: 12px !important;
+  }
+
+  .form-input-col {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .form-input-col input,
+  .form-input-col textarea,
+  .form-input-col select {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Force tables inside table-responsive to have a min width so they scroll */
+  .table-responsive table {
+    min-width: 600px;
+  }
+
+  /* Header actions stacking */
+  .header-actions-mobile {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .header-actions-mobile > div {
+    flex-wrap: wrap !important;
+  }
+
+  /* --- Card layout mobile adjustments --- */
+  /* Document & Publication list cards: stack vertically */
+  div[style*="alignItems: 'stretch'"] {
+    flex-direction: column !important;
+  }
+
+  /* Action icon buttons row in cards */
+  div[style*="gap: 6"] {
+    flex-wrap: wrap !important;
+  }
+
+  /* Filter bar stacking on mobile */
+  div[style*="gap: 16"][style*="fontSize: 13"] {
+    flex-wrap: wrap !important;
+  }
+
+  /* Pagination buttons */
+  div[style*="justifyContent: 'center'"][style*="gap: 10"] {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  /* --- Modal responsive fixes --- */
+  /* Fixed modals should constrain to viewport */
+  div[style*="position: 'fixed'"] > div,
+  div[style*="position: fixed"] > div {
+    max-width: 95vw !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+
+  /* DocumentDetailPage responsive */
+  div[style*="padding: '20px 40px'"] {
+    padding: 8px !important;
+  }
+
+  /* Tab buttons in document detail should wrap */
+  div[style*="borderBottom: '2px solid"] {
+    flex-wrap: wrap !important;
+  }
+
+  div[style*="borderBottom: '2px solid"] button {
+    flex: 1 !important;
+    min-width: 0 !important;
+    font-size: 11px !important;
+    padding: 10px 8px !important;
+    white-space: nowrap !important;
+  }
+
+  /* Detail tables inside document pages */
+  div[style*="maxWidth: 600"] {
+    max-width: 100% !important;
+  }
+
+  div[style*="maxWidth: 600"] table td {
+    display: block !important;
+    width: 100% !important;
+    padding: 4px 8px !important;
+  }
+
+  /* UserDetailPage container */
+  div[style*="maxWidth: 650"] {
+    max-width: 100% !important;
+    margin: 10px auto !important;
+  }
+
+  /* Footer action buttons wrap */
+  div[style*="justifyContent: 'center'"][style*="backgroundColor: '#e6e6e6'"] {
+    flex-wrap: wrap !important;
+    padding: 10px !important;
+  }
+
+  /* Event log text container */
+  div[style*="fontSize: 11"][dir="ltr"] {
+    word-break: break-all !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Status + action button rows */
+  div[style*="gap: 12"][style*="alignItems: 'center'"] {
+    flex-wrap: wrap !important;
+  }
+}
+
+/* ===== Small phone breakpoint (480px) ===== */
+@media (max-width: 480px) {
+  /* Further reduce padding */
+  .main-content-area {
+    padding: 0 4px 12px 4px !important;
+  }
+
+  /* Sidebar items go single column on very small screens */
+  .page-sidebar ul {
+    flex-direction: column !important;
+  }
+
+  .page-sidebar ul li {
+    min-width: 100% !important;
+  }
+
+  /* Filter row items stack fully */
+  div[style*="gap: 16"][style*="fontSize: 13"] > div {
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+
+  /* Document card action buttons */
+  div[style*="gap: 6"][style*="padding: '8px 12px'"] {
+    justify-content: center !important;
+    padding: 8px !important;
+  }
+
+  /* Bulk action row stacking */
+  div[style*="gap: 16"][style*="marginBottom: 8"] {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  div[style*="gap: 16"][style*="marginBottom: 8"] select {
+    max-width: 100% !important;
+  }
+
+  /* Tab buttons even smaller */
+  div[style*="borderBottom: '2px solid"] button {
+    font-size: 10px !important;
+    padding: 8px 4px !important;
+  }
+
+  /* Modal internal tables scroll */
+  table {
+    font-size: 11px !important;
+  }
+}
+
+/* Show Hamburger normally hidden on desktop */
+.mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--primary);
+    cursor: pointer;
+    padding: 0 10px;
+}

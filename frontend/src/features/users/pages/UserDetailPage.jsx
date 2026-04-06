@@ -15,10 +15,15 @@ import { useNavigate, useParams } from 'react-router-dom'
 // استيراد مكتبة التنبيهات لإظهار رسائل النجاح والخطأ
 import toast from 'react-hot-toast'
 // استيراد خطافات الواجهة الخلفية
-import { useCustomerDetails, useUpdateCustomer, useCustomerBulkAction, useDownloadLicense } from '../hooks/useUsers'
+import { useCustomerDetails, useUpdateCustomer, useCustomerBulkAction, useDownloadLicense, useUpdatePublicationAccess, useUpdateDocumentAccess } from '../hooks/useUsers'
 import SelectPublicationModal from '../components/SelectPublicationModal'
 import SelectDocumentModal from '../components/SelectDocumentModal'
 import ConfirmAccessModal from '../components/ConfirmAccessModal'
+import SuspendActivateDeviceModal from '../components/SuspendActivateDeviceModal'
+import ChangeViewsModal from '../components/ChangeViewsModal'
+import ChangePrintsModal from '../components/ChangePrintsModal'
+import WebViewerLoginHistoryModal from '../components/WebViewerLoginHistoryModal'
+import EmailDeliveryStatusModal from '../components/EmailDeliveryStatusModal'
 
 // تعريف اللون الأساسي (Teal) المستخدم في تصميم LockLizard
 const TEAL = '#009cad'
@@ -51,11 +56,18 @@ export default function UserDetailPage() {
   const [isPubModalOpen, setIsPubModalOpen] = useState(false)
   const [isDocModalOpen, setIsDocModalOpen] = useState(false)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false)
+  const [isViewsModalOpen, setIsViewsModalOpen] = useState(false)
+  const [isPrintsModalOpen, setIsPrintsModalOpen] = useState(false)
+  const [isWebLoginOpen, setIsWebLoginOpen] = useState(false)
+  const [isEmailStatusOpen, setIsEmailStatusOpen] = useState(false)
   const [selectedResource, setSelectedResource] = useState(null)
   const [accessActionType, setAccessActionType] = useState('')
 
   const bulkMutation = useCustomerBulkAction()
   const downloadMutation = useDownloadLicense()
+  const pubAccessMutation = useUpdatePublicationAccess()
+  const docAccessMutation = useUpdateDocumentAccess()
 
   // عند تحميل بيانات العميل من الخادم بنجاح، نقوم بتعبئتها في النموذج (Form)
   useEffect(() => {
@@ -112,34 +124,63 @@ export default function UserDetailPage() {
     })
   }
 
-  // الدالة التي يتم استدعاؤها بعد الموافقة من نافذة ConfirmAccessModal
-  const confirmGrantAccess = () => {
-    if (!selectedResource) return;
-    
-    // إرفاق مُعَرّف المورد المختار بناءً على نوع العملية المختارة
-    const extraPayload = {};
-    if (accessActionType === 'grant_access_to_publication') {
-      extraPayload.publication_ids = [selectedResource.id];
-    } else if (accessActionType === 'grant_access_to_documents') {
-      extraPayload.document_ids = [selectedResource.id];
-    }
-    
-    bulkMutation.mutate({
-      license_ids: [id],
-      action: accessActionType,
-      ...extraPayload
-    }, {
+  // دالة منح وصول المنشورات - تستخدم الـ endpoint الصحيح
+  const handlePublicationAccess = (selectedPubs, action = 'unlimited', validFrom = '', validUntil = '') => {
+    const pubIds = selectedPubs.map(p => p.id)
+    if (!pubIds.length) return
+
+    // تحويل action من المودال إلى ما يتوقعه الباك إند
+    const apiAction = action === 'grant_unlimited' ? 'unlimited' 
+                    : action === 'grant_limited' ? 'limited' 
+                    : action === 'revoke' ? 'revoke' 
+                    : action  // fallback
+
+    const data = { action: apiAction, publication_ids: pubIds }
+    if (apiAction === 'limited' && validFrom) data.valid_from = validFrom
+    if (apiAction === 'limited' && validUntil) data.valid_until = validUntil
+
+    pubAccessMutation.mutate({ customerId: id, data }, {
       onSuccess: () => {
-        toast.success(`تم منح حقوق الوصول بنجاح!`);
-        setSelectedResource(null);
-        setIsConfirmOpen(false);
-        setAccessActionType('');
+        const msg = apiAction === 'revoke' 
+          ? `تم سحب الوصول من ${pubIds.length} منشور بنجاح!`
+          : `تم تحديث صلاحيات ${pubIds.length} منشور بنجاح!`
+        toast.success(msg)
+        setIsPubModalOpen(false)
       },
-      onError: (error) => {
-        toast.error('حدث خطأ أثناء التنفيذ!');
-        console.error('Bulk Action Error:', error);
+      onError: (err) => {
+        toast.error('حدث خطأ أثناء تحديث صلاحيات المنشورات!')
+        console.error(err)
       }
-    });
+    })
+  }
+
+  // دالة منح وصول المستندات - تستخدم الـ endpoint الصحيح
+  const handleDocumentAccess = (selectedDocs, action = 'unlimited', validFrom = '', validUntil = '') => {
+    const docIds = selectedDocs.map(d => d.id)
+    if (!docIds.length) return
+
+    const apiAction = action === 'grant_unlimited' ? 'unlimited' 
+                    : action === 'grant_limited' ? 'limited' 
+                    : action === 'revoke' ? 'revoke' 
+                    : action
+
+    const data = { action: apiAction, document_ids: docIds }
+    if (apiAction === 'limited' && validFrom) data.valid_from = validFrom
+    if (apiAction === 'limited' && validUntil) data.valid_until = validUntil
+
+    docAccessMutation.mutate({ customerId: id, data }, {
+      onSuccess: () => {
+        const msg = apiAction === 'revoke'
+          ? `تم سحب الوصول من ${docIds.length} مستند بنجاح!`
+          : `تم تحديث صلاحيات ${docIds.length} مستند بنجاح!`
+        toast.success(msg)
+        setIsDocModalOpen(false)
+      },
+      onError: (err) => {
+        toast.error('حدث خطأ أثناء تحديث صلاحيات المستندات!')
+        console.error(err)
+      }
+    })
   }
 
   // دالة تحميل ملف الترخيص
@@ -197,41 +238,41 @@ export default function UserDetailPage() {
         <div style={{ padding: '15px' }}>
           
           {/* سطر بيانات: الاسم */}
-          <div style={rowStyle}>
+          <div className="form-row" style={rowStyle}>
             {/* التسمية التوضيحية (Label) */}
-            <div style={labelColStyle}>الاسم (Name)</div>
+            <div className="form-label-col" style={labelColStyle}>الاسم (Name)</div>
             {/* حقل الإدخال النصي */}
-            <div style={inputColStyle}>
+            <div className="form-input-col" style={inputColStyle}>
               <input type="text" name="name" value={form.name} onChange={handleChange} required style={inputStyle} />
             </div>
           </div>
 
           {/* سطر بيانات: الإيميل */}
-          <div style={rowStyle}>
+          <div className="form-row" style={rowStyle}>
             {/* التسمية التوضيحية (Label) */}
-            <div style={labelColStyle}>البريد الإلكتروني (Email)</div>
+            <div className="form-label-col" style={labelColStyle}>البريد الإلكتروني (Email)</div>
             {/* حقل الإدخال للإيميل */}
-            <div style={inputColStyle}>
+            <div className="form-input-col" style={inputColStyle}>
               <input type="email" name="email" value={form.email} onChange={handleChange} required style={inputStyle} />
             </div>
           </div>
 
           {/* سطر بيانات: الشركة */}
-          <div style={rowStyle}>
+          <div className="form-row" style={rowStyle}>
             {/* التسمية التوضيحية (Label) */}
-            <div style={labelColStyle}>الشركة (Company)</div>
+            <div className="form-label-col" style={labelColStyle}>الشركة (Company)</div>
             {/* حقل الإدخال النصي للشركة */}
-            <div style={inputColStyle}>
+            <div className="form-input-col" style={inputColStyle}>
               <input type="text" name="company" value={form.company} onChange={handleChange} style={inputStyle} />
             </div>
           </div>
 
           {/* سطر بيانات: الملاحظات */}
-          <div style={rowStyle}>
+          <div className="form-row" style={rowStyle}>
             {/* التسمية التوضيحية (Label) */}
-            <div style={labelColStyle}>ملاحظات (Notes)</div>
+            <div className="form-label-col" style={labelColStyle}>ملاحظات (Notes)</div>
             {/* مربع نصي (Textarea) متعدد الأسطر للملاحظات */}
-            <div style={inputColStyle}>
+            <div className="form-input-col" style={inputColStyle}>
               <textarea name="notes" value={form.notes} onChange={handleChange} rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
             </div>
           </div>
@@ -245,37 +286,51 @@ export default function UserDetailPage() {
         <div style={{ padding: '12px 15px' }}>
           
           {/* سطر عرض المعرف (ID) */}
-          <div style={rowInfoStyle}>
-            <div style={labelInfoStyle}>المعرف (ID)</div>
+          <div className="form-row" style={rowInfoStyle}>
+            <div className="form-label-col" style={labelInfoStyle}>المعرف (ID)</div>
             <div>{id || 1}</div>
           </div>
           
-          {/* سطر عرض الحالة (Status) */}
-          <div style={rowInfoStyle}>
-            <div style={labelInfoStyle}>الحالة (Status)</div>
-            <div style={{ color: cust?.status === 'enabled' ? '#4caf50' : '#ff9800', fontWeight: 'bold' }}>
-              {cust?.status === 'enabled' ? 'مُفعل (enabled)' : 'مُجمد (suspended)'}
+          {/* سطر عرض الحالة (Status) مع زر التجميد/التفعيل */}
+          <div className="form-row" style={rowInfoStyle}>
+            <div className="form-label-col" style={labelInfoStyle}>الحالة (Status)</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ color: cust?.status === 'enabled' ? '#4caf50' : '#ff9800', fontWeight: 'bold' }}>
+                {cust?.status === 'enabled' ? 'مُفعل (enabled)' : 'مُجمد (suspended)'}
+              </span>
+              <button 
+                onClick={() => {
+                  const action = cust?.status === 'enabled' ? 'suspend' : 'activate';
+                  bulkMutation.mutate({ license_ids: [id], action }, {
+                    onSuccess: () => { toast.success(action === 'suspend' ? 'تم تجميد الحساب!' : 'تم تفعيل الحساب!'); window.location.reload(); },
+                    onError: () => toast.error('حدث خطأ!')
+                  });
+                }}
+                style={{ backgroundColor: cust?.status === 'enabled' ? '#ff9800' : '#4caf50', color: '#fff', border: 'none', padding: '3px 14px', fontSize: 12, cursor: 'pointer', fontWeight: 'bold', borderRadius: 3 }}
+              >
+                {cust?.status === 'enabled' ? 'Suspend account' : 'Enable account'}
+              </button>
             </div>
           </div>
 
           {/* سطر عرض تاريخ التسجيل (Registered) */}
-          <div style={rowInfoStyle}>
-            <div style={labelInfoStyle}>مُسجل في (Registered)</div>
+          <div className="form-row" style={rowInfoStyle}>
+            <div className="form-label-col" style={labelInfoStyle}>مُسجل في (Registered)</div>
             <div style={{ color: '#4caf50' }} dir="ltr">{cust?.registered || '-'}</div>
           </div>
 
           {/* سطر تاريخ البدء */}
-          <div style={rowStyle}>
-            <div style={labelColStyle}>تاريخ البدء (Start Date)</div>
-            <div style={inputColStyle}>
+          <div className="form-row" style={rowStyle}>
+            <div className="form-label-col" style={labelColStyle}>تاريخ البدء (Start Date)</div>
+            <div className="form-input-col" style={inputColStyle}>
               <input type="text" disabled value={cust?.start_date ? cust.start_date.split(' ')[0] : '-'} style={{ ...inputStyle, width: 120, backgroundColor: '#f0f0f0' }} dir="ltr" />
             </div>
           </div>
 
           {/* سطر تاريخ الانتهاء */}
-          <div style={rowStyle}>
-            <div style={labelColStyle}>صالح حتى (Valid until)</div>
-            <div style={inputColStyle}>
+          <div className="form-row" style={rowStyle}>
+            <div className="form-label-col" style={labelColStyle}>صالح حتى (Valid until)</div>
+            <div className="form-input-col" style={inputColStyle}>
               {form.neverExpires ? (
                 <input type="text" disabled value="لا ينتهي" style={{ ...inputStyle, width: 140, backgroundColor: '#f0f0f0' }} dir="ltr" />
               ) : (
@@ -296,16 +351,16 @@ export default function UserDetailPage() {
         <div style={{ padding: '12px 15px' }}>
           
           {/* سطر عدد التراخيص */}
-          <div style={rowStyle}>
-            <div style={labelColStyle}>التراخيص (Licenses)</div>
-            <div style={inputColStyle}>
+          <div className="form-row" style={rowStyle}>
+            <div className="form-label-col" style={labelColStyle}>التراخيص (Licenses)</div>
+            <div className="form-input-col" style={inputColStyle}>
               <input type="number" name="licenses" value={form.licenses} onChange={handleChange} min={1} style={{ ...inputStyle, width: 60 }} />
             </div>
           </div>
 
           {/* قسم عمليات الترخيص السريعة وحفظ الترخيص وإرساله */}
-          <div style={rowStyle}>
-            <div style={labelColStyle}>الترخيص (License)</div>
+          <div className="form-row" style={rowStyle}>
+            <div className="form-label-col" style={labelColStyle}>الترخيص (License)</div>
             <div style={{ ...inputColStyle, display: 'flex', flexDirection: 'column', gap: 6 }}>
               {/* رابط أزرق لحفظ الترخيص إلى ملف محلي */}
               <a href="#" onClick={handleDownloadLicense} style={{...actionLinkStyle, opacity: downloadMutation.isPending ? 0.5 : 1, pointerEvents: downloadMutation.isPending ? 'none' : 'auto'}}>
@@ -323,25 +378,96 @@ export default function UserDetailPage() {
             </div>
           </div>
 
-          {/* قم بإضافة مزيد من المعلومات إذا احتاجها الباك إند هنا مستقبلاً */}
-
+          <div className="form-row" style={rowStyle}>
+            <div className="form-label-col" style={labelColStyle}>الجهاز (Device)</div>
+            <div style={{ ...inputColStyle, display: 'flex', alignItems: 'center' }}>
+              <a href="#" style={actionLinkStyle} onClick={(e) => { e.preventDefault(); setIsDeviceModalOpen(true); }}>
+                <i className="bi bi-phone" style={{ marginRight: 4 }} /> تعليق أو تفعيل (Suspend or Activate)
+              </a>
+            </div>
+          </div>
         </div>
 
-        {/* تم استبعاد Web Viewer من النموذج كما طلب المستخدم سابقاً */}
+        {/* تم إزالة قسم تقييد الموقع (IP/Country) بطلب المستخدم */}
+
+        {/* === قسم عارض الويب (Web Viewer) === */}
+        <div style={sectionHeaderStyle}>عارض الويب (Web Viewer)</div>
+        <div style={{ padding: '12px 15px' }}>
+          
+          <div className="form-row" style={rowStyle}>
+            <div className="form-label-col" style={labelColStyle}>مفعل (Enabled)</div>
+            <div className="form-input-col" style={inputColStyle}>
+              <i className="bi bi-check" style={{ color: TEAL, fontSize: 20 }} />
+            </div>
+          </div>
+
+          <div className="form-row" style={rowStyle}>
+            <div className="form-label-col" style={labelColStyle}>اسم المستخدم (Username)</div>
+            <div className="form-input-col" style={inputColStyle}>
+              <input type="text" value={form.email} readOnly style={{ ...inputStyle, backgroundColor: '#f9f9f9', color: '#666' }} />
+            </div>
+          </div>
+
+          <div className="form-row" style={rowStyle}>
+            <div className="form-label-col" style={labelColStyle}>كلمة المرور (Password)</div>
+            <div className="form-input-col" style={inputColStyle}>
+              <input type="text" value="********" readOnly style={{ ...inputStyle, backgroundColor: '#f9f9f9', color: '#666' }} />
+            </div>
+          </div>
+
+          <div className="form-row" style={rowStyle}>
+            <div className="form-label-col" style={labelColStyle}>تسجيل الدخول (Logins)</div>
+            <div className="form-input-col" style={inputColStyle}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingTop: 6 }}>
+                <input type="checkbox" id="allowMultipleLogs" defaultChecked />
+                <label htmlFor="allowMultipleLogs" style={{ fontSize: 13, color: '#333' }}>السماح بتسجيل دخول متزامن متعدد (allow multiple simultaneous logins)</label>
+              </div>
+            </div>
+          </div>
+
+          <div className="form-row" style={rowStyle}>
+            <div className="form-label-col" style={labelColStyle}>إعادة إرسال (Resend)</div>
+            <div className="form-input-col" style={inputColStyle}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingTop: 6 }}>
+                <input type="checkbox" id="emailLoginInfo" />
+                <label htmlFor="emailLoginInfo" style={{ fontSize: 13, color: '#333' }}>إرسال معلومات تسجيل الدخول (email login info)</label>
+              </div>
+            </div>
+          </div>
+          
+        </div>
 
         {/* === قسم إدارة الوصول للصلاحيات (Manage Access) === */}
         <div style={sectionHeaderStyle}>إدارة الوصول (Manage Access)</div>
-        <div style={{ padding: '12px 15px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ padding: '12px 15px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           
-          {/* رابط أزرق لإعطاء حق الوصول للمنشورات */}
-          <a href="#" onClick={(e) => { e.preventDefault(); setAccessActionType('grant_access_to_publication'); setIsPubModalOpen(true); }} style={actionLinkStyle}>
-            <i className="bi bi-journal-text" style={{ marginLeft: 4 }} /> تعيين وصول المنشور (Set Publication Access)
-          </a>
-          
-          {/* رابط أزرق لإعطاء حق الوصول للمستندات */}
-          <a href="#" onClick={(e) => { e.preventDefault(); setAccessActionType('grant_access_to_documents'); setIsDocModalOpen(true); }} style={actionLinkStyle}>
-            <i className="bi bi-file-earmark-text" style={{ marginLeft: 4 }} /> تعيين وصول المستند (Set Document Access)
-          </a>
+          {/* رابط تعيين وصول المنشورات */}
+          <div>
+            <a href="#" onClick={(e) => { e.preventDefault(); setIsPubModalOpen(true); }} style={{...actionLinkStyle, textDecoration: 'underline'}}>
+              <i className="bi bi-journal-text" style={{ marginRight: 6 }} /> تعيين صلاحيات المنشورات (Set Publication Access)
+            </a>
+          </div>
+
+          {/* رابط تعيين وصول المستندات */}
+          <div>
+            <a href="#" onClick={(e) => { e.preventDefault(); setIsDocModalOpen(true); }} style={{...actionLinkStyle, textDecoration: 'underline'}}>
+              <i className="bi bi-file-earmark-pdf" style={{ marginRight: 6 }} /> تعيين صلاحيات المستندات (Set Document Access)
+            </a>
+          </div>
+
+          {/* رابط تغيير عدد المشاهدات */}
+          <div>
+            <a href="#" onClick={(e) => { e.preventDefault(); setIsViewsModalOpen(true); }} style={{...actionLinkStyle, textDecoration: 'underline'}}>
+              <i className="bi bi-eye" style={{ marginRight: 6 }} /> تغيير عدد المشاهدات (Change number of views)
+            </a>
+          </div>
+
+          {/* رابط تغيير عدد الطباعات */}
+          <div>
+            <a href="#" onClick={(e) => { e.preventDefault(); setIsPrintsModalOpen(true); }} style={{...actionLinkStyle, textDecoration: 'underline'}}>
+              <i className="bi bi-printer" style={{ marginRight: 6 }} /> تغيير عدد الطباعات (Change number of prints)
+            </a>
+          </div>
 
         </div>
 
@@ -349,18 +475,18 @@ export default function UserDetailPage() {
         <hr style={{ margin: 0, border: 'none', borderTop: '1px solid #ccc' }} />
 
         {/* الأزرار الختامية السفلية (Footer Action Buttons) */}
-        <div style={{ padding: '15px 20px', display: 'flex', justifyContent: 'flex-start', gap: 10, backgroundColor: '#fff', flexDirection: 'row-reverse' }}>
-          {/* زر إلغاء للعودة لصفحة اللستة للعملاء */}
-          {/* زر التراجع */}
-          <button type="button" onClick={() => navigate('/users')} disabled={updateMutation.isPending}
-            style={{ backgroundColor: '#888', color: '#fff', border: 'none', padding: '6px 16px', fontSize: 13, cursor: 'pointer', fontWeight: 'bold', opacity: updateMutation.isPending ? 0.7 : 1 }}>
-            إلغاء (Cancel)
-          </button>
+        <div style={{ padding: '15px 20px', display: 'flex', justifyContent: 'center', gap: 10, backgroundColor: '#e6e6e6' }}>
           
           {/* زر حفظ التعديلات */}
           <button type="button" onClick={handleSave} disabled={updateMutation.isPending}
-            style={{ backgroundColor: TEAL, color: '#fff', border: 'none', padding: '6px 24px', fontSize: 13, cursor: updateMutation.isPending ? 'not-allowed' : 'pointer', fontWeight: 'bold', opacity: updateMutation.isPending ? 0.7 : 1 }}>
-            {updateMutation.isPending ? 'جاري الحفظ...' : 'حفظ (Save)'}
+            style={{ backgroundColor: TEAL, color: '#fff', border: 'none', padding: '6px 30px', fontSize: 13, cursor: updateMutation.isPending ? 'not-allowed' : 'pointer', fontWeight: 'bold', opacity: updateMutation.isPending ? 0.7 : 1 }}>
+            {updateMutation.isPending ? 'جاري الحفظ...' : 'Save (حفظ)'}
+          </button>
+
+          {/* زر التراجع */}
+          <button type="button" onClick={() => navigate('/users')} disabled={updateMutation.isPending}
+            style={{ backgroundColor: '#888', color: '#fff', border: 'none', padding: '6px 20px', fontSize: 13, cursor: 'pointer', fontWeight: 'bold', opacity: updateMutation.isPending ? 0.7 : 1 }}>
+            Cancel (إلغاء)
           </button>
         </div>
 
@@ -368,18 +494,18 @@ export default function UserDetailPage() {
         <div style={{ ...sectionHeaderStyle, borderTop: '1px solid #ccc' }}>سجل الأحداث (Event log)</div>
         <div style={{ padding: '12px 15px' }}>
           
-          {/* قسم روابط سجل الأحداث (Web Viewer Login + Sent Email Status) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 15 }}>
-            {/* رابط يعرض سجل تسجيل الدخول إذا وجد */}
-            <a href="#" style={actionLinkStyle}><i className="bi bi-window" /> تاريخ دخول عارض الويب (Web Viewer Login history)</a>
-            {/* رابط يعرض حالة آخر رسالة بريد أرسلت */}
-            <a href="#" style={actionLinkStyle}><i className="bi bi-envelope-paper" /> إظهار حالة آخر إيميل (Show status of last sent email)</a>
+            <a href="#" style={actionLinkStyle} onClick={(e) => { e.preventDefault(); setIsWebLoginOpen(true); }}><i className="bi bi-window" style={{marginRight: 6}} /> Web Viewer Login History</a>
+            <a href="#" style={actionLinkStyle} onClick={(e) => { e.preventDefault(); setIsEmailStatusOpen(true); }}><i className="bi bi-envelope-paper" style={{marginRight: 6}} /> Show status of last sent email</a>
           </div>
 
-          {/* لوج نصي رمادي (Log Box) يعرض أحدث السجلات المسجلة على هذا المستخدم */}
-          <div style={{ fontSize: 11, color: '#666', lineHeight: 1.5, padding: '8px', border: '1px solid #eee', backgroundColor: '#fafafa' }} dir="ltr">
-            11-01-2016 15:40:40 - Registration successful(license issue). From:<br/>
-            105.145.65.42 (B2-AE-E6-22-08-32 : UUID ) (Windows)
+          <div style={{ fontSize: 11, color: '#666', lineHeight: 1.5, padding: '8px', border: '1px solid #eee', backgroundColor: '#e9ecef' }} dir="ltr">
+            11-01-2016 19:40:40 - Registration successful(license reuse). From:<br/>
+            109.149.65.42 (BC-AE-C5-22-6B-22-285072491425) (Windows)<br/>
+            10-20-2016 19:48:42 - Auto Restrict IP disabled<br/>
+            10-20-2016 19:48:42 - Restrict IP removed.<br/>
+            10-18-2016 14:13:57 - Auto Restrict IP 86.190.92.179<br/>
+            10-18-2016 14:13:57 - Auto Restricted Country GB
           </div>
 
         </div>
@@ -390,22 +516,42 @@ export default function UserDetailPage() {
       <SelectPublicationModal 
         isOpen={isPubModalOpen} 
         onClose={() => setIsPubModalOpen(false)} 
-        onSelect={(pub) => { setSelectedResource(pub); setIsPubModalOpen(false); setIsConfirmOpen(true); }} 
+        initialSelectedIds={cust?.publications?.map(p => p.id) || []}
+        onSelect={handlePublicationAccess}
       />
       
       <SelectDocumentModal 
         isOpen={isDocModalOpen} 
         onClose={() => setIsDocModalOpen(false)} 
-        onSelect={(doc) => { setSelectedResource(doc); setIsDocModalOpen(false); setIsConfirmOpen(true); }} 
+        initialSelectedIds={cust?.documents?.map(d => d.id) || []}
+        onSelect={handleDocumentAccess}
       />
-      
-      <ConfirmAccessModal 
-        isOpen={isConfirmOpen} 
-        onClose={() => setIsConfirmOpen(false)} 
-        onConfirm={confirmGrantAccess}
-        actionText="GRANT ACCESS"
-        customers={[{ id: id, name: form.name, email: form.email, company: form.company }]}
-        resourceName={selectedResource?.name || selectedResource?.title}
+
+      <SuspendActivateDeviceModal 
+        isOpen={isDeviceModalOpen}
+        onClose={() => setIsDeviceModalOpen(false)}
+      />
+
+      <ChangeViewsModal 
+        isOpen={isViewsModalOpen}
+        onClose={() => setIsViewsModalOpen(false)}
+        userName={form.name}
+      />
+
+      <ChangePrintsModal 
+        isOpen={isPrintsModalOpen}
+        onClose={() => setIsPrintsModalOpen(false)}
+        userName={form.name}
+      />
+
+      <WebViewerLoginHistoryModal
+        isOpen={isWebLoginOpen}
+        onClose={() => setIsWebLoginOpen(false)}
+      />
+
+      <EmailDeliveryStatusModal
+        isOpen={isEmailStatusOpen}
+        onClose={() => setIsEmailStatusOpen(false)}
       />
     </div>
   )

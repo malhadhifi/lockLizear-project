@@ -17,7 +17,7 @@ class UpdateDocumentRequest extends BaseRequest
             'note'                   => 'nullable|string|max:2000',
 
             // إعدادات انتهاء الصلاحية
-            'expiry_mode'            => 'nullable|in:none,fixed_date,days_from_first_use',
+            'expiry_mode'            => 'nullable|in:none,never,fixed_date,days_from_first_use',
             'expiry_date'            => 'nullable|date',
             'expiry_days'            => 'nullable|integer|min:1',
 
@@ -28,6 +28,12 @@ class UpdateDocumentRequest extends BaseRequest
 
             // حد المشاهدات
             'max_views_allowed'      => 'nullable|integer|min:0',
+
+            // إعدادات الطباعة والسجلات السجلات الجديدة
+            'print_mode'             => 'nullable|in:disabled,unlimited,limited',
+            'max_prints_allowed'     => 'nullable|integer|min:0',
+            'log_views'              => 'nullable|boolean',
+            'log_prints'             => 'nullable|boolean',
         ];
     }
 

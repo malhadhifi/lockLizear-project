@@ -1,44 +1,28 @@
 /**
- * SelectDocumentModal.jsx - نافذة تحديد وصول المستندات مع كامل العمليات
+ * ChangePrintsModal.jsx - نافذة تعديل عدد الطباعات مع فلاتر شغالة
  */
 import { useState, useEffect, useMemo } from 'react'
 import { useDocuments } from '../../documents/hooks/useDocuments'
 
 const TEAL = '#009cad'
 
-export default function SelectDocumentModal({ isOpen, onClose, onSelect, initialSelectedIds = [] }) {
+export default function ChangePrintsModal({ isOpen, onClose, userName = '' }) {
   const { data: docData, isLoading } = useDocuments({ limit: 1000 })
   const documents = Array.isArray(docData?.items) ? docData.items : Array.isArray(docData?.data?.items) ? docData.data.items : Array.isArray(docData) ? docData : []
 
-  const [selectedIds, setSelectedIds] = useState(initialSelectedIds)
+  const [selectedIds, setSelectedIds] = useState([])
   const [filterText, setFilterText] = useState('')
   const [sortBy, setSortBy] = useState('title')
   const [showAtLeast, setShowAtLeast] = useState(25)
-  const [docFilter, setDocFilter] = useState('all')
   const [withChecked, setWithChecked] = useState('')
-  const [validFrom, setValidFrom] = useState('')
-  const [validUntil, setValidUntil] = useState('')
 
-  useEffect(() => {
-    if (isOpen) {
-      setSelectedIds(initialSelectedIds)
-      setFilterText('')
-      setWithChecked('')
-      setValidFrom('')
-      setValidUntil('')
-    }
-  }, [isOpen, initialSelectedIds])
+  useEffect(() => { if (isOpen) { setSelectedIds([]); setFilterText(''); setWithChecked('') } }, [isOpen])
 
   const filtered = useMemo(() => {
     let result = [...documents]
     if (filterText.trim()) {
       const s = filterText.toLowerCase()
-      result = result.filter(d => (d.title || d.name || '').toLowerCase().includes(s) || (d.description || '').toLowerCase().includes(s))
-    }
-    if (docFilter === 'with_access') {
-      result = result.filter(d => selectedIds.includes(d.id))
-    } else if (docFilter === 'without_access') {
-      result = result.filter(d => !selectedIds.includes(d.id))
+      result = result.filter(d => (d.title || d.name || '').toLowerCase().includes(s))
     }
     result.sort((a, b) => {
       if (sortBy === 'title') return (a.title || a.name || '').localeCompare(b.title || b.name || '')
@@ -46,38 +30,27 @@ export default function SelectDocumentModal({ isOpen, onClose, onSelect, initial
       return 0
     })
     return result
-  }, [documents, filterText, sortBy, docFilter, selectedIds])
+  }, [documents, filterText, sortBy])
 
   const displayed = filtered.slice(0, showAtLeast)
-
   if (!isOpen) return null
-
-  const handleOK = () => {
-    const selectedDocs = documents.filter(x => selectedIds.includes(x.id))
-    // نرسل الـ action + التواريخ مع المستندات المحددة
-    onSelect(selectedDocs, withChecked || 'grant_unlimited', validFrom, validUntil)
-  }
 
   return (
     <div style={overlayStyle}>
       <div style={modalStyle}>
-        
         <div style={headerStyle}>
-          <span>Set Document Access (تحديد وصول المستندات)</span>
-          <i className="bi bi-file-earmark-pdf" />
+          <span>Change number of document prints for &quot;{userName}&quot;</span>
+          <i className="bi bi-printer" />
         </div>
-
         <div style={{ padding: '20px 24px', backgroundColor: '#fff' }}>
-          
           <div style={filterBoxStyle}>
             <div style={{ display: 'flex', marginBottom: 10, alignItems: 'center' }}>
               <span style={{ width: 80, fontWeight: 'bold', fontSize: 13, color: '#333' }}>Filter</span>
               <div style={{ flex: 1, position: 'relative' }}>
-                <input type="text" value={filterText} onChange={e => setFilterText(e.target.value)} style={inputStyle} placeholder="بحث بالاسم أو الوصف..." />
+                <input type="text" value={filterText} onChange={e => setFilterText(e.target.value)} style={inputStyle} placeholder="بحث..." />
                 <i className="bi bi-search" style={{ position: 'absolute', right: 8, top: 4, color: '#999' }} />
               </div>
             </div>
-            
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
               <span style={{ width: 80, fontWeight: 'bold', fontSize: 13, color: '#333' }}>Sort by</span>
               <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ ...inputStyle, width: 140 }}>
@@ -87,22 +60,10 @@ export default function SelectDocumentModal({ isOpen, onClose, onSelect, initial
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <span style={{ fontSize: 13, color: '#333' }}>Show at least</span>
                 <select value={showAtLeast} onChange={e => setShowAtLeast(Number(e.target.value))} style={{ ...inputStyle, width: 60 }}>
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
-                <span style={{ fontSize: 13, color: '#333' }}>Documents</span>
-                <select value={docFilter} onChange={e => setDocFilter(e.target.value)} style={{ ...inputStyle, width: 120 }}>
-                  <option value="all">All</option>
-                  <option value="with_access">With Access</option>
-                  <option value="without_access">Without Access</option>
+                  <option value={10}>10</option><option value={25}>25</option><option value={50}>50</option><option value={100}>100</option>
                 </select>
               </div>
             </div>
-
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 15 }}>
                <div style={{ fontSize: 13, color: TEAL }}>
                   All &nbsp;&nbsp; 
@@ -113,47 +74,20 @@ export default function SelectDocumentModal({ isOpen, onClose, onSelect, initial
                <div style={{ display: 'flex', alignItems: 'center' }}>
                  <div style={{ marginRight: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
                    <span style={{ fontSize: 13, color: '#333' }}>With all checked</span>
-                   <select value={withChecked} onChange={e => setWithChecked(e.target.value)} style={{ ...inputStyle, width: 180 }}>
+                   <select value={withChecked} onChange={e => setWithChecked(e.target.value)} style={{ ...inputStyle, width: 120 }}>
                      <option value=""></option>
-                     <option value="grant_unlimited">Grant Unlimited Access</option>
-                     <option value="grant_limited">Grant Limited Access</option>
-                     <option value="revoke">Revoke Access</option>
                    </select>
                  </div>
-                 <button style={okBtnStyle} onClick={handleOK}>OK</button>
+                 <button style={okBtnStyle} onClick={onClose}>OK</button>
                </div>
             </div>
-
-            {/* حقول التاريخ عند اختيار Limited Access */}
-            {withChecked === 'grant_limited' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 12, padding: '10px 16px', background: '#f0f9fa', border: `1px solid ${TEAL}`, borderRadius: 4 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-                  <label style={{ fontWeight: 700 }}>From:</label>
-                  <input type="date" value={validFrom} onChange={e => setValidFrom(e.target.value)}
-                    style={{ border: '1px solid #ccc', borderRadius: 3, padding: '4px 8px', fontSize: 13 }} />
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-                  <label style={{ fontWeight: 700 }}>Until:</label>
-                  <input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)}
-                    style={{ border: '1px solid #ccc', borderRadius: 3, padding: '4px 8px', fontSize: 13 }} />
-                </div>
-              </div>
-            )}
           </div>
-
-          <div style={{ textAlign: 'center', fontSize: 12, color: TEAL, fontWeight: 'bold', margin: '8px 0' }}>
-            {filtered.length} نتيجة {filtered.length !== documents.length && `(من ${documents.length})`}
-          </div>
-
+          <div style={{ textAlign: 'center', fontSize: 12, color: TEAL, fontWeight: 'bold', margin: '8px 0' }}>{filtered.length} نتيجة</div>
           <div style={{ maxHeight: 300, overflowY: 'auto', borderBottom: '1px solid #ccc' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <tbody>
-                {isLoading && (
-                  <tr><td style={{ padding: 20, textAlign: 'center', color: TEAL }}>جاري جلب المستندات... ⏳</td></tr>
-                )}
-                {!isLoading && displayed.length === 0 && (
-                  <tr><td style={{ padding: 20, textAlign: 'center', color: '#888' }}>لا توجد نتائج</td></tr>
-                )}
+                {isLoading && (<tr><td style={{ padding: 20, textAlign: 'center', color: TEAL }}>جاري جلب المستندات... ⏳</td></tr>)}
+                {!isLoading && displayed.length === 0 && (<tr><td style={{ padding: 20, textAlign: 'center', color: '#888' }}>لا توجد نتائج</td></tr>)}
                 {!isLoading && displayed.map((doc) => {
                   const isChecked = selectedIds.includes(doc.id);
                   return (
@@ -171,9 +105,9 @@ export default function SelectDocumentModal({ isOpen, onClose, onSelect, initial
                           <tbody>
                             <tr><td style={{ width: 120, fontWeight: 'bold', padding: '2px 0' }}>ID:</td><td>{doc.id}</td></tr>
                             <tr><td style={{ fontWeight: 'bold', padding: '2px 0' }}>Published:</td><td>{doc.published || doc.created_at || '-'}</td></tr>
-                            <tr><td style={{ fontWeight: 'bold', padding: '2px 0' }}>Status:</td><td style={{ color: (doc.status === 'valid' || !doc.status) ? '#4CAF50' : '#e65100', fontWeight: 'bold' }}>{doc.status || 'valid'}</td></tr>
-                            <tr><td style={{ fontWeight: 'bold', padding: '2px 0' }}>Expires:</td><td>{doc.expires || 'never'}</td></tr>
-                            <tr><td style={{ fontWeight: 'bold', padding: '2px 0' }}>Direct Access:</td><td style={{ color: isChecked ? '#4CAF50' : '#e65100', fontWeight: 'bold' }}>{isChecked ? 'yes' : 'no'}</td></tr>
+                            <tr><td style={{ fontWeight: 'bold', padding: '2px 0' }}>Status:</td><td style={{ color: '#4CAF50', fontWeight: 'bold' }}>{doc.status || 'valid'}</td></tr>
+                            <tr><td style={{ fontWeight: 'bold', padding: '2px 0' }}>Expires:</td><td>never</td></tr>
+                            <tr><td style={{ fontWeight: 'bold', padding: '2px 0' }}>Prints Left:</td><td style={{ fontWeight: 'bold' }}>5</td></tr>
                           </tbody>
                         </table>
                       </div>
@@ -183,7 +117,6 @@ export default function SelectDocumentModal({ isOpen, onClose, onSelect, initial
               </tbody>
             </table>
           </div>
-
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 15 }}>
             <button onClick={onClose} style={cancelBtnStyle}>Cancel</button>
           </div>

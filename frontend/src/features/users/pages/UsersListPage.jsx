@@ -18,11 +18,12 @@ import SelectDocumentModal from '../components/SelectDocumentModal'
 import ConfirmAccessModal from '../components/ConfirmAccessModal'
 const TEAL = '#009cad'
 
-// استخراج دالة مساعدة لتحديد لون الحد الجانبي بناءً على `ui_status` الفعلي
+// استخراج دالة مساعدة لتحديد لون الحد الجانبي بناءً على `ui_status` الفعلي (4 ألوان كما في الكتاب)
 const getBorderColor = (uiStatus) => {
-  if (uiStatus?.expired_on) return '#f44336'; // منتهي
-  if (uiStatus?.account_status === 'suspend') return '#ff9800'; // موقوف
-  return '#4caf50'; // مفعل أو افتراضي
+  if (uiStatus?.expired_on) return '#9e9e9e';  // رمادي = منتهي الصلاحية
+  if (uiStatus?.account_status === 'suspend') return '#f44336';  // أحمر = موقوف/مجمد
+  if (uiStatus?.registration === 'not registers') return '#2196f3';  // أزرق = مفعل لكن غير مسجل
+  return '#4caf50'; // أخضر = مفعل ومسجل
 };
 
 const UsersListPage = () => {
@@ -158,9 +159,9 @@ const UsersListPage = () => {
   ]
 
   return (
-    <div style={{ display: 'flex', gap: 20 }}>
+    <div className="page-layout">
       {/* === القائمة الجانبية المخصصة للقسم === */}
-      <div style={{ width: 180, flexShrink: 0 }}>
+      <div className="page-sidebar">
         <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {sideNavItems.map(item => (
             <li key={item.id} style={{ borderBottom: '1px solid #ddd' }}>
@@ -190,7 +191,7 @@ const UsersListPage = () => {
       </div>
 
       {/* === محتوى القسم الرئيسي === */}
-      <div style={{ flex: 1 }}>
+      <div className="page-content">
         {/* عنوان القسم */}
         <div style={{
           background: TEAL, color: '#fff', padding: '10px 16px',

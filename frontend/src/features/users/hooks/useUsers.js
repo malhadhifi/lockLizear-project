@@ -50,6 +50,31 @@ export const useUpdateCustomer = () => {
 export const useDownloadLicense = () => {
   return useMutation({
     mutationFn: userApi.downloadLicense,
-    // معالجة الناجح تتم في الواجهة لتحويل الـ blob إلى رابط وتحميله
+  })
+}
+
+// خطاف تعديل صلاحيات وصول المنشورات لعميل محدد
+export const useUpdatePublicationAccess = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: userApi.updatePublicationAccess,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['customers', variables.customerId] })
+      queryClient.invalidateQueries({ queryKey: ['customers'] })
+      queryClient.invalidateQueries({ queryKey: ['publication-subscribers'] })
+      queryClient.invalidateQueries({ queryKey: ['all-customers-for-pub'] })
+    }
+  })
+}
+
+// خطاف تعديل صلاحيات وصول المستندات لعميل محدد
+export const useUpdateDocumentAccess = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: userApi.updateDocumentAccess,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['customers', variables.customerId] })
+      queryClient.invalidateQueries({ queryKey: ['customers'] })
+    }
   })
 }

@@ -90,6 +90,10 @@ class DocumentDetailsResource extends JsonResource
                 'verify_frequency_days' => $controls?->verify_frequency_days,
                 'grace_period_days'     => $controls?->grace_period_days,
                 'max_views_allowed'     => $controls?->max_views_allowed,
+                'print_mode'            => $controls?->print_mode ?? 'disabled',
+                'max_prints_allowed'    => $controls?->max_prints_allowed,
+                'log_views'             => (bool) ($controls?->log_views ?? false),
+                'log_prints'            => (bool) ($controls?->log_prints ?? false),
             ],
         ];
     }

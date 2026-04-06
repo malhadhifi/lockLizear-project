@@ -48,5 +48,29 @@ export const userApi = {
       responseType: 'blob'
     })
     return response
+  },
+
+  // 7. جلب منشورات العميل مع حالة الوصول
+  getCustomerPublications: async (customerId) => {
+    const response = await api.get(`/customer-management/customer-licenses/${customerId}/publications`)
+    return response
+  },
+
+  // 8. تعديل صلاحيات وصول المنشورات (unlimited / limited / revoke)
+  updatePublicationAccess: async ({ customerId, data }) => {
+    const response = await api.post(`/customer-management/customer-licenses/${customerId}/publications/bulk-access`, data)
+    return response
+  },
+
+  // 9. جلب مستندات العميل مع حالة الوصول
+  getCustomerDocuments: async (customerId) => {
+    const response = await api.get(`/customer-management/customer-licenses/${customerId}/documents`)
+    return response
+  },
+
+  // 10. تعديل صلاحيات وصول المستندات (unlimited / limited / baselimited / revoke)
+  updateDocumentAccess: async ({ customerId, data }) => {
+    const response = await api.post(`/customer-management/customer-licenses/${customerId}/documents/bulk-access`, data)
+    return response
   }
 }

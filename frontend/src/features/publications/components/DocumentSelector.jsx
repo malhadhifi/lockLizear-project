@@ -52,7 +52,7 @@ const DocumentSelector = ({ isOpen, onClose, existingDocIds = [], onDocumentsAdd
 
         {/* عنوان أزرق */}
         <div style={{
-          background: 'linear-gradient(135deg, #0078d4, #005a9e)',
+          background: `linear-gradient(135deg, #009cad, #007a87)`,
           color: '#fff', padding: '10px 16px', fontWeight: 700, fontSize: 14,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between'
         }}>
@@ -84,7 +84,7 @@ const DocumentSelector = ({ isOpen, onClose, existingDocIds = [], onDocumentsAdd
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={4} style={{ textAlign: 'center', padding: 20, color: '#0078d4' }}>جارٍ جلب المستندات...</td></tr>
+                <tr><td colSpan={4} style={{ textAlign: 'center', padding: 20, color: '#009cad' }}>جارٍ جلب المستندات...</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={4} style={{ textAlign: 'center', padding: 20, color: '#888' }}>لا توجد مستندات متاحة</td></tr>
               ) : filtered.map((d, idx) => (
@@ -115,7 +115,7 @@ const DocumentSelector = ({ isOpen, onClose, existingDocIds = [], onDocumentsAdd
             </button>
             <button onClick={handleAdd} disabled={!selected.length}
               style={{
-                background: '#0078d4', color: '#fff', border: 'none', borderRadius: 3,
+                background: '#009cad', color: '#fff', border: 'none', borderRadius: 3,
                 padding: '6px 16px', fontWeight: 600, cursor: 'pointer',
                 opacity: !selected.length ? 0.5 : 1
               }}>

@@ -4,14 +4,16 @@ const TEAL = '#009cad'
 
 const navItems = [
   { to: '/users', icon: 'bi-people-fill', label: 'العملاء' },
-  { to: '/usb', icon: 'bi-usb-drive-fill', label: 'أجهزة USB' },
+  // { to: '/usb', icon: 'bi-usb-drive-fill', label: 'أجهزة USB' },
   { to: '/publications', icon: 'bi-collection-fill', label: 'المنشورات' },
   { to: '/documents', icon: 'bi-file-earmark-text-fill', label: 'المستندات' },
+  /* 
   { to: '/statistics', icon: 'bi-bar-chart-fill', label: 'الإحصائيات' },
   { to: '/backups', icon: 'bi-hdd-fill', label: 'النسخ الاحتياطية' },
   { to: '/settings', icon: 'bi-gear-fill', label: 'الإعدادات' },
   { to: '/news', icon: 'bi-newspaper', label: 'الأخبار' },
   { to: '/my-account', icon: 'bi-person-badge-fill', label: 'حسابي' },
+  */
   { action: 'logout', icon: 'bi-box-arrow-right', label: 'تسجيل الخروج' },
   { action: 'help', icon: 'bi-question-circle-fill', label: 'مساعدة' },
 ]
@@ -28,31 +30,33 @@ const Header = () => {
   return (
     <header style={{ width: '100%', marginBottom: 20 }}>
       {/* Top Blue Bar */}
-      <div style={{
+      <div className="header-actions-mobile" style={{
         background: '#0a80b0', /* Slightly darker blue from screenshot */
         color: '#fff',
         padding: '12px 20px',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        gap: '10px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 24 }}>🛡️</span>
           <span style={{ fontSize: 20, fontWeight: 700 }}>Locklizard</span>
         </div>
-        <div style={{ fontSize: 22, fontWeight: 700 }}>
+        <div style={{ fontSize: 'var(--header-title-size, 22px)', fontWeight: 700, textAlign: 'center' }}>
           Safeguard Enterprise لحماية PDF
         </div>
       </div>
 
       {/* Info Bar */}
-      <div style={{
+      <div className="header-actions-mobile" style={{
         padding: '6px 20px',
         borderBottom: '1px solid #ddd',
         fontSize: 12,
         color: '#666',
         display: 'flex',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        gap: '5px'
       }}>
         <span>
           مسجل الدخول باسم: <span style={{ color: TEAL }}>A.Fletcher (A.fletcher@locklizard.int)</span>
@@ -63,7 +67,7 @@ const Header = () => {
       </div>
 
       {/* Navigation Menu */}
-      <div style={{ borderBottom: '2px solid #0a80b0', display: 'flex' }}>
+      <div style={{ borderBottom: '2px solid #0a80b0', display: 'flex', flexWrap: 'wrap' }}>
         {navItems.map((item, i) => {
           const isButton = item.action
           const content = (

@@ -26,7 +26,8 @@ class CustomerLicenseDetailsResource extends JsonResource
             'valid_until' => $this->valid_until ? Carbon::parse($this->valid_until)->format('Y-m-d') : null,
 
             'download_url' => $this->file_path ? route('customer-licenses.download', $this->id) : null,
-
+            'publications' => $this->whenLoaded('publications'),
+            'documents'    => $this->whenLoaded('documents'),
         ];
 
         // إذا كانت رخصة جماعية، نجلب عدد الكروت

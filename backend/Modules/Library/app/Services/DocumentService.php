@@ -100,6 +100,7 @@ class DocumentService
             'expiry_date', 'expiry_mode', 'expiry_days',
             'verify_mode', 'verify_frequency_days',
             'grace_period_days', 'max_views_allowed',
+            'print_mode', 'max_prints_allowed', 'log_views', 'log_prints',
         ];
         $hasSecurityUpdate = collect($securityFields)->some(fn($f) => array_key_exists($f, $data));
 
@@ -109,7 +110,11 @@ class DocumentService
 
             foreach ($securityFields as $field) {
                 if (array_key_exists($field, $data)) {
-                    $controls->$field = $data[$field];
+                    $value = $data[$field];
+                    // تطبيع القيم: الفرنت إند يرسل 'none' لكن قاعدة البيانات تستخدم 'never'
+                    if ($field === 'expiry_mode' && $value === 'none') $value = 'never';
+                    if ($field === 'verify_mode' && $value === 'none') $value = 'never';
+                    $controls->$field = $value;
                 }
             }
             if (array_key_exists('expiry_date', $data) && !array_key_exists('expiry_mode', $data)) {

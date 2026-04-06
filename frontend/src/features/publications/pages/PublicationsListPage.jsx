@@ -84,9 +84,8 @@ const PublicationsListPage = () => {
     result.sort((a, b) => {
       // الفرز أبجدياً بناءً على الاسم
       if (sortBy === 'name') return a.name.localeCompare(b.name)
-      // الفرز تصاعدياً بناءً على المعرف (ID)
       if (sortBy === 'id') return a.id - b.id
-      // عدم تغيير الترتيب إذا لم يتم تحديد فرز صالح
+      if (sortBy === 'date') return new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
       return 0
     })
     
@@ -142,10 +141,10 @@ const PublicationsListPage = () => {
   // === بداية رسم واجهة المستخدم (Render) ===
   return (
     // الغلاف العام للمحتوى ينفصل لعمودين (شريط جانبي، والقسم الرئيسي)
-    <div style={{ display: 'flex', gap: 20 }}>
+    <div className="page-layout">
       
       {/* === القائمة الجانبية الداخلية المخصصة لقسم المنشورات === */}
-      <div style={{ width: 180, flexShrink: 0 }}>
+      <div className="page-sidebar">
         {/* قائمة بدون نقاظ ترتيبية */}
         <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {/* حلقة تكرارية لرسم أزرار القائمة الجانبية */}
@@ -174,7 +173,7 @@ const PublicationsListPage = () => {
       </div>
 
       {/* === القسم الرئيسي الواسع لمحتوى المنشورات === */}
-      <div style={{ flex: 1 }}>
+      <div className="page-content">
         
         {/* الترويسة الرئيسية الخاصة بـ LockLizard باللون الـ Teal وتنسيق مُطابق للمانيوال */}
         <div style={{
@@ -216,6 +215,7 @@ const PublicationsListPage = () => {
                 <select value={sortBy} onChange={e => { setSortBy(e.target.value); setCurrentPage(1); }} style={filterSelectStyle}>
                   <option value="name">الاسم (Name)</option>
                   <option value="id">المعرف (ID)</option>
+                  <option value="date">تاريخ الإضافة (Date Added)</option>
                 </select>
               </div>
               
@@ -363,6 +363,12 @@ const PublicationsListPage = () => {
                         <a href="#" onClick={e => { e.preventDefault(); navigate(`/publications/${pub.id}/edit`, { state: { tab: 'documents' } }) }}
                           style={{ color: TEAL, fontWeight: 'bold' }}>{pub.docsCount || 0}</a>
                       </td>
+                    </tr>
+                    
+                    {/* صف عرض تاريخ الإضافة */}
+                    <tr>
+                      <td style={fieldLabelStyle}>تاريخ الإضافة (Date Added)</td>
+                      <td style={fieldValueStyle}>{pub.createdAt || '—'}</td>
                     </tr>
                     
                   </tbody>

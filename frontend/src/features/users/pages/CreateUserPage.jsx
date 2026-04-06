@@ -14,6 +14,8 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { userApi } from '../services/userApi'
+import SelectPublicationModal from '../components/SelectPublicationModal'
+import SelectDocumentModal from '../components/SelectDocumentModal'
 
 const TEAL = '#009cad'
 const GRAY_BG = '#e6e6e6'
@@ -32,6 +34,12 @@ const CreateUserPage = () => {
     notes: '',
     emailLicense: true
   })
+
+  // حالات النوافذ المنبثقة للاختيار
+  const [isPubModalOpen, setIsPubModalOpen] = useState(false)
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false)
+  const [selectedPubs, setSelectedPubs] = useState([])
+  const [selectedDocs, setSelectedDocs] = useState([])
 
   // خطاف (Hook) للاتصال بالخادم وإرسال طلب الإضافة
   const mutation = useMutation({
@@ -65,6 +73,8 @@ const CreateUserPage = () => {
       never_expires: form.neverExpires,
       valid_until: form.neverExpires ? null : form.validUntil, // إرسال null إذا كانت لا تنتهي
       send_via_email: form.emailLicense,
+      publications: selectedPubs.map(p => p.id),
+      documents: selectedDocs.map(d => d.id)
     }
 
     if (form.type === 'group') {
@@ -182,18 +192,20 @@ const CreateUserPage = () => {
 
           </div>
 
-          {/* قسم إدارة الوصول المسبق (تركت كعناصر للقراءة فقط حتى يتم إنشاء العميل) */}
+          {/* قسم إدارة الوصول المسبق */}
           <div style={sectionHeaderStyle}>إدارة الوصول (Manage Access)</div>
           <div style={{ padding: '12px 20px' }}>
-            <div style={{ marginBottom: 8 }}>
-              <a href="#" onClick={(e) => { e.preventDefault(); toast('يجب إضافة العميل أولاً (Save user first)') }} style={linkStyle}>
+            <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <a href="#" onClick={(e) => { e.preventDefault(); setIsPubModalOpen(true); }} style={linkStyle}>
                 <i className="bi bi-journal-text" style={{ marginRow: 6 }} /> تعيين الوصول للمنشورات (Set Publication Access)
               </a>
+              {selectedPubs.length > 0 && <span style={{fontSize: 12, color: TEAL, fontWeight: 'bold'}}>{selectedPubs.length} محدد</span>}
             </div>
-            <div>
-              <a href="#" onClick={(e) => { e.preventDefault(); toast('يجب إضافة العميل أولاً (Save user first)') }} style={linkStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <a href="#" onClick={(e) => { e.preventDefault(); setIsDocModalOpen(true); }} style={linkStyle}>
                 <i className="bi bi-file-earmark-text" style={{ marginRow: 6 }} /> تعيين الوصول للمستندات (Set Document Access)
               </a>
+              {selectedDocs.length > 0 && <span style={{fontSize: 12, color: TEAL, fontWeight: 'bold'}}>{selectedDocs.length} محدد</span>}
             </div>
           </div>
 
@@ -222,6 +234,18 @@ const CreateUserPage = () => {
 
         </form>
       </div>
+
+      <SelectPublicationModal 
+        isOpen={isPubModalOpen} 
+        onClose={() => setIsPubModalOpen(false)} 
+        onSelect={(pubs) => { setSelectedPubs(pubs); setIsPubModalOpen(false) }} 
+      />
+      
+      <SelectDocumentModal 
+        isOpen={isDocModalOpen} 
+        onClose={() => setIsDocModalOpen(false)} 
+        onSelect={(docs) => { setSelectedDocs(docs); setIsDocModalOpen(false) }} 
+      />
     </div>
   )
 }
