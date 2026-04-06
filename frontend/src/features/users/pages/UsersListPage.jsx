@@ -208,7 +208,7 @@ const UsersListPage = () => {
 
           {/* شريط الفلاتر */}
           <div style={{ marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13 }}>
+            <div className="mobile-filter-row" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13 }}>
               <label style={{ fontWeight: 600, minWidth: 40 }}>تصفية</label>
               <div style={{ display: 'flex', alignItems: 'center', flex: 1, maxWidth: 400 }}>
                 <span style={{ color: TEAL, fontSize: 16, borderLeft: '1px solid #ccc', padding: '0 8px', border: '1px solid #ccc', height: 28, display: 'flex', alignItems: 'center', background: '#fafafa' }}>🔍</span>
@@ -217,7 +217,7 @@ const UsersListPage = () => {
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13, flexWrap: 'wrap' }}>
+            <div className="mobile-filter-row" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13, flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <label style={{ fontWeight: 600 }}>فرز حسب</label>
                 <select value={sortBy} onChange={e => { setSortBy(e.target.value); setCurrentPage(1); }} style={filterSelectStyle}>
@@ -250,14 +250,14 @@ const UsersListPage = () => {
 
             <hr style={{ border: 'none', borderTop: '1px solid #a3d9df', margin: '16px 0' }} />
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13 }}>
+            <div className="mobile-check-row" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13 }}>
               <span style={{ fontWeight: 600 }}>الكل</span>
               <a href="#" onClick={e => { e.preventDefault(); checkAll() }} style={{ color: TEAL }}>تحديد</a> <span style={{ color: '#ccc' }}>|</span>
               <a href="#" onClick={e => { e.preventDefault(); uncheckAll() }} style={{ color: TEAL }}>إلغاء التحديد</a> <span style={{ color: '#ccc' }}>|</span>
               <a href="#" onClick={e => { e.preventDefault(); invertSelection() }} style={{ color: TEAL }}>عكس التحديد</a>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 8, fontSize: 13 }}>
+            <div className="mobile-bulk-row" style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 8, fontSize: 13 }}>
               <label style={{ fontWeight: 600, marginTop: 6 }}>مع كل المحدد<br/><span style={{fontSize:11, color:'#777'}}>(With all checked)</span></label>
               <div style={{ display: 'flex', flexDirection: 'column', flex: 1, maxWidth: 300 }}>
                 <select value={bulkAction} onChange={e => { setBulkAction(e.target.value); setSelectedResource(null) }} style={{ ...filterSelectStyle, minWidth: 200 }}>
@@ -308,11 +308,11 @@ const UsersListPage = () => {
           {filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 40, color: '#888' }}>لا يوجد عملاء</div>
           ) : filtered.slice((currentPage - 1) * showAtLeast, currentPage * showAtLeast).map((u) => (
-            <div key={u.id} style={{
+            <div key={u.id} className="mobile-card" style={{
               display: 'flex', alignItems: 'stretch',
               background: '#f8f8f8',
               marginBottom: 16,
-              borderRight: `8px solid ${getBorderColor(u.ui_status)}`, /* Right border for RTL */
+              borderRight: `8px solid ${getBorderColor(u.ui_status)}`,
               borderBottom: '1px solid #eee',
               borderTop: '1px solid #eee',
               borderLeft: '1px solid #eee'
@@ -380,7 +380,7 @@ const UsersListPage = () => {
               </div>
 
               {/* Action Icons (Top Left corner for RTL) */}
-              <div style={{ display: 'flex', gap: 6, padding: '8px 12px', alignItems: 'flex-start', background: '#fff' }}>
+              <div className="mobile-card-actions" style={{ display: 'flex', gap: 6, padding: '8px 12px', alignItems: 'flex-start', background: '#fff' }}>
                 <ActionIcon icon={u.ui_status?.account_status === 'suspend' ? "bi-check-circle" : "bi-slash-circle"} 
                   color={u.ui_status?.account_status === 'suspend' ? "#4caf50" : "#ff9800"} 
                   title={u.ui_status?.account_status === 'suspend' ? "تفعيل" : "تجميد"}

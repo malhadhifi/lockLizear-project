@@ -690,6 +690,12 @@ table {
   gap: 10px;
 }
 
+/* ===== Prevent any horizontal overflow globally ===== */
+html, body {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+}
+
 /* ===== Tablet breakpoint (768px) ===== */
 @media (max-width: 768px) {
   /* Sidebar toggle logic */
@@ -747,6 +753,115 @@ table {
     text-align: center !important;
   }
 
+  /* ===== Header nav bar – equal-width tabs ===== */
+  .mobile-nav-bar {
+    flex-wrap: wrap !important;
+  }
+
+  .mobile-nav-bar > a {
+    flex: 1 1 auto !important;
+    text-align: center !important;
+    padding: 8px 6px !important;
+    font-size: 11px !important;
+    border-left: none !important;
+    border-bottom: 1px solid #eee !important;
+  }
+
+  .mobile-nav-bar > a > div {
+    justify-content: center !important;
+    gap: 4px !important;
+  }
+
+  .mobile-nav-bar > a > div > i {
+    font-size: 12px !important;
+  }
+
+  /* ===== Filter rows – stack vertically ===== */
+  .mobile-filter-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .mobile-filter-row > label {
+    min-width: unset !important;
+  }
+
+  .mobile-filter-row > div {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .mobile-filter-row > div > div {
+    width: 100% !important;
+  }
+
+  .mobile-filter-row select {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .mobile-filter-row input {
+    width: 100% !important;
+  }
+
+  /* ===== Check/Uncheck/Invert row ===== */
+  .mobile-check-row {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  /* ===== Bulk action row – stack vertically ===== */
+  .mobile-bulk-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .mobile-bulk-row select {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .mobile-bulk-row > div {
+    max-width: 100% !important;
+  }
+
+  .mobile-bulk-row button {
+    width: 100% !important;
+    padding: 10px !important;
+  }
+
+  /* ===== Item cards – stack checkbox, content, actions vertically ===== */
+  .mobile-card {
+    flex-direction: column !important;
+  }
+
+  .mobile-card > div:first-child {
+    padding: 8px 12px 0 12px !important;
+  }
+
+  .mobile-card table {
+    width: 100% !important;
+  }
+
+  .mobile-card table td {
+    white-space: normal !important;
+    word-break: break-word !important;
+    padding-left: 8px !important;
+  }
+
+  /* ===== Card action icons – horizontal row at bottom ===== */
+  .mobile-card-actions {
+    flex-direction: row !important;
+    justify-content: center !important;
+    padding: 8px !important;
+    gap: 10px !important;
+    border-top: 1px solid #eee !important;
+  }
+
   /* Form breakpoints – stack label above input */
   .form-row {
     flex-direction: column !important;
@@ -786,87 +901,9 @@ table {
     flex-wrap: wrap !important;
   }
 
-  /* --- Card layout mobile adjustments --- */
-  /* Document & Publication list cards: stack vertically */
-  div[style*="alignItems: 'stretch'"] {
-    flex-direction: column !important;
-  }
-
-  /* Action icon buttons row in cards */
-  div[style*="gap: 6"] {
-    flex-wrap: wrap !important;
-  }
-
-  /* Filter bar stacking on mobile */
-  div[style*="gap: 16"][style*="fontSize: 13"] {
-    flex-wrap: wrap !important;
-  }
-
-  /* Pagination buttons */
-  div[style*="justifyContent: 'center'"][style*="gap: 10"] {
-    flex-wrap: wrap !important;
-    gap: 6px !important;
-  }
-
-  /* --- Modal responsive fixes --- */
-  /* Fixed modals should constrain to viewport */
-  div[style*="position: 'fixed'"] > div,
-  div[style*="position: fixed"] > div {
-    max-width: 95vw !important;
-    max-height: 90vh !important;
-    overflow-y: auto !important;
-  }
-
-  /* DocumentDetailPage responsive */
-  div[style*="padding: '20px 40px'"] {
-    padding: 8px !important;
-  }
-
-  /* Tab buttons in document detail should wrap */
-  div[style*="borderBottom: '2px solid"] {
-    flex-wrap: wrap !important;
-  }
-
-  div[style*="borderBottom: '2px solid"] button {
-    flex: 1 !important;
-    min-width: 0 !important;
-    font-size: 11px !important;
-    padding: 10px 8px !important;
-    white-space: nowrap !important;
-  }
-
-  /* Detail tables inside document pages */
-  div[style*="maxWidth: 600"] {
-    max-width: 100% !important;
-  }
-
-  div[style*="maxWidth: 600"] table td {
-    display: block !important;
-    width: 100% !important;
-    padding: 4px 8px !important;
-  }
-
   /* UserDetailPage container */
-  div[style*="maxWidth: 650"] {
+  .main-content-area div[style] {
     max-width: 100% !important;
-    margin: 10px auto !important;
-  }
-
-  /* Footer action buttons wrap */
-  div[style*="justifyContent: 'center'"][style*="backgroundColor: '#e6e6e6'"] {
-    flex-wrap: wrap !important;
-    padding: 10px !important;
-  }
-
-  /* Event log text container */
-  div[style*="fontSize: 11"][dir="ltr"] {
-    word-break: break-all !important;
-    overflow-wrap: break-word !important;
-  }
-
-  /* Status + action button rows */
-  div[style*="gap: 12"][style*="alignItems: 'center'"] {
-    flex-wrap: wrap !important;
   }
 }
 
@@ -875,6 +912,11 @@ table {
   /* Further reduce padding */
   .main-content-area {
     padding: 0 4px 12px 4px !important;
+  }
+
+  /* Filter box interior padding */
+  .mobile-filter-row {
+    gap: 6px !important;
   }
 
   /* Sidebar items go single column on very small screens */
@@ -886,37 +928,26 @@ table {
     min-width: 100% !important;
   }
 
-  /* Filter row items stack fully */
-  div[style*="gap: 16"][style*="fontSize: 13"] > div {
-    width: 100% !important;
-    min-width: 100% !important;
-  }
-
-  /* Document card action buttons */
-  div[style*="gap: 6"][style*="padding: '8px 12px'"] {
-    justify-content: center !important;
-    padding: 8px !important;
-  }
-
-  /* Bulk action row stacking */
-  div[style*="gap: 16"][style*="marginBottom: 8"] {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 8px !important;
-  }
-
-  div[style*="gap: 16"][style*="marginBottom: 8"] select {
-    max-width: 100% !important;
-  }
-
-  /* Tab buttons even smaller */
-  div[style*="borderBottom: '2px solid"] button {
+  /* Nav bar even smaller text */
+  .mobile-nav-bar > a {
+    padding: 6px 4px !important;
     font-size: 10px !important;
-    padding: 8px 4px !important;
   }
 
-  /* Modal internal tables scroll */
-  table {
+  /* Bulk action button full width */
+  .mobile-bulk-row button {
+    padding: 12px !important;
+    font-size: 14px !important;
+  }
+
+  /* Card action icons slightly larger touch targets */
+  .mobile-card-actions button {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* Table text smaller */
+  .mobile-card table {
     font-size: 11px !important;
   }
 }
@@ -930,4 +961,5 @@ table {
     color: var(--primary);
     cursor: pointer;
     padding: 0 10px;
-}
+}
+

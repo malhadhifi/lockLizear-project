@@ -32,7 +32,7 @@ function ViewCustomersPopup({ pubId, pubName, onClose }) {
           <span><i className="bi bi-people" /> عملاء المنشور: {pubName}</span>
           <button onClick={onClose} style={closeBtnStyle}>✕</button>
         </div>
-        <div style={{ padding: 16, maxHeight: 350, overflowY: 'auto' }}>
+        <div style={{ padding: 16, maxHeight: 350, overflowY: 'auto', overflowX: 'auto' }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: 20, color: TEAL }}>جاري التحميل... ⏳</div>
           ) : customers.length === 0 ? (
@@ -96,7 +96,7 @@ function ViewDocumentsPopup({ pubId, pubName, onClose }) {
           <span><i className="bi bi-file-earmark-pdf" /> مستندات المنشور: {pubName}</span>
           <button onClick={onClose} style={closeBtnStyle}>✕</button>
         </div>
-        <div style={{ padding: 16, maxHeight: 350, overflowY: 'auto' }}>
+        <div style={{ padding: 16, maxHeight: 350, overflowY: 'auto', overflowX: 'auto' }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: 20, color: TEAL }}>جاري التحميل... ⏳</div>
           ) : documents.length === 0 ? (
@@ -205,7 +205,7 @@ export default function SelectPublicationModal({ isOpen, onClose, onSelect, init
           
           <div style={filterBoxStyle}>
             {/* فلتر */}
-            <div style={{ display: 'flex', marginBottom: 10, alignItems: 'center' }}>
+            <div className="mobile-filter-row" style={{ display: 'flex', marginBottom: 10, alignItems: 'center' }}>
               <span style={{ width: 80, fontWeight: 'bold', fontSize: 13, color: '#333' }}>Filter</span>
               <div style={{ flex: 1, position: 'relative' }}>
                 <input type="text" value={filterText} onChange={e => setFilterText(e.target.value)} style={inputStyle} placeholder="بحث بالاسم أو الوصف..." />
@@ -214,7 +214,7 @@ export default function SelectPublicationModal({ isOpen, onClose, onSelect, init
             </div>
             
             {/* فرز */}
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <div className="mobile-filter-row" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
               <span style={{ width: 80, fontWeight: 'bold', fontSize: 13, color: '#333' }}>Sort by</span>
               <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ ...inputStyle, width: 140 }}>
                 <option value="title">Title</option>
@@ -240,15 +240,15 @@ export default function SelectPublicationModal({ isOpen, onClose, onSelect, init
             </div>
 
             {/* Check/Uncheck + With all checked */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 15 }}>
-               <div style={{ fontSize: 13, color: TEAL }}>
+            <div className="mobile-bulk-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 15, flexWrap: 'wrap', gap: 10 }}>
+               <div className="mobile-check-row" style={{ fontSize: 13, color: TEAL }}>
                   All &nbsp;&nbsp; 
                   <a href="#" onClick={(e) => { e.preventDefault(); setSelectedIds(filtered.map(d => d.id)) }} style={{ textDecoration: 'none', color: TEAL }}>Check</a> | 
                   <a href="#" onClick={(e) => { e.preventDefault(); setSelectedIds([]) }} style={{ textDecoration: 'none', color: TEAL }}> Uncheck</a> | 
                   <a href="#" onClick={(e) => { e.preventDefault(); setSelectedIds(prev => filtered.map(d => d.id).filter(id => !prev.includes(id))) }} style={{ textDecoration: 'none', color: TEAL }}> Invert</a>
                </div>
-               <div style={{ display: 'flex', alignItems: 'center' }}>
-                 <div style={{ marginRight: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+               <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10, flex: 1, justifyContent: 'flex-end' }}>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: 1, minWidth: 200 }}>
                    <span style={{ fontSize: 13, color: '#333' }}>With all checked</span>
                    <select value={withChecked} onChange={e => setWithChecked(e.target.value)} style={{ ...inputStyle, width: 180 }}>
                      <option value=""></option>
@@ -284,7 +284,7 @@ export default function SelectPublicationModal({ isOpen, onClose, onSelect, init
           </div>
 
           {/* الجدول */}
-          <div style={{ maxHeight: 300, overflowY: 'auto', borderBottom: '1px solid #ccc' }}>
+          <div style={{ maxHeight: 300, overflowY: 'auto', overflowX: 'auto', borderBottom: '1px solid #ccc' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead style={{ position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                 <tr style={{ borderBottom: '2px solid #ddd', color: '#555' }}>

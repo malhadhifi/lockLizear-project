@@ -166,7 +166,7 @@ const DocumentsListPage = () => {
         <div style={{ border: `1px solid ${TEAL}`, borderTop: 'none', padding: '16px 20px', background: '#fff' }}>
 
           {/* شريط البحث */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13 }}>
+          <div className="mobile-filter-row" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13 }}>
             <label style={{ fontWeight: 600, minWidth: 40 }}>تصفية (Filter)</label>
             <div style={{ display: 'flex', alignItems: 'center', flex: 1, maxWidth: 400 }}>
               <span style={{ color: TEAL, fontSize: 16, padding: '0 8px', border: '1px solid #ccc', borderLeft: 'none', height: 28, display: 'flex', alignItems: 'center', background: '#fafafa' }}>🔍</span>
@@ -181,7 +181,7 @@ const DocumentsListPage = () => {
           </div>
 
           {/* قوائم الفرز والحالة وعدد النتائج */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13, flexWrap: 'wrap' }}>
+          <div className="mobile-filter-row" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <label style={{ fontWeight: 600 }}>فرز حسب (Sort by)</label>
               <select value={sortBy} onChange={e => handleFilterChange(setSortBy)(e.target.value)} style={filterSelectStyle}>
@@ -213,7 +213,7 @@ const DocumentsListPage = () => {
           <hr style={{ border: 'none', borderTop: '1px solid #a3d9df', margin: '16px 0' }} />
 
           {/* تحديد شامل */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13 }}>
+          <div className="mobile-check-row" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13 }}>
             <span style={{ fontWeight: 600 }}>الكل (All)</span>
             <a href="#" onClick={e => { e.preventDefault(); checkAll() }}         style={{ color: TEAL }}>تحديد (Check)</a>     <span style={{ color: '#ccc' }}>|</span>
             <a href="#" onClick={e => { e.preventDefault(); uncheckAll() }}       style={{ color: TEAL }}>إلغاء (Uncheck)</a>   <span style={{ color: '#ccc' }}>|</span>
@@ -221,7 +221,7 @@ const DocumentsListPage = () => {
           </div>
 
           {/* عمليات جماعية */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8, fontSize: 13 }}>
+          <div className="mobile-bulk-row" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8, fontSize: 13 }}>
             <label style={{ fontWeight: 600 }}>مع كل المحدد (With all checked)</label>
             <select value={bulkAction} onChange={e => setBulkAction(e.target.value)}
               style={{ ...filterSelectStyle, minWidth: 200, flex: 1, maxWidth: 300 }}>
@@ -277,7 +277,7 @@ const DocumentsListPage = () => {
                 لا توجد مستندات مطابقة (No documents found)
               </div>
             ) : documents.map(doc => (
-              <div key={doc.id} style={{
+              <div key={doc.id} className="mobile-card" style={{
                 display: 'flex', alignItems: 'stretch',
                 background: '#f8f8f8', marginBottom: 16,
                 borderRight: `8px solid ${borderColor[doc.status] || '#ccc'}`,
@@ -323,7 +323,7 @@ const DocumentsListPage = () => {
                     </tbody>
                   </table>
                 </div>
-                <div style={{ display: 'flex', gap: 6, padding: '8px 12px', alignItems: 'flex-start', background: '#fff' }}>
+                <div className="mobile-card-actions" style={{ display: 'flex', gap: 6, padding: '8px 12px', alignItems: 'flex-start', background: '#fff' }}>
                   <ActionIcon icon="bi-slash-circle" color="#ff9800" title="إيقاف (Suspend)"
                     onClick={() => handleSingleAction([doc.id], 'Suspend', 'تم إيقاف المستند')} />
                   <ActionIcon icon="bi-x" color="#f44336" title="حذف (Delete)" bold

@@ -70,7 +70,7 @@ export default function SelectDocumentModal({ isOpen, onClose, onSelect, initial
         <div style={{ padding: '20px 24px', backgroundColor: '#fff' }}>
           
           <div style={filterBoxStyle}>
-            <div style={{ display: 'flex', marginBottom: 10, alignItems: 'center' }}>
+            <div className="mobile-filter-row" style={{ display: 'flex', marginBottom: 10, alignItems: 'center' }}>
               <span style={{ width: 80, fontWeight: 'bold', fontSize: 13, color: '#333' }}>Filter</span>
               <div style={{ flex: 1, position: 'relative' }}>
                 <input type="text" value={filterText} onChange={e => setFilterText(e.target.value)} style={inputStyle} placeholder="بحث بالاسم أو الوصف..." />
@@ -78,7 +78,7 @@ export default function SelectDocumentModal({ isOpen, onClose, onSelect, initial
               </div>
             </div>
             
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <div className="mobile-filter-row" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
               <span style={{ width: 80, fontWeight: 'bold', fontSize: 13, color: '#333' }}>Sort by</span>
               <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ ...inputStyle, width: 140 }}>
                 <option value="title">Title</option>
@@ -103,15 +103,15 @@ export default function SelectDocumentModal({ isOpen, onClose, onSelect, initial
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 15 }}>
-               <div style={{ fontSize: 13, color: TEAL }}>
+            <div className="mobile-bulk-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 15, flexWrap: 'wrap', gap: 10 }}>
+               <div className="mobile-check-row" style={{ fontSize: 13, color: TEAL }}>
                   All &nbsp;&nbsp; 
                   <a href="#" onClick={(e) => { e.preventDefault(); setSelectedIds(filtered.map(d => d.id)) }} style={{ textDecoration: 'none', color: TEAL }}>Check</a> | 
                   <a href="#" onClick={(e) => { e.preventDefault(); setSelectedIds([]) }} style={{ textDecoration: 'none', color: TEAL }}> Uncheck</a> | 
                   <a href="#" onClick={(e) => { e.preventDefault(); setSelectedIds(prev => filtered.map(d => d.id).filter(id => !prev.includes(id))) }} style={{ textDecoration: 'none', color: TEAL }}> Invert</a>
                </div>
-               <div style={{ display: 'flex', alignItems: 'center' }}>
-                 <div style={{ marginRight: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+               <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10, flex: 1, justifyContent: 'flex-end' }}>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: 1, minWidth: 200 }}>
                    <span style={{ fontSize: 13, color: '#333' }}>With all checked</span>
                    <select value={withChecked} onChange={e => setWithChecked(e.target.value)} style={{ ...inputStyle, width: 180 }}>
                      <option value=""></option>
@@ -145,7 +145,7 @@ export default function SelectDocumentModal({ isOpen, onClose, onSelect, initial
             {filtered.length} نتيجة {filtered.length !== documents.length && `(من ${documents.length})`}
           </div>
 
-          <div style={{ maxHeight: 300, overflowY: 'auto', borderBottom: '1px solid #ccc' }}>
+          <div style={{ maxHeight: 300, overflowY: 'auto', overflowX: 'auto', borderBottom: '1px solid #ccc' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <tbody>
                 {isLoading && (

@@ -62,8 +62,8 @@ const ViewCustomersModal = ({ open, onClose, docId, accessList }) => {
     <Modal open={open} onClose={onClose} title={`العملاء الذين لديهم وصول للمستند المعرف: ${docId}`} icon="bi-people-fill" width={780}>
       <div style={{ padding: 16 }}>
         {/* التصفية */}
-        <div style={{ border: '1px solid #ccc', padding: 12, marginBottom: 16, background: '#fcfcfc', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', fontSize: 13 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: 280 }}>
+        <div className="mobile-filter-row" style={{ border: '1px solid #ccc', padding: 12, marginBottom: 16, background: '#fcfcfc', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', fontSize: 13 }}>
+          <div className="mobile-filter-row" style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', maxWidth: 280 }}>
             <label style={{ width: 80, color: '#333' }}>تصفية (Filter)</label>
             <div style={{ position: 'relative', flex: 1 }}>
               <input type="text" value={filter} onChange={e => setFilter(e.target.value)} style={{ width: '100%', padding: '4px 28px 4px 8px', border: '1px solid #ccc', borderRadius: 2 }} />
@@ -81,7 +81,7 @@ const ViewCustomersModal = ({ open, onClose, docId, accessList }) => {
             </select>
           </div>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 'auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <label style={{ color: '#333' }}>عرض على الأقل</label>
             <select value={showAtLeast} onChange={e => setShowAtLeast(Number(e.target.value))} style={{ padding: '4px', border: '1px solid #ccc', width: 60 }}>
               <option value={25}>25</option>
@@ -98,7 +98,8 @@ const ViewCustomersModal = ({ open, onClose, docId, accessList }) => {
         </div>
 
         {/* الجدول */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, borderTop: '1px solid #ddd' }}>
+        <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, borderTop: '1px solid #ddd', minWidth: 500 }}>
           <thead>
             <tr style={{ background: '#fff', borderBottom: '2px solid #ddd', color: '#333' }}>
               <th style={{ padding: '8px', textAlign: 'right', fontWeight: 'bold' }}>المعرف (ID)</th>
@@ -125,6 +126,7 @@ const ViewCustomersModal = ({ open, onClose, docId, accessList }) => {
             )}
           </tbody>
         </table>
+        </div>
         
         {/* زر التصدير السفلي */}
         <div style={{ marginTop: 16 }}>
@@ -188,15 +190,15 @@ const GrantRevokeModal = ({ open, onClose, docId, allCustomers, accessList, onBu
       <div style={{ padding: 16 }}>
         {/* صندوق التحكم العلوي */}
         <div style={{ border: `1px solid ${TEAL}`, padding: 16, marginBottom: 16, fontSize: 13 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
+          <div className="mobile-filter-row" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
             <label style={{ width: 80, color: '#333' }}>تصفية (Filter)</label>
-            <div style={{ position: 'relative', width: 280 }}>
+            <div style={{ position: 'relative', width: '100%', maxWidth: 280 }}>
               <input type="text" value={filter} onChange={e => setFilter(e.target.value)} style={{ width: '100%', padding: '4px 28px 4px 8px', border: '1px solid #ccc', borderRadius: 2 }} />
               <i className="bi bi-search" style={{ position: 'absolute', right: 8, top: 6, color: '#888' }} />
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+          <div className="mobile-filter-row" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
             <label style={{ color: '#333' }}>فرز حسب (Sort by)</label>
             <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ padding: '4px', border: '1px solid #ccc', width: 100 }}>
               <option value="name">الاسم</option>
@@ -220,7 +222,7 @@ const GrantRevokeModal = ({ open, onClose, docId, allCustomers, accessList, onBu
 
           <hr style={{ border: 0, borderTop: '1px solid #ddd', margin: '16px 0' }} />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
+          <div className="mobile-check-row" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
             <span style={{ color: '#333' }}>الكل</span>
             <a href="#" onClick={e => { e.preventDefault(); setSelected(filtered.map(x => x.id)) }} style={{ color: LINK_COLOR, textDecoration: 'underline' }}>تحديد (Check)</a>
             <span style={{ color: '#ccc' }}>|</span>
@@ -229,11 +231,11 @@ const GrantRevokeModal = ({ open, onClose, docId, allCustomers, accessList, onBu
             <a href="#" onClick={e => { e.preventDefault(); setSelected(filtered.map(x => x.id).filter(id => !selected.includes(id))) }} style={{ color: LINK_COLOR, textDecoration: 'underline' }}>عكس (Invert)</a>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+          <div className="mobile-bulk-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', flex: 1 }}>
               <label style={{ color: '#333', marginTop: 6, fontWeight: 'bold' }}>مع كل المحدد (With all checked)</label>
               <div>
-                <select value={action} onChange={e => setAction(e.target.value)} style={{ padding: '4px', border: '1px solid #ccc', width: 220, marginBottom: action === 'grant_limited' ? 8 : 0 }}>
+                <select value={action} onChange={e => setAction(e.target.value)} style={{ padding: '4px', border: '1px solid #ccc', width: '100%', maxWidth: 220, marginBottom: action === 'grant_limited' ? 8 : 0 }}>
                   <option value="">—</option>
                   <option value="grant_unlimited">منح وصول غير محدود</option>
                   <option value="grant_limited">منح وصول محدود</option>
@@ -395,10 +397,10 @@ const HistoryModal = ({ open, onClose, doc, allCustomers, type = 'open' }) => {
             <i className="bi bi-caret-down-fill" style={{ marginRight: 'auto', color: '#888' }} />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+          <div className="mobile-filter-row" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
             <label style={{ color: '#333' }}>معرف العميل (Customers ID):</label>
-            <input type="text" value={custId} onChange={e => setCustId(e.target.value)} placeholder="مثال: 1" style={{ padding: '6px 8px', border: '1px solid #ccc', width: 250, borderRadius: 2 }} />
-            <a href="#" onClick={(e) => { e.preventDefault(); setShowSelectCustomer(!showSelectCustomer) }} style={{ color: LINK_COLOR, textDecoration: 'underline', fontWeight: 'bold' }}>
+            <input type="text" value={custId} onChange={e => setCustId(e.target.value)} placeholder="مثال: 1" style={{ padding: '6px 8px', border: '1px solid #ccc', width: '100%', maxWidth: 250, borderRadius: 2 }} />
+            <a href="#" onClick={(e) => { e.preventDefault(); setShowSelectCustomer(!showSelectCustomer) }} style={{ color: LINK_COLOR, textDecoration: 'underline', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
               <i className="bi bi-box-arrow-up-right" style={{ marginLeft: 4 }}/> 
               تحديد العملاء (Select customers...)
             </a>
@@ -422,14 +424,14 @@ const HistoryModal = ({ open, onClose, doc, allCustomers, type = 'open' }) => {
             </div>
           )}
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div className="mobile-filter-row" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <label style={{ color: '#333' }}>بين (Between):</label>
-            <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} style={{ padding: '6px', border: '1px solid #ccc', borderRadius: 2 }} />
+            <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} style={{ padding: '6px', border: '1px solid #ccc', borderRadius: 2, flex: 1, maxWidth: 180 }} />
             <label style={{ color: '#333' }}>و (And):</label>
-            <input type="date" value={untilDate} onChange={e => setUntilDate(e.target.value)} style={{ padding: '6px', border: '1px solid #ccc', borderRadius: 2 }} />
+            <input type="date" value={untilDate} onChange={e => setUntilDate(e.target.value)} style={{ padding: '6px', border: '1px solid #ccc', borderRadius: 2, flex: 1, maxWidth: 180 }} />
             <i className="bi bi-info-circle text-primary" title="اترك التواريخ فارغة لعرض السجل بالكامل" />
             
-            <button onClick={handleSearch} disabled={isLoading} style={{ marginRight: 'auto', background: '#337ab7', color: '#fff', border: 'none', padding: '8px 30px', borderRadius: 2, fontSize: 13, cursor: isLoading ? 'wait' : 'pointer', fontWeight: 'bold' }}>
+            <button onClick={handleSearch} disabled={isLoading} style={{ background: '#337ab7', color: '#fff', border: 'none', padding: '8px 30px', borderRadius: 2, fontSize: 13, cursor: isLoading ? 'wait' : 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
               {isLoading ? 'جاري البحث...' : 'موافق OK'}
             </button>
           </div>
@@ -437,12 +439,12 @@ const HistoryModal = ({ open, onClose, doc, allCustomers, type = 'open' }) => {
         
         {/* الجدول (نتيجة البحث) */}
         {results !== null && (
-          <div style={{ border: '1px solid #ddd' }}>
-            <div style={{ background: TEAL, color: '#fff', padding: '6px 12px', fontSize: 13, fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ border: '1px solid #ddd', overflowX: 'auto' }}>
+            <div className="mobile-filter-row" style={{ background: TEAL, color: '#fff', padding: '6px 12px', fontSize: 13, fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
                <span>نتائج السجل ({results.length} عملية)</span>
                {results.length > 0 && <span>وقت آخر عملية: {results[0].dateTime}</span>}
             </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 450 }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid #ddd', background: '#f5f5f5' }}>
                   <th style={{ padding: '10px 8px', textAlign: 'right' }}>المعرف (ID)</th>
@@ -620,7 +622,7 @@ const DocumentDetailPage = () => {
         </div>
 
         {/* التبويبات */}
-        <div style={{ display: 'flex', background: '#f0f0f0', borderBottom: `2px solid ${TEAL}` }}>
+        <div className="mobile-nav-bar" style={{ display: 'flex', background: '#f0f0f0', borderBottom: `2px solid ${TEAL}`, flexWrap: 'wrap' }}>
           {[
             { id: 'details', lbl: 'تعديل المستند (Edit Document)' },
             { id: 'drm', lbl: 'إعدادات الحماية (Security Settings)' },
@@ -629,7 +631,7 @@ const DocumentDetailPage = () => {
             <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
               background: activeTab === t.id ? TEAL : 'transparent',
               color: activeTab === t.id ? '#fff' : '#555',
-              border: 'none', padding: '12px 24px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer'
+              border: 'none', padding: '12px 24px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer', flex: '1 1 auto', minWidth: 0
             }}>
               {t.lbl}
             </button>
@@ -641,7 +643,7 @@ const DocumentDetailPage = () => {
           
           {/* Details */}
           {activeTab === 'details' && (
-            <div style={{ maxWidth: 600 }}>
+            <div style={{ maxWidth: 600, width: '100%' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <tbody>
                   <tr style={{ borderBottom: '1px solid #eee' }}><td style={{ padding: '10px 16px', fontWeight: 'bold', width: 200, color: '#333' }}>العنوان (Title)</td><td style={{ padding: '10px 0' }}>{document.title}</td></tr>
@@ -669,7 +671,7 @@ const DocumentDetailPage = () => {
 
           {/* DRM Settings */}
           {activeTab === 'drm' && (
-            <div style={{ maxWidth: 600 }}>
+            <div style={{ maxWidth: 600, width: '100%' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <tbody>
                   <tr style={{ borderBottom: '1px solid #eee' }}><td style={{ padding: '10px 16px', fontWeight: 'bold', width: 220, color: '#333' }}>طريقة الانتهاء (Expiry Mode)</td>

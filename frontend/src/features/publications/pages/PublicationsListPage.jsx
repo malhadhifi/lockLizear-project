@@ -193,7 +193,7 @@ const PublicationsListPage = () => {
           <div style={{ marginBottom: 12 }}>
             
             {/* شريط البحث النصي (Filter) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13 }}>
+            <div className="mobile-filter-row" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13 }}>
               {/* عنوان دلالي للبحث */}
               <label style={{ fontWeight: 600, minWidth: 40 }}>تصفية (Filter)</label>
               {/* مجموعة حقل الإدخال مع الأيقونة الملتصقة به */}
@@ -207,7 +207,7 @@ const PublicationsListPage = () => {
             </div>
 
             {/* صف القوائم المنسدلة للفرز وعرض الأعداد */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13, flexWrap: 'wrap' }}>
+            <div className="mobile-filter-row" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13, flexWrap: 'wrap' }}>
               
               {/* فرز حسب (Sort by) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -246,7 +246,7 @@ const PublicationsListPage = () => {
             <hr style={{ border: 'none', borderTop: '1px solid #a3d9df', margin: '16px 0' }} />
 
             {/* الروابط الزرقاء لتحديد أو إلغاء تحديد مربعات الاختيار */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13 }}>
+            <div className="mobile-check-row" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, fontSize: 13 }}>
               {/* النص المرجعي الثابت */}
               <span style={{ fontWeight: 600 }}>الكل (All)</span>
               {/* رابط سريع لتحديد كل العناصر الحالية المعروضة */}
@@ -258,7 +258,7 @@ const PublicationsListPage = () => {
             </div>
 
             {/* الجزء الخاص بتنفيذ الإجراءات المتعددة (Bulk Actions) المنسدلة بناءً للمانيوال */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8, fontSize: 13 }}>
+            <div className="mobile-bulk-row" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8, fontSize: 13 }}>
               {/* التسمية التوضيحية للقائمة المنسدلة للعمليات المتعددة */}
               <label style={{ fontWeight: 600 }}>مع كل المحدد (With all checked)</label>
               {/* القائمة المنسدلة التي تتضمن كافة خيارات التعديل الجماهيري */}
@@ -297,10 +297,9 @@ const PublicationsListPage = () => {
             filtered.slice((currentPage - 1) * showAtLeast, currentPage * showAtLeast).map((pub) => (
             
             // بداية تصميم البطاقة (Card) الشبيهة بأسطر الجدول الأنيقة، لكل منشور
-            <div key={pub.id} style={{
+            <div key={pub.id} className="mobile-card" style={{
               display: 'flex', alignItems: 'stretch',
               background: '#f8f8f8', marginBottom: 16,
-              // ألوان متوهجة للحد الجانبي للدلالة على حالة المنشور بصرياً (أخضر لملتزم، أزرق لمفتوح)
               borderRight: `8px solid ${pub.obey ? '#4caf50' : '#2196f3'}`,
               borderBottom: '1px solid #eee', borderTop: '1px solid #eee', borderLeft: '1px solid #eee'
             }}>
@@ -376,7 +375,7 @@ const PublicationsListPage = () => {
               </div>
 
               {/* رصيف العمليات لكل عنصر منشور فردي (قائمة الأيقونات السريعة أقصى اليسار) */}
-              <div style={{ display: 'flex', gap: 6, padding: '8px 12px', alignItems: 'flex-start', background: '#fff' }}>
+              <div className="mobile-card-actions" style={{ display: 'flex', gap: 6, padding: '8px 12px', alignItems: 'flex-start', background: '#fff' }}>
                 {/* زر التعديل (يأخذك لنموذج تعديل المنشور) */}
                 <ActionIcon icon="bi-pencil-fill" color={TEAL} title="تعديل (Edit)"
                   onClick={() => navigate(`/publications/${pub.id}/edit`)} />

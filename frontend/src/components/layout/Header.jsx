@@ -67,7 +67,7 @@ const Header = () => {
       </div>
 
       {/* Navigation Menu */}
-      <div style={{ borderBottom: '2px solid #0a80b0', display: 'flex', flexWrap: 'wrap' }}>
+      <div className="mobile-nav-bar" style={{ borderBottom: '2px solid #0a80b0', display: 'flex', flexWrap: 'wrap' }}>
         {navItems.map((item, i) => {
           const isButton = item.action
           const content = (
