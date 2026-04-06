@@ -19,8 +19,8 @@ class VerifyOtpRequest extends FormRequest
     public function rules()
     {
         return [
-            'email' => 'required|email|exists:readers,email',
-            'otp_code' => 'required|numeric|digits:4', // تأكد أن الرقم من 4 خانات
+            'email' => 'required|email',
+            'otp_code' => 'required|string|min:5', // تأكد أن الرقم من 4 خانات
             'hardware_id' => 'required|string', // لربط التوكن بالجهاز
         ];
     }

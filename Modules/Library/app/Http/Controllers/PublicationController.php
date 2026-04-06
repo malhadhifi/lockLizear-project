@@ -3,8 +3,8 @@ namespace Modules\Library\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 
-use Modules\Library\App\Transformers\DocumentResource;
-use Modules\Library\App\Transformers\PublicationResource;
+use Modules\Library\Transformers\DocumentResource;
+use Modules\Library\Transformers\PublicationResource;
 use Modules\Library\Http\Requests\Publications\BulkActionRequest;
 use Modules\Library\Http\Requests\Publications\IndexPublicationRequest;
 use Modules\Library\Http\Requests\Publications\StorePublicationRequest;

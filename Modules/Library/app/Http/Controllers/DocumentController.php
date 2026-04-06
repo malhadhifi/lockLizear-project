@@ -1,8 +1,8 @@
 <?php
 namespace Modules\Library\Http\Controllers;
 use App\Http\Controllers\Controller;
-use Modules\Library\App\Transformers\DocumentDetailsResource;
-use Modules\Library\App\Transformers\DocumentResource;
+use Modules\Library\Transformers\DocumentDetailsResource;
+use Modules\Library\Transformers\DocumentResource;
 use Modules\Library\Http\Requests\Documents\DocumentActionRequest;
 use Modules\Library\Http\Requests\Documents\IndexDocumentRequest;
 use Modules\Library\Http\Requests\Documents\UpdateDocumentRequest;
@@ -22,6 +22,7 @@ class DocumentController extends Controller
 
     public function index(IndexDocumentRequest $request)
     {
+
         try {
             $paginator = $this->documentService->getDocuments($request->validated());
 
@@ -85,14 +86,6 @@ class DocumentController extends Controller
         }
     }
 
-    /**
-     * تعديل بيانات ملف محدد
-     * الرابط: PUT /api/library/documents/{id}
-     */
-    /**
-     * تعديل بيانات ملف محدد (الوصف وتاريخ الانتهاء فقط)
-     * الرابط: PUT /api/library/documents/{id}
-     */
     public function update(UpdateDocumentRequest $request, $id)
     {
         try {

@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->string('title');
             $table->enum('type', ['pdf', 'video'])->default('pdf');
             $table->text('description')->nullable();
+
             $table->unsignedBigInteger('size')->nullable(); // حجم الملف بالبايت
 
             // بصمة الملف (Hash) لضمان أن العميل يفتح الملف الأصلي ولم يدمج معه فايروس

@@ -39,6 +39,12 @@ class PublisherRegistrationController extends Controller
         } catch (\Exception $e) {
             // التعامل مع أي خطأ برمجي غير متوقع (5000 => خطأ داخلي في الخادم)
             return $this->sendResponse(false, 5000, null, 500);
+            // return response()->json(
+            //     [
+            //         "data" => $e->getMessage(),
+            //         "line" => $e->getLine(),
+            //     ]
+            // );
         }
     }
 

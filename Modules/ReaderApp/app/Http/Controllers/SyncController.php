@@ -3,7 +3,9 @@
 namespace Modules\ReaderApp\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Modules\CustomerManagement\Models\CustomerDevice;
+use Modules\Library\Models\Document;
 use Modules\ReaderApp\Http\Requests\PingDeviceRequest;
 use Modules\ReaderApp\Http\Requests\SyncLicenseRequest;
 use Modules\ReaderApp\Services\License\LicenseSyncService;
@@ -40,6 +42,49 @@ class SyncController extends Controller
 
         }
     }
+    public function syncCatalog(Request $request)
+    {
+        try {
+            $reader = $request->user();
+
+            // نمرر البيانات للخدمة
+            $result = $this->syncService->getDeltaSync($request->all());
+
+            return $this->sendResponse(true, 1000, $result, 200);
+
+        } catch (\Exception $e) {
+            // $errorCode = $e->getCode();
+            // // إذا كان الخطأ خاصاً بالجهاز (2001)
+            // if ($errorCode == 2001) {
+            //     return $this->sendResponse(false, 2001, null, 403);
+            // }
+            return $this->sendResponse(false, 5000, null, 500);
+        }
+    }
+    /**
+     * رابط التوجيه للتحميل (Proxy Redirect)
+     * يقوم باستلام الطلب وتوجيهه للرابط الحقيقي (Mega, Mediafire, etc.)
+     */
+    public function downloadFile($uuid)
+    {
+        try {
+            // البحث عن الملف بالـ UUID
+            $document = Document::where('document_uuid', $uuid)
+                ->where('status', 'valid')
+                ->first();
+
+            if (!$document) {
+                return $this->sendResponse(false, 4041, null, 404); // 4041: ملف غير موجود
+            }
+
+            // توجيه المشغل للرابط الخارجي فوراً
+            return redirect()->away($document->download_url);
+
+        } catch (\Exception $e) {
+            return $this->sendResponse(false, 5000, null, 500);
+        }
+    }
+
 
     public function pingDevice(PingDeviceRequest $request)
     {
@@ -72,3 +117,4 @@ class SyncController extends Controller
         }
     }
 }
+

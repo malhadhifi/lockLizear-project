@@ -31,6 +31,7 @@ class WriterSyncService
                     'status' => 'valid',
                     'publisher_id' => $publisherId,
                     'publication_id' => $publicationId,
+                    'download_url' => $docData['download_url'] ?? null,
                 ]);
 
                 // ب. حفظ المفتاح المشفر المرتبط بالمستند

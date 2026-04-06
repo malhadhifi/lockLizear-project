@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Traits\ApiResponseTrait;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -11,6 +12,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
  */
 abstract class BaseRequest extends FormRequest
 {
+    use ApiResponseTrait;
     /**
      * اعتراض أخطاء التحقق (Validation) وتغليفها بالغلاف الموحد
      */

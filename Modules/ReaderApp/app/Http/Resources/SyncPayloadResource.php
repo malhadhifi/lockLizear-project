@@ -44,11 +44,10 @@ class SyncPayloadResource extends JsonResource
         return [
             'publication_id' => $pub->id,
             'license_id' => $item['license_id'],
-            'publisher_id' => $pub->publisher_id,
             'name' => $pub->name,
             'description' => $pub->description,
             'status' => ApiEnumMapper::status($pub->status), // دائماً active في الإنشاء بناءً على منطقك
-            'access_mode' => ApiEnumMapper::expiryMode(($pivot->access_mode === 'unlimited')),
+            'valid_mode' => ApiEnumMapper::expiryMode(($pivot->access_mode === 'unlimited')),
             'valid_from' => $pivot ? $pivot->valid_from : null,
             'valid_until' => $pivot ? $pivot->valid_until : null,
         ];
@@ -69,8 +68,8 @@ class SyncPayloadResource extends JsonResource
         return [
             'publication_id' => $pub->id,
             'status' => ApiEnumMapper::status($statusStr),
-            'expiry_mode' => ApiEnumMapper::expiryMode(($pivot->access_mode === 'unlimited') ? 'never' : 'fixed_date'),
-            'expiry_date' => $pivot->valid_until,
+            'valid_mode' => ApiEnumMapper::expiryMode(($pivot->access_mode === 'unlimited') ? 'never' : 'fixed_date'),
+            'valid_until' => $pivot->valid_until,
         ];
     }
 

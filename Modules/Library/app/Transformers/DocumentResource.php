@@ -1,5 +1,5 @@
 <?php
-namespace Modules\Library\App\Transformers;
+namespace Modules\Library\Transformers;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use Carbon\Carbon;

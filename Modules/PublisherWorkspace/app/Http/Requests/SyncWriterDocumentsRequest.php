@@ -27,7 +27,7 @@ class SyncWriterDocumentsRequest extends BaseReaderRequest
             'documents.*.size' => 'required|integer',
             'documents.*.file_hash' => 'required|string',
             'documents.*.access_scope' => 'required|integer|in:1,2,3',
-            'documents.*.description' => 'required|string',
+            'documents.*.description' => 'nullable|string',
 
             // مفتاح الملف المشفر (مهم جداً!)
             'documents.*.encrypted_key' => 'required|string',

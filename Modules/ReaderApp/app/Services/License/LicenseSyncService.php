@@ -169,9 +169,47 @@ class LicenseSyncService
 
     private function validateLicenseDates($license)
     {
-        if ($license->status === 'suspend') throw new Exception('suspended', 4036);
+        if ($license->status === 'suspend')
+            throw new Exception('suspended', 4036);
         if (!$license->never_expires && $license->valid_until && now()->isAfter($license->valid_until)) {
             throw new Exception('expired', 4032);
         }
     }
+
+
+    public function getDeltaSync(array $data)
+    {
+        $lastSyncAt = $data['last_sync_at'] ?? null;
+
+        // 2. بناء الاستعلام
+        $query = Document::with('publisher')
+            ->whereNotNull('download_url')
+            ->where('status', 'valid');
+
+        // 3. 🌟 السر هنا: إذا أرسل تاريخاً، نجلب فقط ما تم تحديثه بعد هذا التاريخ
+        if ($lastSyncAt) {
+            $query->where('created_at', '>', $lastSyncAt);
+        }
+
+        $documents = $query->get();
+
+        // 4. تنسيق الرد
+        $formattedCatalog = $documents->map(function ($doc) {
+            return [
+                'uuid' => $doc->document_uuid,
+                'title' => $doc->title,
+                'publisher_name' => $doc->publisher->name ?? 'Unknown',
+                'file_size' => $doc->file_hash,
+                'download_url' => url("api/reader/download/{$doc->document_uuid}"),
+                'created_at' => $doc->created_at->toDateTimeString(), // لكي يخزنه المشغل للمرة القادمة
+            ];
+        });
+
+        return [
+            'sync_time' => now()->toDateTimeString(), // هذا التاريخ سيخزنه المشغل كـ last_sync_at للمرة القادمة
+            'count' => $documents->count(),
+            'files' => $formattedCatalog
+        ];
+    }
+
 }

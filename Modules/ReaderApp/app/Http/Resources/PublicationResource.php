@@ -17,7 +17,8 @@ class PublicationResource extends JsonResource
             'license_id' => $this->license_id,
             'status' => ApiEnumMapper::status($this->status), // دائماً active في الإنشاء بناءً على منطقك
             'name' => $this->name,
-            'access_mode' => ApiEnumMapper::expiryMode($accessModeStr),
+            'description'=>$this->description,
+            'valid_mode' => ApiEnumMapper::expiryMode($accessModeStr),
             'valid_from' => $pivot ? $pivot->valid_from : null,
             'valid_until' => $pivot ? $pivot->valid_until : null,
         ];

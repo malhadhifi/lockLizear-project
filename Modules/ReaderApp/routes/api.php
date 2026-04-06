@@ -3,10 +3,10 @@
 use Illuminate\Support\Facades\Route;
 
 use Modules\ReaderApp\Http\Controllers\LicenseController;
-use Modules\ReaderApp\Http\Controllers\ReaderActivationController;
-use Modules\ReaderApp\Http\Controllers\ReaderAppController;
-use Modules\ReaderApp\Http\Controllers\ReaderSyncController;
-use Modules\ReaderApp\Http\Controllers\ReaderVerificationController;
+// use Modules\ReaderApp\Http\Controllers\ReaderActivationController;
+// use Modules\ReaderApp\Http\Controllers\ReaderAppController;
+// use Modules\ReaderApp\Http\Controllers\ReaderSyncController;
+// use Modules\ReaderApp\Http\Controllers\ReaderVerificationController;
 use Modules\ReaderApp\Http\Controllers\AuthController;
 
 use Modules\ReaderApp\Http\Controllers\SyncController;
@@ -68,5 +68,19 @@ Route::prefix('reader')->middleware('auth:reader_api')->group(function () {
     Route::post('/device/ping', [SyncController::class, 'pingDevice']);
 
     Route::post('/device/logout', [AuthController::class, 'logout']);
+
+
+
+
+    // 4. رابط مزامنة فهرس الملفات (للبحث والتحميل)
+    Route::get('/catalog/sync', [SyncController::class, 'syncCatalog']);
+
+    // 5. رابط التوجيه للتحميل (Proxy) الذي شرحناه سابقاً
+    Route::get('/download/{uuid}', [SyncController::class, 'downloadFile']);
+
+});
+Route::prefix('reader')->middleware('auth:reader_api')->group(function () {
+
+    // ... المسارات الحالية ...
 
 });

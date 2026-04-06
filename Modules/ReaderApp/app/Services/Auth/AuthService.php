@@ -44,7 +44,7 @@ class AuthService
     protected function cacheDataAndSendOtp(array $userData, string $ipAddress)
     {
         $email = $userData['email'];
-        $otpCode = rand(1000, 99999);
+        $otpCode = random_int(10000, 99999);
         $cacheKey = 'otp_register_' . $email;
 
         // نقوم بتخزين الرمز + بيانات المستخدم + رقم الـ IP في مصفوفة واحدة
