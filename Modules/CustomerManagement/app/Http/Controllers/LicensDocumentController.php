@@ -9,7 +9,7 @@ use Modules\CustomerManagement\Http\Requests\LicenseDocuments\UpdateLicenseDocum
 use Modules\CustomerManagement\Services\LicenseDocuments\LicenseDocumentService;
 use Modules\CustomerManagement\Transformers\LicenseDocuments\LicenseDocumentResource;
 
-class LicenseDocumentController extends Controller
+class LicensDocumentController extends Controller
 {
 
     use ApiResponseTrait;

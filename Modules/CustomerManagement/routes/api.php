@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\CustomerManagement\Http\Controllers\CustomerLicenseController;
-use Modules\CustomerManagement\Http\Controllers\LicenseDocumentController;
+use Modules\CustomerManagement\Http\Controllers\LicensDocumentController;
 use Modules\CustomerManagement\Http\Controllers\LicensPublicationController;
 
 Route::prefix('customer-licenses')->middleware([
@@ -48,10 +48,10 @@ group(function () {
     // ====================================================================
 
     // جلب الملفات المباشرة المتاحة للرخصة مع حالة الوصول
-    Route::get('/{customer_license_id}/documents', [LicenseDocumentController::class, 'index']);
+    Route::get('/{customer_license_id}/documents', [LicensDocumentController::class, 'index']);
 
     // تعديل صلاحيات وصول الرخصة لملفات محددة (روابط النوافذ المنبثقة)
-    Route::post('/{customer_license_id}/documents/bulk-access', [LicenseDocumentController::class, 'updateAccess']);
+    Route::post('/{customer_license_id}/documents/bulk-access', [LicensDocumentController::class, 'updateAccess']);
 
 });
 
