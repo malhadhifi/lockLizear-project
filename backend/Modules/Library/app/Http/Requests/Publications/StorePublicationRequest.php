@@ -18,8 +18,8 @@ class StorePublicationRequest extends BaseLibraryRequest
             'name' => 'required|string|max:64',
             'description' => 'nullable|string',
             'obey' => 'boolean',
-            // سنفترض أن معرف الناشر يأتي من الجلسة (Auth) أو يتم إرساله
-            'publisher_id' => 'required|exists:publishers,id',
+            // سنفترض أن معرف الناشر يأتي من الجلسة (Auth) أو يتم إرساله (أو الافتراضي 1)
+            'publisher_id' => 'nullable|exists:publishers,id',
         ];
     }
 }

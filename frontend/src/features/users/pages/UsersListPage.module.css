@@ -1,0 +1,40 @@
+/* UsersListPage.module.css */
+
+.filterInputStyle {
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+.filterSelectStyle {
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+.fieldLabelStyle {
+  font-weight: 700;
+  padding-left: 16px;
+  vertical-align: top;
+  color: #111;
+  white-space: nowrap;
+}
+
+.fieldValueStyle {
+  color: #333;
+  vertical-align: top;
+}
+
+.actionIcon {
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+}

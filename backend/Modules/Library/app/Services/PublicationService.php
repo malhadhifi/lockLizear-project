@@ -12,6 +12,9 @@ class PublicationService
     {
         // إذا لم يتم إرسال obey، نضع قيمته الافتراضية false
         $data['obey'] = $data['obey'] ?? false;
+        
+        // الافتراضي للـ publisher_id هو 1 لتجنب أخطاء قاعدة البيانات أثناء التطوير
+        $data['publisher_id'] = $data['publisher_id'] ?? 1;
 
         return Publication::create($data);
     }

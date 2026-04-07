@@ -1,0 +1,129 @@
+/* UserDetailPage.module.css */
+/* تم استخراج هذه التنسيقات من داخل الكود المدمج لضمان المحافظة على التصميم الأصلي 100% */
+
+.pageContainer {
+  padding-bottom: 40px;
+}
+
+.mainWrapper {
+  max-width: 650px;
+  margin: 20px auto;
+  border: 1px solid #009cad;
+  background-color: #fff;
+  font-family: Arial, sans-serif;
+}
+
+/* الترويسة العلوية باللون الأزرق المائل للأخضر (Teal) */
+.topHeader {
+  background-color: #009cad;
+  color: #fff;
+  padding: 6px 12px;
+  font-weight: bold;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* الغلاف العام للنموذج */
+.formWrapper {
+  padding: 15px;
+}
+
+/* حاوية السطر في الشاشة (Row Wrapper) */
+.rowStyle {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+/* التسمية التوضيحية لسطر النموذج (Label Column) */
+.labelColStyle {
+  width: 130px;
+  font-weight: bold;
+  font-size: 12px;
+  color: #333;
+  padding-top: 6px;
+}
+
+/* نمط التسمية التوضيحية داخل قسم المعلومات (Account Info Label) */
+.labelInfoStyle {
+  width: 130px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* عمود الإدخال (Input Column) */
+.inputColStyle {
+  flex: 1;
+}
+
+/* النمط الأساسي للحقول النصية ومحتويات الإدخال */
+.inputStyle {
+  width: 100%;
+  max-width: 350px;
+  border: 1px solid #ccc;
+  padding: 6px 8px;
+  font-size: 13px;
+  outline: none;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+  font-family: inherit;
+}
+
+/* حالات العرض الخاصة لـ inputStyle */
+.inputStyleDisabled {
+  background-color: #f0f0f0;
+}
+.inputStyleReadOnly {
+  background-color: #f9f9f9;
+  color: #666;
+}
+
+/* حاوية السطور في قسم المعلومات (Account Info Row) */
+.rowInfoStyle {
+  display: flex;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+/* نمط الترويسات الرمادية للأقسام (Gray Headers) */
+.sectionHeaderStyle {
+  background-color: #e6e6e6;
+  color: #555;
+  font-weight: bold;
+  font-size: 12px;
+  padding: 6px 20px;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+}
+
+/* نمط الروابط الزرقاء للإجراءات السريعة والمختصرات */
+.actionLinkStyle {
+  color: #009cad;
+  text-decoration: none;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: underline;
+}
+
+/* أزرار السجل والتاريخ (History Logs Buttons) */
+.historyButton {
+  margin-bottom: 10px;
+  display: block;
+}
+
+.historyButton i {
+  margin-right: 6px;
+}
+
+.checkboxRow {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.checkboxLabel {
+  font-size: 13px;
+  color: #333;
+}

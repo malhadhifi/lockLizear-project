@@ -17,9 +17,11 @@ import { userApi } from '../services/userApi'
 import SelectPublicationModal from '../components/SelectPublicationModal'
 import SelectDocumentModal from '../components/SelectDocumentModal'
 
-const TEAL = '#009cad'
-const GRAY_BG = '#e6e6e6'
-const BORDER_COLOR = '#b3d9ff'
+import CreateUserMainInfo from '../components/CreateUserSections/CreateUserMainInfo'
+import CreateUserManageAccess from '../components/CreateUserSections/CreateUserManageAccess'
+import CreateUserLicenseInfo from '../components/CreateUserSections/CreateUserLicenseInfo'
+
+import styles from './CreateUserPage.module.css'
 
 const CreateUserPage = () => {
   const navigate = useNavigate()
@@ -94,26 +96,16 @@ const CreateUserPage = () => {
   }
 
   return (
-    <div style={{ paddingBottom: 40 }}>
+    <div className={styles.pageContainer}>
       {/* === مساحة علوية فارغة للأبعاد الجمالية === */}
-      <div style={{ marginBottom: 15 }} />
+      <div className={styles.spacer} />
 
       {/* === الحاوية الرئيسية للنموذج (Main Container) === */}
-      <div style={{ 
-        maxWidth: 600, 
-        margin: '0 auto', 
-        border: `1px solid ${TEAL}`, 
-        backgroundColor: '#fff',
-        fontFamily: 'Arial, sans-serif'
-      }}>
+      <div className={styles.mainWrapper}>
         
         {/* شريط العنوان العلوي (Header) */}
-        <div style={{
-          backgroundColor: TEAL, color: '#fff', padding: '6px 12px',
-          fontWeight: 'bold', fontSize: 13,
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div className={styles.topHeader}>
+          <div className={styles.headerTitle}>
             <span>إضافة عميل جديد (New customer)</span>
           </div>
           <i className="bi bi-person-plus-fill" />
@@ -122,110 +114,31 @@ const CreateUserPage = () => {
         {/* بداية النموذج الذي يتصل بدالة الحفظ عند الإرسال */}
         <form onSubmit={submit}>
           
-          {/* قسم البيانات الأساسية للعميل (Main Info Section) */}
-          <div style={{ padding: '15px 20px' }}>
-            
-            <div style={rowStyle}>
-              <div style={labelColStyle}>الاسم (Name):</div>
-              <div style={inputColStyle}>
-                <input type="text" name="name" value={form.name} onChange={handleChange} required style={inputStyle} />
-              </div>
-            </div>
+          <CreateUserMainInfo 
+            form={form} 
+            handleChange={handleChange} 
+          />
 
-            <div style={rowStyle}>
-              <div style={labelColStyle}>الشركة (Company):</div>
-              <div style={inputColStyle}>
-                <input type="text" name="company" value={form.company} onChange={handleChange} style={inputStyle} />
-              </div>
-            </div>
+          <CreateUserManageAccess 
+            selectedPubs={selectedPubs} 
+            selectedDocs={selectedDocs} 
+            onOpenPubModal={() => setIsPubModalOpen(true)}
+            onOpenDocModal={() => setIsDocModalOpen(true)}
+          />
 
-            <div style={rowStyle}>
-              <div style={labelColStyle}>البريد الإلكتروني (E-mail):</div>
-              <div style={inputColStyle}>
-                <input type="email" name="email" value={form.email} onChange={handleChange} required style={inputStyle} />
-              </div>
-            </div>
+          <CreateUserLicenseInfo 
+            form={form}
+            handleChange={handleChange}
+          />
 
-            <div style={rowStyle}>
-              <div style={labelColStyle}>نوع الرخصة (Type):</div>
-              <div style={inputColStyle}>
-                <select name="type" value={form.type} onChange={handleChange} style={{ ...inputStyle, width: 140 }}>
-                  <option value="individual">فردية (Individual)</option>
-                  <option value="group">جماعية (Group)</option>
-                </select>
-              </div>
-            </div>
-
-            {form.type === 'group' && (
-              <div style={rowStyle}>
-                <div style={labelColStyle}>عدد التراخيص (Licenses):</div>
-                <div style={inputColStyle}>
-                  <input type="number" name="count_license" value={form.count_license} onChange={handleChange} min={1} style={{ ...inputStyle, width: 80 }} />
-                </div>
-              </div>
-            )}
-
-            <div style={rowStyle}>
-              <div style={labelColStyle}>تاريخ البدء (Start Date):</div>
-              <div style={inputColStyle}>
-                <input type="date" name="startDate" value={form.startDate} onChange={handleChange} style={{ ...inputStyle, width: 140 }} />
-              </div>
-            </div>
-
-            <div style={rowStyle}>
-              <div style={labelColStyle}>صالح حتى (Valid until):</div>
-              <div style={inputColStyle}>
-                <input type="date" name="validUntil" value={form.validUntil} onChange={handleChange} disabled={form.neverExpires} style={{ ...inputStyle, width: 140, backgroundColor: form.neverExpires ? '#f5f5f5' : '#fff' }} />
-                <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <input type="checkbox" name="neverExpires" checked={form.neverExpires} onChange={handleChange} id="neverExp" />
-                  <label htmlFor="neverExp" style={{ fontSize: 12, color: '#555', cursor: 'pointer' }}>لا تنتهي صلاحيته أبدًا (never expires)</label>
-                </div>
-              </div>
-            </div>
-
-            <div style={rowStyle}>
-              <div style={labelColStyle}>ملاحظات (Notes):</div>
-              <div style={inputColStyle}>
-                <textarea name="notes" value={form.notes} onChange={handleChange} rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
-              </div>
-            </div>
-
-          </div>
-
-          {/* قسم إدارة الوصول المسبق */}
-          <div style={sectionHeaderStyle}>إدارة الوصول (Manage Access)</div>
-          <div style={{ padding: '12px 20px' }}>
-            <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <a href="#" onClick={(e) => { e.preventDefault(); setIsPubModalOpen(true); }} style={linkStyle}>
-                <i className="bi bi-journal-text" style={{ marginRow: 6 }} /> تعيين الوصول للمنشورات (Set Publication Access)
-              </a>
-              {selectedPubs.length > 0 && <span style={{fontSize: 12, color: TEAL, fontWeight: 'bold'}}>{selectedPubs.length} محدد</span>}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <a href="#" onClick={(e) => { e.preventDefault(); setIsDocModalOpen(true); }} style={linkStyle}>
-                <i className="bi bi-file-earmark-text" style={{ marginRow: 6 }} /> تعيين الوصول للمستندات (Set Document Access)
-              </a>
-              {selectedDocs.length > 0 && <span style={{fontSize: 12, color: TEAL, fontWeight: 'bold'}}>{selectedDocs.length} محدد</span>}
-            </div>
-          </div>
-
-          {/* قسم خيارات إرسال التراخيص */}
-          <div style={sectionHeaderStyle}>معلومات الترخيص (License Information)</div>
-          <div style={{ padding: '12px 20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <input type="checkbox" name="emailLicense" checked={form.emailLicense} onChange={handleChange} id="emailLic" />
-              <label htmlFor="emailLic" style={{ fontSize: 13, cursor: 'pointer', color: '#333' }}>إرسال الترخيص بالبريد (Email license)</label>
-            </div>
-          </div>
-
-          <hr style={{ margin: 0, border: 'none', borderTop: '1px solid #ccc' }} />
+          <hr className={styles.divider} />
 
           {/* شريط الإجراءات السفلي وأزرار الإرسال (Footer Actions) */}
-          <div style={{ padding: '15px 20px', display: 'flex', justifyContent: 'flex-end', backgroundColor: '#fff' }}>
+          <div className={styles.footerActions}>
              <button type="submit" disabled={mutation.isPending}
+              className={styles.submitButton}
               style={{
-                backgroundColor: TEAL, color: '#fff', border: 'none',
-                padding: '8px 30px', fontSize: 13, cursor: mutation.isPending ? 'not-allowed' : 'pointer', fontWeight: 'bold',
+                cursor: mutation.isPending ? 'not-allowed' : 'pointer',
                 opacity: mutation.isPending ? 0.7 : 1
               }}>
               {mutation.isPending ? 'جاري الإضافة...' : 'إضافة (Add)'}
@@ -248,48 +161,6 @@ const CreateUserPage = () => {
       />
     </div>
   )
-}
-
-// الأنماط (Styles) لتطابق لوحة تحكم LockLizard بدقة
-const rowStyle = { 
-  display: 'flex', 
-  marginBottom: 10 
-}
-const labelColStyle = { 
-  width: 140, 
-  fontWeight: 'bold', 
-  fontSize: 12, 
-  color: '#333',
-  paddingTop: 6
-}
-const inputColStyle = { 
-  flex: 1 
-}
-const inputStyle = { 
-  width: '100%', 
-  maxWidth: 350,
-  border: '1px solid #ccc', 
-  padding: '6px 8px', 
-  fontSize: 13,
-  outline: 'none',
-  boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
-}
-const sectionHeaderStyle = {
-  backgroundColor: GRAY_BG,
-  color: '#555',
-  fontWeight: 'bold',
-  fontSize: 12,
-  padding: '6px 20px',
-  borderTop: '1px solid #ccc',
-  borderBottom: '1px solid #ccc'
-}
-const linkStyle = {
-  color: TEAL,
-  textDecoration: 'none',
-  fontSize: 13,
-  display: 'inline-flex',
-  alignItems: 'center',
-  textDecoration: 'underline'
 }
 
 export default CreateUserPage

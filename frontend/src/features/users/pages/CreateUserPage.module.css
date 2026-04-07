@@ -1,0 +1,155 @@
+/* CreateUserPage.module.css */
+/* تم استخراج هذه التنسيقات للحفاظ على التصميم بنسبة 100% كما طلب المستخدم */
+
+.pageContainer {
+  padding-bottom: 40px;
+}
+
+.spacer {
+  margin-bottom: 15px;
+}
+
+.mainWrapper {
+  max-width: 600px;
+  margin: 0 auto;
+  border: 1px solid #009cad;
+  background-color: #fff;
+  font-family: Arial, sans-serif;
+}
+
+.topHeader {
+  background-color: #009cad;
+  color: #fff;
+  padding: 6px 12px;
+  font-weight: bold;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.formPadding {
+  padding: 15px 20px;
+}
+
+.rowStyle {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.labelColStyle {
+  width: 140px; /* العرض مخصص لصفحة الإضافة 140 وليس 130 */
+  font-weight: bold;
+  font-size: 12px;
+  color: #333;
+  padding-top: 6px;
+}
+
+.inputColStyle {
+  flex: 1;
+}
+
+.inputStyle {
+  width: 100%;
+  max-width: 350px;
+  border: 1px solid #ccc;
+  padding: 6px 8px;
+  font-size: 13px;
+  outline: none;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.sectionHeaderStyle {
+  background-color: #e6e6e6;
+  color: #555;
+  font-weight: bold;
+  font-size: 12px;
+  padding: 6px 20px;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+}
+
+.linkStyle {
+  color: #009cad;
+  text-decoration: none;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: underline;
+}
+
+.accessPadding {
+  padding: 12px 20px;
+}
+
+.accessRow {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.accessRowNoMargin {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badgeStyle {
+  font-size: 12px;
+  color: #009cad;
+  font-weight: bold;
+}
+
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.checkboxLabel {
+  font-size: 13px;
+  cursor: pointer;
+  color: #333;
+}
+
+.neverExpireContainer {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.neverExpireLabel {
+  font-size: 12px;
+  color: #555;
+  cursor: pointer;
+}
+
+.divider {
+  margin: 0;
+  border: none;
+  border-top: 1px solid #ccc;
+}
+
+.footerActions {
+  padding: 15px 20px;
+  display: flex;
+  justify-content: flex-end;
+  background-color: #fff;
+}
+
+.submitButton {
+  background-color: #009cad;
+  color: #fff;
+  border: none;
+  padding: 8px 30px;
+  font-size: 13px;
+  font-weight: bold;
+}
