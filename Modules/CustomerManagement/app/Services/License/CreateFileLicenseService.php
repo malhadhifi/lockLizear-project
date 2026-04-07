@@ -42,7 +42,7 @@ class CreateFileLicenseService
         // 2. بناء الهيكل (Payload)
         $payload = [
             'Type' => 'IndividualCustomer',
-            'Status' => $license->status === 'active' ? 'Active' : 'Suspended',
+            'Status' => $license->status === 'active' ? 'Active' : 'suspend',
 
             'MetaInfo' => [
                 'LicenseId' => (string) $license->id,

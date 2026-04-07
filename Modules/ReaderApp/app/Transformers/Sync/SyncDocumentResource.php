@@ -18,7 +18,7 @@ class SyncDocumentResource extends JsonResource
 
         // إذا كان موقوفاً أو بدون مفتاح
         if (!$access['is_accessible'] || !$hasActiveKey) {
-            $status = !$hasActiveKey ? 'revoked' : 'suspended';
+            $status = !$hasActiveKey ? 'revoked' : 'suspend';
             return [
                 'sync_action' => ($status === 'revoked') ? 'revoke' : 'suspend', // توحيد اسم المفتاح
                 'document_uuid' => $this->document_uuid ?? $this->id,

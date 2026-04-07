@@ -30,7 +30,7 @@ class CustomerAccountResource extends JsonResource
             'email' => $this->email,
             'status_ui' => [
                 'registration' => $registration,
-                'account' => $this->status === 'active' ? 'enabled' : 'suspended',
+                'account' => $this->status === 'active' ? 'enabled' : 'suspend',
                 'web_viewer' => 'Web Viewer access: ' . ($this->web_viewer_access ?? false ? 'yes' : 'no'),
                 'validity' => $validityText,
                 'is_expired' => $isExpired

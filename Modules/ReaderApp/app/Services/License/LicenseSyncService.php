@@ -56,7 +56,7 @@ class LicenseSyncService
             // 2. الجديدة
             elseif (!$deletedAt && $createdAt->greaterThan($lastSync)) {
                 // منطقك: تخطي المسحوب أو المعلق من الإنشاء
-                if (($pivot && $pivot->status === 'revoked') || $pub->status === 'suspend' || ($pivot && $pivot->status === 'suspended')) {
+                if (($pivot && $pivot->status === 'revoked') || $pub->status === 'suspend' || ($pivot && $pivot->status === 'suspend')) {
                     continue;
                 }
                 $payloadRaw['create']['publications'][] = ['publication' => $pub, 'pivot' => $pivot, 'license_id' => $license->id];
@@ -82,6 +82,7 @@ class LicenseSyncService
         $allDocs = Document::withTrashed()->with(['securityControls', 'key'])
             ->where('publisher_id', $license->publisher_id)
             ->where('access_scope', 'all_customers')->get();
+        //ركز على حقل$license
         $this->distributeDocuments($allDocs, $lastSync, $license, 'all_customers', null, $payloadRaw);
 
         // إرسال البيانات الخام للقالب ليعيد تشكيلها
@@ -112,18 +113,36 @@ class LicenseSyncService
             $controlsUpdated = $doc->securityControls ? Carbon::parse($doc->securityControls->updated_at) : $docUpdated;
             $updatedAt = $docUpdated->max($pivotUpdated)->max($controlsUpdated);
 
+            // استخراج المعرف الفريد للملف لاستخدامه كمفتاح مانع للتكرار
+            $uuid = $doc->document_uuid;
+
             if ($deletedAt && $deletedAt->greaterThan($lastSync)) {
-                if (!in_array($doc->document_uuid, $payloadRaw['deleted']['documents'])) {
-                    $payloadRaw['deleted']['documents'][] = $doc->document_uuid;
+                if (!in_array($uuid, $payloadRaw['deleted']['documents'])) {
+                    $payloadRaw['deleted']['documents'][] = $uuid;
                 }
             } elseif (!$deletedAt && $createdAt->greaterThan($lastSync)) {
-                // منطقك: تخطي الملفات المسحوبة أو المنتهية من الإنشاء
+                // تخطي الملفات المسحوبة أو المنتهية من الإنشاء
                 if (($pivot && $pivot->status === 'revoked') || $doc->status === 'expired') {
                     continue;
                 }
-                $payloadRaw['create']['documents'][] = ['document' => $doc, 'pivot' => $pivot, 'source_type' => $sourceType, 'license_id' => $license->id];
+
+                // 🌟 التعديل هنا: استخدام uuid كمفتاح لسلة الإنشاء
+                $payloadRaw['create']['documents'][$uuid] = [
+                    'document' => $doc,
+                    'pivot' => $pivot,
+                    'source_type' => $sourceType,
+                    'license_id' => $license->id
+                ];
+
             } elseif (!$deletedAt && $updatedAt->greaterThan($lastSync) && $createdAt->lessThanOrEqualTo($lastSync)) {
-                $payloadRaw['update']['documents'][] = ['document' => $doc, 'pivot' => $pivot, 'source_type' => $sourceType];
+
+                // 🌟 التعديل هنا: استخدام uuid كمفتاح لسلة التحديث
+                $payloadRaw['update']['documents'][$uuid] = [
+                    'document' => $doc,
+                    'pivot' => $pivot,
+                    'source_type' => $sourceType
+                ];
+
             }
         }
     }
@@ -170,7 +189,7 @@ class LicenseSyncService
     private function validateLicenseDates($license)
     {
         if ($license->status === 'suspend')
-            throw new Exception('suspended', 4036);
+            throw new Exception('suspend', 4036);
         if (!$license->never_expires && $license->valid_until && now()->isAfter($license->valid_until)) {
             throw new Exception('expired', 4032);
         }

@@ -34,7 +34,7 @@ class DocumentCustomersResource extends JsonResource
                     : 'Yes - valid until ' . ($document->pivot->valid_until ?
                         \Carbon\Carbon::parse($document->pivot->valid_until)->format('m-d-Y') : 'No Date Set');
             } else {
-                $accessText = 'Revoked / Suspended';
+                $accessText = 'Revoked / suspend';
             }
         }
 

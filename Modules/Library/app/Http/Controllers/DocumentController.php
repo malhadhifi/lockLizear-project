@@ -22,9 +22,9 @@ class DocumentController extends Controller
 
     public function index(IndexDocumentRequest $request)
     {
-
+        $publisherId=$request->user()->id;
         try {
-            $paginator = $this->documentService->getDocuments($request->validated());
+            $paginator = $this->documentService->getDocuments($request->validated(), $publisherId);
 
             $responseData = [
                 'items' => DocumentResource::collection($paginator),

@@ -20,7 +20,7 @@ class LicenseService
 
     public function __construct(
         LicensePublicationService $publicationService,
-         LicenseDocumentService $documentService
+        LicenseDocumentService $documentService
     ) {
         $this->publicationService = $publicationService;
         $this->documentService = $documentService;
@@ -81,7 +81,7 @@ class LicenseService
                 Voucher::insert($vouchersData);
             }
 
-           // 5. بناء وتوليد الملف (دائماً نولده لكي نحفظ الرابط للتحميل لاحقاً)
+            // 5. بناء وتوليد الملف (دائماً نولده لكي نحفظ الرابط للتحميل لاحقاً)
             $generatedFileData = [];
 
             if ($data['type'] === 'group') {
@@ -96,7 +96,7 @@ class LicenseService
             if ($data['send_via_email']) {
                 if ($data['type'] === 'group') {
                     // إرسال الإشعار الجماعي
-                 Notification::route('mail', $license->email)
+                    Notification::route('mail', $license->email)
                         ->notify(new SendGroupLicenseEmailNotification(
                             $license,
                             $generatedFileData['file_path'],
@@ -104,7 +104,7 @@ class LicenseService
                         ));
                 } else {
                     // إرسال الإشعار الفردي
-                   Notification::route('mail', $license->email)
+                    Notification::route('mail', $license->email)
                         ->notify(new SendLicenseEmailNotification(
                             $license,
                             $generatedFileData['encoded_file'],
@@ -157,7 +157,7 @@ class LicenseService
             case 'not_registered':
                 $query->whereNull('registered_at');
                 break;
-            case 'suspended':
+            case 'suspend':
                 $query->where('status', 'suspend');
                 break;
             case 'expired':
@@ -169,7 +169,7 @@ class LicenseService
 
         // 3. الترتيب
         // إذا كان الترتيب بالشركة، نجعله تصاعدياً (أبجدياً)، وإلا تنازلياً (أحدث شيء)
-        $sortDirection = $filters['sort_by'] === 'name'|| $filters['sort_by'] === 'company' ? 'asc' : 'desc';
+        $sortDirection = $filters['sort_by'] === 'name' || $filters['sort_by'] === 'company' ? 'asc' : 'desc';
         $query->orderBy($filters['sort_by'], $sortDirection);
 
         return $query->paginate($filters['show_at_least']);

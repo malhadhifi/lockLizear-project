@@ -7,7 +7,7 @@ use Carbon\Carbon;
 trait DocumentDynamicStatusTrait
 {
     /**
-     * دالة مركزية لحساب حالة الملف اللحظية (valid, suspended, revoked, expired)
+     * دالة مركزية لحساب حالة الملف اللحظية (valid, suspend, revoked, expired)
      * بناءً على التواريخ والأيام والجدول الوسيط
      */
     public function evaluateDynamicStatus($doc, $pivot, $sourceType)
@@ -17,8 +17,8 @@ trait DocumentDynamicStatusTrait
             return 'revoked';
         }
 
-        if ($doc->status === 'suspended' || ($pivot && isset($pivot->status) && $pivot->status === 'suspended')) {
-            return 'suspended';
+        if ($doc->status === 'suspend' || ($pivot && isset($pivot->status) && $pivot->status === 'suspend')) {
+            return 'suspend';
         }
 
 

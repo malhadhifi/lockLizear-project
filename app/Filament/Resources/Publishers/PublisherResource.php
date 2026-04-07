@@ -89,7 +89,7 @@ class PublisherResource extends Resource
                             ->label('حالة الحساب')
                             ->options([
                                 'active' => 'نشط',
-                                'suspended' => 'موقف مؤقتاً',
+                                'suspend' => 'موقف مؤقتاً',
                                 'banned' => 'محظور نهائياً',
                             ])
                             ->default('active')
@@ -122,7 +122,7 @@ class PublisherResource extends Resource
                     ->label('الحالة')
                     ->colors([
                         'success' => 'active',
-                        'warning' => 'suspended',
+                        'warning' => 'suspend',
                         'danger' => 'banned',
                     ]),
 
@@ -140,7 +140,7 @@ class PublisherResource extends Resource
                     ->label('تصفية حسب الحالة')
                     ->options([
                         'active' => 'نشط',
-                        'suspended' => 'موقف',
+                        'suspend' => 'موقف',
                         'banned' => 'محظور',
                     ]),
             ])

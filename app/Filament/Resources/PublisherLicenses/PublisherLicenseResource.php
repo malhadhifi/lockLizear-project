@@ -52,7 +52,7 @@ class PublisherLicenseResource extends Resource
                             ->required()
                             ->live() // يجعل الحقل يتفاعل فوراً عند التغيير
                             ->native(false)
-                            ->afterStateUpdated(function ( $set, $state) {
+                            ->afterStateUpdated(function ($set, $state) {
                                 // 💡 جلب بيانات الباقة فور اختيارها لتعبئة الحقول أدناه تلقائياً
                                 if ($state) {
                                     $package = Package::find($state);
@@ -99,7 +99,7 @@ class PublisherLicenseResource extends Resource
                             ->options([
                                 'trial' => 'تجريبية',
                                 'active' => 'نشطة',
-                                'suspended' => 'موقوفة',
+                                'suspend' => 'موقوفة',
                                 'expired' => 'منتهية',
                             ])
                             ->default('active')
@@ -136,7 +136,7 @@ class PublisherLicenseResource extends Resource
                     ->color(fn(string $state): string => match ($state) {
                         'active' => 'success',
                         'trial' => 'info',
-                        'suspended', 'expired' => 'danger',
+                        'suspend', 'expired' => 'danger',
                         default => 'gray',
                     }),
 

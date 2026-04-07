@@ -17,8 +17,8 @@ class DocumentResource extends JsonResource
         $publictionId = $this->resource['publication_id'] ?? null;
 
         $controls = $doc->securityControls;
-        $isSuspended = ($doc->status === 'suspended' || ($pivot && $pivot->status === 'suspended'));
-        $statusStr = $isSuspended ? 'suspended' : 'valid';
+        $isSuspended = ($doc->status === 'suspend' || ($pivot && $pivot->status === 'suspend'));
+        $statusStr = $isSuspended ? 'suspend' : 'valid';
 
         // 1. الإعدادات الافتراضية من الملف نفسه
         $expiryModeStr = $controls->expiry_mode ?? 'never';

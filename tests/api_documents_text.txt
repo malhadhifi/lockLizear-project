@@ -13,12 +13,12 @@
 // http://127.0.0.1:8000/api/library/documents?search=report&sort_by=title&show=expired_on&expired_on_date=2024-12-31&show_at_least=25
 
 
-// 2. تغيير حالة ملفات (Bulk Action: deleted, suspended, active)
+// 2. تغيير حالة ملفات (Bulk Action: deleted, suspend, active)
 // نوع الطلب: POST
 // الرابط: http://127.0.0.1:8000/api/library/documents/action
 // الـ Body (JSON):
 {
-  "action": "suspended",
+  "action": "suspend",
   "document_ids": [1, 2, 5]
 }
 

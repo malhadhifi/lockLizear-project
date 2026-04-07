@@ -8,7 +8,7 @@ class IndexDocumentRequest extends BaseRequest
 {
     public function authorize()
     {
-        return true;
+        return $this->user() !== null;
     }
 
     protected function prepareForValidation()
@@ -29,7 +29,7 @@ class IndexDocumentRequest extends BaseRequest
             'show_at_least' => 'integer|min:1',
 
             // خيارات العرض التي طلبتها
-            'show' => 'in:all,suspended,expired,not_yet_expired,expired_on',
+            'show' => 'in:all,suspend,expired,not_yet_expired,expired_on',
 
             // هذا الحقل مطلوب فقط إذا اختار المستخدم فلتر 'expired_on'
             'expired_on_date' => 'required_if:show,expired_on|nullable|date'

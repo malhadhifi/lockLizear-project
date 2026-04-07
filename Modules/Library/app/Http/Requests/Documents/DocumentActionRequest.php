@@ -19,7 +19,7 @@ class DocumentActionRequest extends BaseRequest
             'document_ids.*' => 'integer|exists:documents,id',
 
             // الإجراءات التي طلبتها
-            'action' => 'required|in:deleted,suspended,active',
+            'action' => 'required|in:deleted,suspend,active',
         ];
     }
 }

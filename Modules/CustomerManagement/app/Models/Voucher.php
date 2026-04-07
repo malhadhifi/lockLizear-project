@@ -14,7 +14,7 @@ class Voucher extends Model
     protected $fillable = [
         'customer_license_id', // الرخصة الأم (التي تحدد ما هي الملفات المسموحة وتاريخ الانتهاء)
         'pin_code',                // كود التفعيل (مثل: X4F9-P2M1-88DC-V9QW)
-        'status',              // active, used, suspended (حالة الكرت نفسه)
+        'status',              // active, used, suspend (حالة الكرت نفسه)
         'customer_devices_id',
         "used_by_customer_id"
     ];

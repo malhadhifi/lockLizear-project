@@ -16,7 +16,7 @@ class ProtectedDocumentResource extends JsonResource
             // التفاصيل الداخلية
             'id' => $this->id,
             'published' => Carbon::parse($this->published_at)->format('m-d-Y H:i:s'),
-            'status' => $this->status, // valid, suspended, expired
+            'status' => $this->status, // valid, suspend, expired
 
             // إضافة برمجية لتطابق واجهة LockLizard
             'web_viewer_access' => 'no',

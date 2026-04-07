@@ -25,8 +25,8 @@ class SyncPayloadResource extends JsonResource
                 'documents' => collect($payload['create']['documents'])->map(fn($item) => $this->formatDocumentCreate($item))->filter()->values(),
             ],
             'update' => [
-                'publications' => collect($payload['update']['publications'])->map(fn($item) => $this->formatPublicationUpdate($item)),
-                'documents' => collect($payload['update']['documents'])->map(fn($item) => $this->formatDocumentUpdate($item)),
+                'publications' => collect($payload['update']['publications'])->map(fn($item) => $this->formatPublicationUpdate($item))->values(),
+                'documents' => collect($payload['update']['documents'])->map(fn($item) => $this->formatDocumentUpdate($item))->values(),
             ],
             'deleted' => $payload['deleted']
         ];
@@ -61,8 +61,8 @@ class SyncPayloadResource extends JsonResource
         $statusStr = 'active';
         if ($pivot && $pivot->status === 'revoked') {
             $statusStr = 'revoked';
-        } elseif ($pub->status === 'suspend' || ($pivot && $pivot->status === 'suspended')) {
-            $statusStr = 'suspended';
+        } elseif ($pub->status === 'suspend' || ($pivot && $pivot->status === 'suspend')) {
+            $statusStr = 'suspend';
         }
 
         return [
@@ -80,8 +80,8 @@ class SyncPayloadResource extends JsonResource
         $sourceType = $item['source_type'];
         $controls = $doc->securityControls;
 
-        $statusStr = ($doc->status === 'suspended' || ($pivot && $pivot->status === 'suspended')) ? 'suspended' : 'valid';
-        $isNotValid = ($statusStr === 'suspended');
+        $statusStr = ($doc->status === 'suspend' || ($pivot && $pivot->status === 'suspend')) ? 'suspend' : 'valid';
+        $isNotValid = ($statusStr === 'suspend');
 
         $formatted = [
             'document_uuid' => $doc->document_uuid,

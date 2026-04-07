@@ -41,7 +41,7 @@ class PublicationCustomersResource extends JsonResource
                     : 'Yes - valid until ' . ($publication->pivot->valid_until ? \Carbon\Carbon::parse($publication->pivot->valid_until)->format('m-d-Y') : 'No Date Set');
 
             } else {
-                $accessText = 'Revoked / Suspended';
+                $accessText = 'Revoked / suspend';
             }
 
         }

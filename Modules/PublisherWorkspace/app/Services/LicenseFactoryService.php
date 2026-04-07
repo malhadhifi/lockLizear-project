@@ -69,9 +69,9 @@ class LicenseFactoryService
         $payload = [
             'package_id' => $license->package_id,
             'type' => $package->license_type,
-            'status' => $license->status === 'active' ? 'Active' : 'Suspended',
+            'status' => $license->status === 'active' ? 'Active' : 'suspend',
             'security_level' => $package->security_grade,
-            'duration_days'=>$package->duration_days,
+            'duration_days' => $package->duration_days,
             'meta_info' => [
                 'user_ref' => (string) $publisher->id,
                 'issue_timestamp' => time(),

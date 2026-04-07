@@ -39,7 +39,7 @@ class PublicationService
      */
     public function getPublications(array $filters)
     {
-        $query = Publication::withCount(["documents","customerlicense"]);
+        $query = Publication::withCount(["documents", "customerlicense"]);
 
         // 1. فلتر البحث (في الاسم والوصف)
         if (!empty($filters['search'])) {
@@ -82,7 +82,7 @@ class PublicationService
                 $query->delete();
                 break;
 
-            case 'suspended':
+            case 'suspend':
                 // تحديث حالة المنشور إلى suspend
                 $query->update(['status' => 'suspend']);
                 break;

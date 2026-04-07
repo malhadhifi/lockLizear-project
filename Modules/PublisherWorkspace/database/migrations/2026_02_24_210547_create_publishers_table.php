@@ -23,7 +23,7 @@ return new class extends Migration {
 
             // بيانات النظام والربط
             $table->string('ecommerce_key')->unique()->nullable();
-            $table->enum('status', ['active', 'suspended', 'banned'])->default('active'); // أضفنا banned للحظر النهائي
+            $table->enum('status', ['active', 'suspend', 'banned'])->default('active'); // أضفنا banned للحظر النهائي
 
             // [الجديد] التتبع ومصدر التسجيل
             $table->enum('registration_source', ['website', 'admin_panel', 'api'])->default('website'); // لمعرفة من أين جاء العميل
@@ -32,7 +32,7 @@ return new class extends Migration {
             // بيانات لارافيل الافتراضية والأمان
             $table->rememberToken();
             $table->timestamps();
-            $table->softDeletes(); 
+            $table->softDeletes();
         });
     }
 

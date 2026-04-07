@@ -44,7 +44,7 @@
 // الرابط: http://127.0.0.1:8000/api/library/publications/bulk-action
 // الـ Body (JSON):
 {
-  "action": "suspended",
+  "action": "suspend",
   "publication_ids": [1, 2, 5]
 }
 

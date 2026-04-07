@@ -7,10 +7,12 @@ use Modules\Library\Models\Document;
 
 class DocumentService
 {
-    public function getDocuments(array $filters)
+    public function getDocuments(array $filters, int $publisherId)
     {
         // نحمل إعدادات الحماية مع الملف لتجنب مشكلة N+1
-        $query = Document::with('securityControls');
+        $query = Document::with('securityControls')
+            ->where("access_scope", "selected_customers")
+            ->where("publisher_id", $publisherId);
 
         // 1. فلتر البحث
         if (!empty($filters['search'])) {
@@ -24,8 +26,8 @@ class DocumentService
         $now = Carbon::now();
 
         switch ($filters['show']) {
-            case 'suspended':
-                $query->where('status', 'suspended');
+            case 'suspend':
+                $query->where('status', 'suspend');
                 break;
 
             case 'expired':
@@ -75,8 +77,8 @@ class DocumentService
                 $query->delete();
                 break;
 
-            case 'suspended':
-                $query->update(['status' => 'suspended']);
+            case 'suspend':
+                $query->update(['status' => 'suspend']);
                 break;
 
             case 'active':

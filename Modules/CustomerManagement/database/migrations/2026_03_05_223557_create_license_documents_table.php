@@ -23,7 +23,7 @@ return new class extends Migration {
             // null = اترك الإعداد الأصلي للملف | 0 = ممنوع | رقم = عدد المرات المسموحة
             $table->integer('prints_override')->nullable();
             $table->integer('views_override')->nullable();
-            $table->enum('status', ['active', 'suspended', 'revoked'])->default('active');
+            $table->enum('status', ['active', 'suspend', 'revoked'])->default('active');
 
             $table->timestamps();
 

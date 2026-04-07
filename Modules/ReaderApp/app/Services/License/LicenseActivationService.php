@@ -84,7 +84,7 @@ class LicenseActivationService
             if (!$voucher)
                 throw new Exception('not_found', 4030);
             if ($voucher->status === 'revoked')
-                throw new Exception('suspended', 4036);
+                throw new Exception('suspend', 4036);
 
             $license = $voucher->license;
             $this->validateLicenseRules($license);
@@ -111,7 +111,7 @@ class LicenseActivationService
                 'activated_at' => now()
             ]);
 
-            return ['code' => 1020, 'license_id' => $license->id, 'voucher_id'=> $voucher->id]; // تم التفعيل بنجاح
+            return ['code' => 1020, 'license_id' => $license->id, 'voucher_id' => $voucher->id]; // تم التفعيل بنجاح
         });
     }
 
@@ -121,8 +121,8 @@ class LicenseActivationService
     private function validateLicenseRules($license)
     {
         if ($license->status === 'suspend')
-            throw new Exception('suspended', 4036);
-        
+            throw new Exception('suspend', 4036);
+
         if ($license->valid_from && now()->isBefore($license->valid_from)) {
             throw new Exception('not_started', 4031);
         }

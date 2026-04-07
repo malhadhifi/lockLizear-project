@@ -29,7 +29,7 @@ class StoreLicenseRequest extends BaseRequest
     {
         return [
             // الآن هذا الحقل سيجد الـ publisher_id الذي حقنّاه في الدالة السابقة
-            'publisher_id' => 'required|exists:publishers,id',
+            'publisher_id' => 'required',
 
             // البيانات الأساسية للرخصة
             'name' => 'required|string|max:255',

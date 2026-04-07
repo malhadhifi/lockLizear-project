@@ -25,7 +25,7 @@ return new class extends Migration {
             $table->unsignedInteger('devices_allowed')->nullable();
             $table->unsignedInteger('batch_size')->nullable();
             // --- حالة الاشتراك والمالية ---
-            $table->enum('status', ['trial', 'active', 'suspended', 'expired'])->default('trial');
+            $table->enum('status', ['trial', 'active', 'suspend', 'expired'])->default('trial');
             $table->boolean('is_paid')->default(false); // [جديد] هل تم دفع ثمن هذه الرخصة فعلياً؟
 
             $table->timestamp('starts_at')->nullable();

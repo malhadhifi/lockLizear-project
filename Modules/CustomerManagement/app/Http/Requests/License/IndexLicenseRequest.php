@@ -5,7 +5,6 @@ use App\Http\Requests\BaseRequest;
 
 
 class IndexLicenseRequest extends BaseRequest
-
 {
     public function authorize()
     {
@@ -29,7 +28,7 @@ class IndexLicenseRequest extends BaseRequest
             'sort_by' => 'in:company,name,valid_from,id',
             'show_at_least' => 'integer|min:25',
             // الفلاتر المطلوبة
-            'show' => 'in:all,registered,not_registered,suspended,expired',
+            'show' => 'in:all,registered,not_registered,suspend,expired',
         ];
     }
 }

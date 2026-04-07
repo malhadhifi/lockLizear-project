@@ -25,7 +25,7 @@ class DocumentPingService
 
         // 2. إذا كان الملف محذوفاً أو معلقاً من الجذور، نرفض فوراً
         if ($document->status === 'suspend') {
-            throw new Exception('suspended', 4002);
+            throw new Exception('suspend', 4002);
         }
 
         // $licenseIdToUse = null;
@@ -57,11 +57,11 @@ class DocumentPingService
         $licenseIdToUse = null;
         $pivotData = null;
         $pivotUpdatedAt = null;
-        
+
         // جلب الجهاز باستخدام ?? null لحماية الكود من أخطاء Undefined key
         $hardwareId = $data['hardware_id'] ?? null;
         $device = CustomerDevice::where('hardware_id', $hardwareId)->where('reader_id', $reader->id)->first();
-        
+
         if (!$device) {
             throw new Exception('device_not_found', 2001);
         }
@@ -70,14 +70,14 @@ class DocumentPingService
         // 🌟 التعديل هنا: فحص الرخصة يتم فقط إذا كان الملف ليس متاحاً للجميع
         // ==========================================================
         if ($document->access_scope !== 'all_customers') {
-            
+
             // استخدام ?? null يحمي النظام في حال لم يتم إرسال هذه المتغيرات
             $licenseType = $data['license_type'] ?? null;
-            $licenseId   = $data['license_id'] ?? null;
+            $licenseId = $data['license_id'] ?? null;
 
             // إذا كان الملف يحتاج رخصة ولكن التطبيق لم يرسلها، نرفض الطلب
             if (!$licenseType || !$licenseId) {
-                throw new Exception('license_missing', 4000); 
+                throw new Exception('license_missing', 4000);
             }
 
             $licenseIdToUse = $this->validateLicenseAndDevice($licenseType, $licenseId, $device, $reader);
@@ -91,12 +91,12 @@ class DocumentPingService
             $pivotData = $this->validateDirectDocument($document->id, $licenseIdToUse);
             $pivotUpdatedAt = Carbon::parse($pivotData->updated_at);
         }
-        
+
         // ... (باقي الكود كما هو بالأسفل) ...
 
         // 5. فحص التعليق من الجدول الوسيط
-        if ($pivotData && isset($pivotData->status) &&( $pivotData->status === 'suspended'|| $pivotData->status === 'suspend')) {
-            throw new Exception('suspended', 4002);
+        if ($pivotData && isset($pivotData->status) && ($pivotData->status === 'suspend' || $pivotData->status === 'suspend')) {
+            throw new Exception('suspend', 4002);
         }
 
         // 6. مقصلة التاريخ الثابت
@@ -185,7 +185,7 @@ class DocumentPingService
     private function validateLicenseDates($license)
     {
         if ($license->status === 'suspend')
-            throw new Exception('suspended', 4036);
+            throw new Exception('suspend', 4036);
         if (!$license->never_expires && $license->valid_until && now()->isAfter($license->valid_until)) {
             throw new Exception('expired', 4032);
         }

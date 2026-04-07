@@ -25,7 +25,7 @@ class ApiEnumMapper
     {
         return match ($status) {
             'active', 'valid', 'available' => 1,
-            'suspend', 'suspended' => 2,
+            'suspend', 'suspend' => 2,
             'revoked' => 3,
             default => 0,
         };
@@ -62,12 +62,12 @@ class ApiEnumMapper
         };
     }
 
- public static function accessScope($scope): int
+    public static function accessScope($scope): int
     {
         return match ($scope) {
-           'all_customers' => 1 ,
-            'selected_customers'=>2,
-            'publication'=>3,
+            'all_customers' => 1,
+            'selected_customers' => 2,
+            'publication' => 3,
             default => 1, // القيمة الافتراضية كما حددتها أنت
         };
     }
