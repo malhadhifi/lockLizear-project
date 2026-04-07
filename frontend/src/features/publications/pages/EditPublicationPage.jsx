@@ -170,9 +170,9 @@ const EditPublicationPage = () => {
                     الاسم (Name)
                   </label>
                   <div style={{ flex: 1 }}>
-                    {/* حقل الإدخال النصي مع ربطه بمتغير الاسم */}
-                    <input type="text" value={name} onChange={e => setName(e.target.value)}
-                      maxLength={64} style={{ width: '100%', maxWidth: 350, border: '1px solid #ccc', borderRadius: 3, padding: '6px 10px', fontSize: 13 }} />
+                    {/* حقل الإدخال النصي مع إضافة خاصية readOnly لمنع التعديل وتغيير لون الخلفية */}
+                    <input type="text" value={name} readOnly
+                      style={{ width: '100%', maxWidth: 350, border: '1px solid #ccc', backgroundColor: '#e9ecef', color: '#555', cursor: 'not-allowed', borderRadius: 3, padding: '6px 10px', fontSize: 13 }} />
                   </div>
                 </div>
 
