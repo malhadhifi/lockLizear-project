@@ -121,7 +121,13 @@ const UsersListPage = () => {
         setIsConfirmOpen(false);
       },
       onError: (error) => {
-        toast.error('حدث خطأ أثناء التنفيذ!');
+        let errorMsg = 'حدث خطأ أثناء التنفيذ!';
+        if (error.response?.data?.data) {
+          errorMsg = Object.values(error.response.data.data).flat().join('\n');
+        } else if (error.response?.data?.message) {
+          errorMsg = error.response.data.message;
+        }
+        toast.error(errorMsg);
         console.error('Bulk Action Error:', error);
       }
     });
@@ -142,9 +148,9 @@ const UsersListPage = () => {
     // إرفاق مُعَرّف المورد المختار بناءً على نوع العملية المختارة
     const extraPayload = {};
     if (bulkAction === 'grant_access_to_publication') {
-      extraPayload.publication_ids = [selectedResource.id];
+      extraPayload.publication_ids = Array.isArray(selectedResource) ? selectedResource.map(r => r.id) : [selectedResource.id];
     } else if (bulkAction === 'grant_access_to_documents') {
-      extraPayload.document_ids = [selectedResource.id];
+      extraPayload.document_ids = Array.isArray(selectedResource) ? selectedResource.map(r => r.id) : [selectedResource.id];
     }
     
     executeBulkAction(selected, bulkAction, extraPayload);
@@ -276,7 +282,11 @@ const UsersListPage = () => {
                         <i className="bi bi-journal-text" style={{ marginRight: 4 }} /> 
                         Select Publication
                      </a>
-                     {selectedResource && <div style={{ color: '#4CAF50', marginTop: 4, fontSize: 12 }}>Selected: {selectedResource.name}</div>}
+                     {selectedResource && bulkAction === 'grant_access_to_publication' && (
+                       <div style={{ color: '#4CAF50', marginTop: 4, fontSize: 12 }}>
+                         Selected: {Array.isArray(selectedResource) ? selectedResource.map(r => r.name || r.title).join(', ') : selectedResource.name}
+                       </div>
+                     )}
                   </div>
                 )}
                 
@@ -286,7 +296,11 @@ const UsersListPage = () => {
                         <i className="bi bi-file-earmark-text" style={{ marginRight: 4 }} /> 
                         Select Document
                      </a>
-                     {selectedResource && <div style={{ color: '#4CAF50', marginTop: 4, fontSize: 12 }}>Selected: {selectedResource.name}</div>}
+                     {selectedResource && bulkAction === 'grant_access_to_documents' && (
+                       <div style={{ color: '#4CAF50', marginTop: 4, fontSize: 12 }}>
+                         Selected: {Array.isArray(selectedResource) ? selectedResource.map(r => r.title || r.name).join(', ') : selectedResource.title}
+                       </div>
+                     )}
                   </div>
                 )}
               </div>
@@ -436,8 +450,8 @@ const UsersListPage = () => {
         onClose={() => setIsConfirmOpen(false)} 
         onConfirm={confirmGrantAccess}
         actionText="GRANT ACCESS"
-        customers={users.filter(u => selected.includes(u.id))}
-        resourceName={selectedResource?.name}
+        customers={filtered.filter(u => selected.includes(u.id))}
+        resourceName={Array.isArray(selectedResource) ? selectedResource.map(r => r.name || r.title).join(', ') : selectedResource?.name || selectedResource?.title}
       />
     </div>
   )

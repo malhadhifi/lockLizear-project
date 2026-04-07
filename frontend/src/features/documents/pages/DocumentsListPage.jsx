@@ -32,43 +32,56 @@ const borderColor = {
 const DocumentsListPage = () => {
   const navigate = useNavigate()
 
-  const [searchInput,   setSearchInput]   = useState('')
-  const [sortBy,        setSortBy]        = useState('title')
-  const [perPage,       setPerPage]       = useState(25)
-  const [showFilter,    setShowFilter]    = useState('all')
-  const [page,          setPage]          = useState(1)
-  const [selected,      setSelected]      = useState([])
-  const [bulkAction,    setBulkAction]    = useState('')
-  const [activeSideNav, setActiveSideNav] = useState('manage')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [perPage, setPerPage]         = useState(25)
+  const [searchInput, setSearchInput] = useState('')
+  const [sortBy, setSortBy]           = useState('title')
+  const [showFilter, setShowFilter]   = useState('all') // all, valid, suspended, expired
+
+  const [selected, setSelected]             = useState([])
+  const [bulkAction, setBulkAction]         = useState('')
+  const [activeSideNav, setActiveSideNav]   = useState('manage')
   const [showExportModal, setShowExportModal] = useState(false)
-  const [exportType, setExportType] = useState('all')
-  const [exportFormat, setExportFormat] = useState('csv')
+  const [exportType, setExportType]         = useState('all')
+  const [exportFormat, setExportFormat]     = useState('csv')
 
-  const debouncedSearch = useDebounce(searchInput, 300)
-
-  const params = useMemo(() => ({
-    ...(showFilter !== 'all' && { show: showFilter }),
-    ...(debouncedSearch      && { search: debouncedSearch }),
-    sort_by:  sortBy,
-    per_page: perPage,
-    page,
-  }), [showFilter, debouncedSearch, sortBy, perPage, page])
-
-  const { data, isLoading, isError, error, isFetching } = useDocuments(params)
   const actionMutation = useDocumentAction()
   const exportMutation = useDocumentExport()
 
+  // جلب كل المستندات (Client-side pagination filtering)
+  const { data, isLoading, isError, error, isFetching } = useDocuments({ limit: 1000 })
+
   // ─── استخراج البيانات ──────────────────────────────────────────────────────
-  // axios interceptor يفك تغليف Laravel تلقائياً:
-  //   data = محتوى "data" من الباك إند مباشرة
-  //   = { items: [...], total, current_page, last_page, per_page }
-  const documents  = Array.isArray(data?.items) ? data.items
-                   : Array.isArray(data?.data?.items) ? data.data.items
-                   : Array.isArray(data) ? data
-                   : []
-  // استخراج كائن التقليب (pagination) بذكاء من الرد بناءً للاعتراضات
-  const pagination = data?.pagination || data?.data?.pagination || null
-  // ──────────────────────────────────────────────────────────────────────────
+  const rawDocuments = Array.isArray(data?.items) ? data.items
+                     : Array.isArray(data?.data?.items) ? data.data.items
+                     : Array.isArray(data) ? data
+                     : []
+  
+  // فلترة العميل وفرزها
+  const filtered = useMemo(() => {
+    let result = [...rawDocuments]
+
+    if (searchInput.trim()) {
+      const s = searchInput.toLowerCase()
+      result = result.filter(d => (d.title || '').toLowerCase().includes(s) || (d.id?.toString().includes(s)))
+    }
+
+    if (showFilter === 'valid')     result = result.filter(d => d.status === 'valid')
+    if (showFilter === 'suspended') result = result.filter(d => d.status === 'suspended')
+    if (showFilter === 'expired')   result = result.filter(d => d.status === 'expired')
+
+    result.sort((a, b) => {
+      if (sortBy === 'title') return (a.title || '').localeCompare(b.title || '')
+      if (sortBy === 'id')    return a.id - b.id
+      if (sortBy === 'published') return new Date(b.published || 0) - new Date(a.published || 0)
+      return 0
+    })
+
+    return result
+  }, [rawDocuments, searchInput, showFilter, sortBy])
+
+  const totalPages = Math.ceil(filtered.length / perPage) || 1
+  const documents = filtered.slice((currentPage - 1) * perPage, currentPage * perPage)
 
   const toggleSelect    = (id) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
   const checkAll        = ()   => setSelected(documents.map(d => d.id))
@@ -112,7 +125,7 @@ const DocumentsListPage = () => {
 
   const handleFilterChange = (setter) => (val) => {
     setter(val)
-    setPage(1)
+    setCurrentPage(1)
     setSelected([])
   }
 
@@ -173,7 +186,7 @@ const DocumentsListPage = () => {
               <input
                 type="text"
                 value={searchInput}
-                onChange={e => { setSearchInput(e.target.value); setPage(1) }}
+                onChange={e => { setSearchInput(e.target.value); setCurrentPage(1) }}
                 placeholder="بحث بالعنوان..."
                 style={{ ...filterInputStyle, borderRight: 'none', borderTopRightRadius: 0, borderBottomRightRadius: 0, flex: 1, height: 28 }}
               />
@@ -265,18 +278,18 @@ const DocumentsListPage = () => {
         {/* عداد النتائج */}
         {!isLoading && !isError && (
           <div style={{ textAlign: 'center', color: TEAL, fontSize: 13, fontWeight: 700, margin: '20px 0' }} dir="ltr">
-            {'>> '}<span>[{pagination?.total ?? documents.length}]</span>{' <<'}
+            {'>> '}<span>[{filtered.length}]</span>{' <<'}
           </div>
         )}
 
         {/* بطاقات المستندات */}
         {!isLoading && !isError && (
           <div>
-            {documents.length === 0 ? (
+            {filtered.length === 0 ? (
               <div style={{ textAlign: 'center', padding: 40, color: '#888' }}>
                 لا توجد مستندات مطابقة (No documents found)
               </div>
-            ) : documents.map(doc => (
+            ) : filtered.slice((currentPage - 1) * perPage, currentPage * perPage).map(doc => (
               <div key={doc.id} className="mobile-card" style={{
                 display: 'flex', alignItems: 'stretch',
                 background: '#f8f8f8', marginBottom: 16,
@@ -337,31 +350,31 @@ const DocumentsListPage = () => {
         )}
 
         {/* أزرار Pagination تعتمد أسهماً صغيرة */}
-        {pagination && pagination.total > 0 && (
+        {!isLoading && filtered.length > 0 && (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, padding: '10px 0' }}>
             <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page <= 1 || isFetching}
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
               title="السابق (Previous)"
               style={{
-                background: page <= 1 ? '#eee' : '#fff', color: page <= 1 ? '#999' : TEAL,
-                border: `1px solid ${page <= 1 ? '#ccc' : TEAL}`, borderRadius: 3, padding: '2px 12px', cursor: page <= 1 ? 'not-allowed' : 'pointer',
+                background: currentPage <= 1 ? '#eee' : '#fff', color: currentPage <= 1 ? '#999' : TEAL,
+                border: `1px solid ${currentPage <= 1 ? '#ccc' : TEAL}`, borderRadius: 3, padding: '2px 12px', cursor: currentPage <= 1 ? 'not-allowed' : 'pointer',
                 fontWeight: 'bold', fontSize: 14
               }}>
               &lt;&lt;
             </button>
             <span style={{ fontSize: 13, fontWeight: 700, color: TEAL }}>
-              [ {pagination.current_page} / {pagination.last_page} ]
+              [ {currentPage} / {totalPages} ]
             </span>
             <button
-              onClick={() => setPage(p => Math.min(pagination.last_page, p + 1))}
-              disabled={page >= pagination.last_page || isFetching}
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
               title="التالي (Next)"
               style={{
-                background: page >= pagination.last_page ? '#eee' : '#fff',
-                color: page >= pagination.last_page ? '#999' : TEAL,
-                border: `1px solid ${page >= pagination.last_page ? '#ccc' : TEAL}`, borderRadius: 3, padding: '2px 12px',
-                cursor: page >= pagination.last_page ? 'not-allowed' : 'pointer',
+                background: currentPage >= totalPages ? '#eee' : '#fff',
+                color: currentPage >= totalPages ? '#999' : TEAL,
+                border: `1px solid ${currentPage >= totalPages ? '#ccc' : TEAL}`, borderRadius: 3, padding: '2px 12px',
+                cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer',
                 fontWeight: 'bold', fontSize: 14
               }}>
               &gt;&gt;

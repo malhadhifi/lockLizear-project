@@ -3,6 +3,7 @@
  */
 import { useState, useEffect, useMemo } from 'react'
 import { useDocuments } from '../../documents/hooks/useDocuments'
+import toast from 'react-hot-toast'
 
 const TEAL = '#009cad'
 
@@ -27,7 +28,7 @@ export default function SelectDocumentModal({ isOpen, onClose, onSelect, initial
       setValidFrom('')
       setValidUntil('')
     }
-  }, [isOpen, initialSelectedIds])
+  }, [isOpen]) // FIXED INFINITE LOOP
 
   const filtered = useMemo(() => {
     let result = [...documents]
@@ -54,6 +55,10 @@ export default function SelectDocumentModal({ isOpen, onClose, onSelect, initial
 
   const handleOK = () => {
     const selectedDocs = documents.filter(x => selectedIds.includes(x.id))
+    if (selectedDocs.length === 0) {
+      toast.error('الرجاء تحديد مستند واحد على الأقل');
+      return;
+    }
     // نرسل الـ action + التواريخ مع المستندات المحددة
     onSelect(selectedDocs, withChecked || 'grant_unlimited', validFrom, validUntil)
   }

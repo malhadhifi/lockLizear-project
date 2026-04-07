@@ -11,6 +11,8 @@ use Illuminate\Http\Exceptions\HttpResponseException;
  */
 abstract class BaseLibraryRequest extends FormRequest
 {
+    use \App\Traits\ApiResponseTrait;
+
     /**
      * اعتراض أخطاء التحقق (Validation) وتغليفها بالغلاف الموحد
      */

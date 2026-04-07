@@ -5,6 +5,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { usePublications } from '../../publications/hooks/usePublications'
 import api from '../../../lib/axios'
+import toast from 'react-hot-toast'
 
 const TEAL = '#009cad'
 
@@ -162,7 +163,7 @@ export default function SelectPublicationModal({ isOpen, onClose, onSelect, init
       setViewCustomers(null)
       setViewDocuments(null)
     }
-  }, [isOpen, initialSelectedIds])
+  }, [isOpen]) // FIXED INFINITE LOOP by removing initialSelectedIds
 
   const filtered = useMemo(() => {
     let result = [...publications]
@@ -189,6 +190,10 @@ export default function SelectPublicationModal({ isOpen, onClose, onSelect, init
 
   const handleOK = () => {
     const selectedPubs = publications.filter(x => selectedIds.includes(x.id))
+    if (selectedPubs.length === 0) {
+      toast.error('الرجاء تحديد عنصر واحد على الأقل');
+      return;
+    }
     onSelect(selectedPubs, withChecked || 'grant_unlimited', validFrom, validUntil)
   }
 

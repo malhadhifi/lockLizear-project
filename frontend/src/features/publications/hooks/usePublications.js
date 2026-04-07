@@ -47,6 +47,16 @@ export const useCreatePublication = () => {
     mutationFn: publicationApi.createPublication,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['publications'] });
+      toast.success('تم إنشاء المنشور بنجاح');
+    },
+    onError: (err) => {
+      let errorMsg = 'فشل إضافة المنشور';
+      if (err.response?.data?.data) {
+        errorMsg = Object.values(err.response.data.data).flat().join('\n');
+      } else if (err.response?.data?.message) {
+        errorMsg = err.response.data.message;
+      }
+      toast.error(errorMsg);
     }
   });
 };
@@ -64,6 +74,16 @@ export const useUpdatePublication = () => {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['publications'] });
       queryClient.invalidateQueries({ queryKey: ['publication', variables.id] });
+      toast.success('تم حفظ التعديلات بنجاح');
+    },
+    onError: (err) => {
+      let errorMsg = 'فشل التعديل';
+      if (err.response?.data?.data) {
+        errorMsg = Object.values(err.response.data.data).flat().join('\n');
+      } else if (err.response?.data?.message) {
+        errorMsg = err.response.data.message;
+      }
+      toast.error(errorMsg);
     }
   });
 };
@@ -79,6 +99,16 @@ export const usePublicationBulkAction = () => {
     mutationFn: publicationApi.bulkAction,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['publications'] });
+      toast.success('تم تنفيذ الإجراء المجمع بنجاح');
+    },
+    onError: (err) => {
+      let errorMsg = 'فشل تنفيذ الإجراء';
+      if (err.response?.data?.data) {
+        errorMsg = Object.values(err.response.data.data).flat().join('\n');
+      } else if (err.response?.data?.message) {
+        errorMsg = err.response.data.message;
+      }
+      toast.error(errorMsg);
     }
   });
 };
