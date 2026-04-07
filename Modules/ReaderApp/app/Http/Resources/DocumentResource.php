@@ -59,7 +59,7 @@ class DocumentResource extends JsonResource
             'verify_frequency_days' => $controls->verify_frequency_days ?? null,
             'grace_period_days' => $controls->grace_period_days ?? null,
             'max_views' => $maxViews,
-            'access_scope'=>$doc->access_scope,
+            'access_scope'=>ApiEnumMapper::accessScope($doc->access_scope),
         ];
     }
 }

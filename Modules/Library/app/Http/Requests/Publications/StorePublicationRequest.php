@@ -2,24 +2,39 @@
 
 namespace Modules\Library\Http\Requests\Publications;
 
-use Modules\Library\Http\Requests\BaseLibraryRequest;
 
-class StorePublicationRequest extends BaseLibraryRequest
+use App\Http\Requests\BaseRequest;
+class StorePublicationRequest extends BaseRequest
 {
     public function authorize()
     {
-        return true; // تأكد من وضع صلاحيات المستخدم هنا لاحقاً
+        return $this->user() !== null;
     }
 
-    public function rules()
-    {
-        return [
-            // الاسم مطلوب، ويجب ألا يتجاوز 64 حرف، ويجب ألا يتكرر لنفس الناشر (اختياري حسب البزنس)
-            'name' => 'required|string|max:64',
-            'description' => 'nullable|string',
-            'obey' => 'boolean',
-            // سنفترض أن معرف الناشر يأتي من الجلسة (Auth) أو يتم إرساله
-            'publisher_id' => 'required|exists:publishers,id',
-        ];
-    }
+protected function prepareForValidation()
+{
+    $this->merge([
+        'publisher_id' => $this->user()->id,
+    ]);
+}
+
+public function rules()
+{
+    return [
+        'name'         => 'required|string|max:64',
+        'description'  => 'nullable|string',
+        'obey'         => 'boolean',
+        
+        // 🌟 أضف هذا السطر:
+        // نضعه كـ 'required' لكي يظهر في مصفوفة الـ validated
+        // وبما أننا دمجناه في prepareForValidation فهو دائماً موجود
+        'publisher_id' => 'required|integer', 
+    ];
+}
+
+
+
+   
+
+
 }

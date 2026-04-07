@@ -2,9 +2,10 @@
 
 namespace Modules\Library\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\BaseRequest;
 
-class GetPublicationsRequest extends FormRequest
+
+class GetPublicationsRequest extends BaseRequest
 {
     public function authorize()
     {

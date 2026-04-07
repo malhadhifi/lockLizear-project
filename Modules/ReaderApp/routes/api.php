@@ -35,7 +35,7 @@ Route::prefix('reader')->group(function () {
 
         // 3. إدخال الكود للحصول على التوكن والبيانات (يرجع كود 1012)
         Route::post('login', [AuthController::class, 'login']);
-        Route::post('verify', [AuthController::class, 'verify']);
+        Route::post('verify-otp', [AuthController::class, 'verify']);
 
 
     });

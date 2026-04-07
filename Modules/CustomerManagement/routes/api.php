@@ -7,6 +7,7 @@ use Modules\CustomerManagement\Http\Controllers\LicensPublicationController;
 
 Route::prefix('customer-licenses')->middleware([
     'auth:publisher_api',
+
     'ability:panel-access',
 ])->
 group(function () {

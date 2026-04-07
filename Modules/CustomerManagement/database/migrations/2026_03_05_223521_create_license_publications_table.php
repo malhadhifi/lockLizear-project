@@ -21,7 +21,7 @@ return new class extends Migration {
             $table->timestamp('valid_until')->nullable();
 
             // 🚨 حالة وصول هذا العميل المحددة للمنشور (تعليق/إلغاء للطالب فقط)
-            $table->enum('status', ['active', 'suspended', 'revoked'])->default('active');
+            $table->enum('status', ['active', 'suspend', 'revoked'])->default('active');
 
             $table->timestamps();
 

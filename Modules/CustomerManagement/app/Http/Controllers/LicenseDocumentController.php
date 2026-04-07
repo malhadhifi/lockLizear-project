@@ -11,6 +11,7 @@ use Modules\CustomerManagement\Transformers\LicenseDocuments\LicenseDocumentReso
 
 class LicenseDocumentController extends Controller
 {
+
     use ApiResponseTrait;
 
     protected $service;

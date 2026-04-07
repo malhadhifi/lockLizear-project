@@ -2,11 +2,12 @@
 
 namespace Modules\Library\Http\Requests\Publications;
 
-use Modules\Library\Http\Requests\BaseLibraryRequest;
+use App\Http\Requests\BaseRequest;
 
 
 
-class UpdatePublicationRequest extends BaseLibraryRequest
+
+class UpdatePublicationRequest extends BaseRequest
 {
     public function authorize()
     {

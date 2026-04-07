@@ -24,24 +24,63 @@ class DocumentPingService
         }
 
         // 2. إذا كان الملف محذوفاً أو معلقاً من الجذور، نرفض فوراً
-        if ($document->status === 'suspended') {
+        if ($document->status === 'suspend') {
             throw new Exception('suspended', 4002);
         }
+
+        // $licenseIdToUse = null;
+        // $pivotData = null;
+        // $pivotUpdatedAt = null;
+        // $device = CustomerDevice::where('hardware_id', $data['hardware_id'])->where('reader_id', $reader->id)->first();
+        // if (!$device) {
+        //     throw new Exception('device_not_found', 2001);
+        // }
+        // $licenseIdToUse = $this->validateLicenseAndDevice($data['license_type'], $data['license_id'], $device, $reader);
+        // // 3. التحقق المسبق من الجهاز (مطلوب لأي ملف غير متاح للجميع)
+        // $device = null;
+        // if ($document->access_scope !== 'all_customers') {
+
+
+        //     // // 🌟 الفحص الأمني القوي للرخصة أو الكرت
+        // }
+
+        // // 4. توجيه مسار الفحص بناءً على نوع وصول الملف
+        // if ($document->access_scope === 'publication' && $document->publication_id) {
+        //     $pivotData = $this->validatePublication($document->publication_id, $licenseIdToUse);
+
+        // } elseif ($document->access_scope === 'selected_customers') {
+        //     $pivotData = $this->validateDirectDocument($document->id, $licenseIdToUse);
+        //     $pivotUpdatedAt = Carbon::parse($pivotData->updated_at);
+        // }
+
 
         $licenseIdToUse = null;
         $pivotData = null;
         $pivotUpdatedAt = null;
-        $device = CustomerDevice::where('hardware_id', $data['hardware_id'])->where('reader_id', $reader->id)->first();
+        
+        // جلب الجهاز باستخدام ?? null لحماية الكود من أخطاء Undefined key
+        $hardwareId = $data['hardware_id'] ?? null;
+        $device = CustomerDevice::where('hardware_id', $hardwareId)->where('reader_id', $reader->id)->first();
+        
         if (!$device) {
             throw new Exception('device_not_found', 2001);
         }
-        $licenseIdToUse = $this->validateLicenseAndDevice($data['license_type'], $data['license_id'], $device, $reader);
-        // 3. التحقق المسبق من الجهاز (مطلوب لأي ملف غير متاح للجميع)
-        $device = null;
+
+        // ==========================================================
+        // 🌟 التعديل هنا: فحص الرخصة يتم فقط إذا كان الملف ليس متاحاً للجميع
+        // ==========================================================
         if ($document->access_scope !== 'all_customers') {
+            
+            // استخدام ?? null يحمي النظام في حال لم يتم إرسال هذه المتغيرات
+            $licenseType = $data['license_type'] ?? null;
+            $licenseId   = $data['license_id'] ?? null;
 
+            // إذا كان الملف يحتاج رخصة ولكن التطبيق لم يرسلها، نرفض الطلب
+            if (!$licenseType || !$licenseId) {
+                throw new Exception('license_missing', 4000); 
+            }
 
-            // // 🌟 الفحص الأمني القوي للرخصة أو الكرت
+            $licenseIdToUse = $this->validateLicenseAndDevice($licenseType, $licenseId, $device, $reader);
         }
 
         // 4. توجيه مسار الفحص بناءً على نوع وصول الملف
@@ -52,9 +91,11 @@ class DocumentPingService
             $pivotData = $this->validateDirectDocument($document->id, $licenseIdToUse);
             $pivotUpdatedAt = Carbon::parse($pivotData->updated_at);
         }
+        
+        // ... (باقي الكود كما هو بالأسفل) ...
 
         // 5. فحص التعليق من الجدول الوسيط
-        if ($pivotData && isset($pivotData->status) && $pivotData->status === 'suspended') {
+        if ($pivotData && isset($pivotData->status) &&( $pivotData->status === 'suspended'|| $pivotData->status === 'suspend')) {
             throw new Exception('suspended', 4002);
         }
 

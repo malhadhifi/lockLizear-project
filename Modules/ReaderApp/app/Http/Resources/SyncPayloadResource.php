@@ -89,7 +89,7 @@ class SyncPayloadResource extends JsonResource
             'type' => ApiEnumMapper::documentType($doc->type),
             'title' => $doc->title,
             'file_hash' => $doc->file_hash,
-            'access_scope' => $doc->access_scope,
+            'access_scope'=>ApiEnumMapper::accessScope($doc->access_scope),
             'publisher_id' => $doc->publisher_id,
             'publication_id' => $doc->publication_id,
             'license_id' => ($sourceType === 'selected_customers') ? $item['license_id'] : null,

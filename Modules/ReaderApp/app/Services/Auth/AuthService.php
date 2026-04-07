@@ -57,7 +57,7 @@ class AuthService
         Cache::put($cacheKey, $cachePayload, now()->addMinutes(2));
 
         Notification::route('mail', $email)->notify(new SendOtpNotification($otpCode));
-        \Log::info("OTP for {$email} is: {$otpCode}");
+        // \Log::info("OTP for {$email} is: {$otpCode}");
 
         return $otpCode;
     }

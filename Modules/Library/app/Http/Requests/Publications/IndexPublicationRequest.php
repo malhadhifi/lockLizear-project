@@ -1,11 +1,12 @@
 <?php
 namespace Modules\Library\Http\Requests\Publications;
 
-use Modules\Library\Http\Requests\BaseLibraryRequest;
+use App\Http\Requests\BaseRequest;
 
 
 
-class IndexPublicationRequest extends BaseLibraryRequest
+
+class IndexPublicationRequest extends BaseRequest
 {
     public function authorize()
     {

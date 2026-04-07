@@ -62,6 +62,16 @@ class ApiEnumMapper
         };
     }
 
+ public static function accessScope($scope): int
+    {
+        return match ($scope) {
+           'all_customers' => 1 ,
+            'selected_customers'=>2,
+            'publication'=>3,
+            default => 1, // القيمة الافتراضية كما حددتها أنت
+        };
+    }
+
 
     // ========================================================
     // الجزء الثاني: من رقم (C#) إلى نص (Database) [التحويل العكسي]
@@ -108,4 +118,5 @@ class ApiEnumMapper
             default => 'selected_customers', // القيمة الافتراضية كما حددتها أنت
         };
     }
+
 }

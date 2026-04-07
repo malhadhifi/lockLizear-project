@@ -13,6 +13,7 @@ use Modules\Library\Models\Document;
 use Modules\Library\Services\PublicationService;
 use Modules\Library\Models\Publication;
 use App\Traits\ApiResponseTrait;
+use Illuminate\Support\Facades\Log;
 
 class PublicationController extends Controller
 {
@@ -37,7 +38,7 @@ class PublicationController extends Controller
             return $this->sendResponse(true, 1001, $publication, 201);
 
         } catch (\Exception $e) {
-
+Log::error($e->getMessage().$e->getFile().$e->getLine());
             return $this->sendResponse(false, 5000, null, 500);
         }
     }
@@ -54,6 +55,7 @@ class PublicationController extends Controller
             return $this->sendResponse(true, 1021, $updatedPublication, 200);
 
         } catch (\Exception $e) {
+             
             return $this->sendResponse(false, 5000, null, 500);
         }
     }
