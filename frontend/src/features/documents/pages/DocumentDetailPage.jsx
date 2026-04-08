@@ -1,12 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import {
-  useDocumentDetail,
-  useUpdateDocument,
-  useDocumentAccessList,
-} from '../hooks/useDocuments'
+import { useDocumentDetail, useUpdateDocument, useDocumentAccessList } from '../hooks/useDocuments'
 import { userApi } from '../../users/services/userApi'
+import { useQuery } from '@tanstack/react-query'
 import api from '../../../lib/axios'
 
 const TEAL = '#008b9c'
@@ -506,8 +503,6 @@ const DocumentDetailPage = () => {
   const [showGrantModal, setShowGrantModal] = useState(false)
   const [showOpenHistory, setShowOpenHistory] = useState(false)
   const [showPrintHistory, setShowPrintHistory] = useState(false)
-  
-  const [allCustomers, setAllCustomers] = useState([])
 
   const { data, isLoading, refetch } = useDocumentDetail(idParam)
   const document = data?.data ?? data ?? null
@@ -515,16 +510,17 @@ const DocumentDetailPage = () => {
 
   const { data: accessData, refetch: refetchAccess } = useDocumentAccessList(idParam)
   const accessList = Array.isArray(accessData?.data) ? accessData.data : Array.isArray(accessData) ? accessData : []
-
-  // جلب كل العملاء لضمان عمل "تحديد العملاء" ونوافذ البحث بشكل سليم
-  useEffect(() => {
-    if (allCustomers.length === 0) {
-      userApi.fetchCustomers().then(res => {
-        const items = res?.data?.items ?? res?.items ?? (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [])
-        setAllCustomers(items)
-      }).catch(() => setAllCustomers([]))
-    }
-  }, [])
+  
+  // جلب العملاء باستخدام التخزين المؤقت وتحديد العدد لـ 50 لمنع التعليق
+  const { data: allCustRes } = useQuery({
+    queryKey: ['all-customers'],
+    queryFn: () => userApi.fetchCustomers({ limit: 50 })
+  });
+  
+  const allCustomers = useMemo(() => {
+    const res = allCustRes;
+    return res?.data?.items ?? res?.items ?? (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [])
+  }, [allCustRes]);
 
   useEffect(() => {
     if (!document) return
@@ -642,8 +638,7 @@ const DocumentDetailPage = () => {
         <div style={{ padding: 24, fontSize: 13 }}>
           
           {/* Details */}
-          {activeTab === 'details' && (
-            <div style={{ maxWidth: 600, width: '100%' }}>
+          <div style={{ display: activeTab === 'details' ? 'block' : 'none', maxWidth: 600, width: '100%' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <tbody>
                   <tr style={{ borderBottom: '1px solid #eee' }}><td style={{ padding: '10px 16px', fontWeight: 'bold', width: 200, color: '#333' }}>العنوان (Title)</td><td style={{ padding: '10px 0' }}>{document.title}</td></tr>
@@ -667,11 +662,9 @@ const DocumentDetailPage = () => {
                 </button>
               </div>
             </div>
-          )}
 
           {/* DRM Settings */}
-          {activeTab === 'drm' && (
-            <div style={{ maxWidth: 600, width: '100%' }}>
+          <div style={{ display: activeTab === 'drm' ? 'block' : 'none', maxWidth: 600, width: '100%' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <tbody>
                   <tr style={{ borderBottom: '1px solid #eee' }}><td style={{ padding: '10px 16px', fontWeight: 'bold', width: 220, color: '#333' }}>طريقة الانتهاء (Expiry Mode)</td>
@@ -733,11 +726,9 @@ const DocumentDetailPage = () => {
                 </button>
               </div>
             </div>
-          )}
 
           {/* Access / Operations */}
-          {activeTab === 'access' && (
-            <div>
+          <div style={{ display: activeTab === 'access' ? 'block' : 'none' }}>
               <p style={{ color: '#555', marginBottom: 20, fontSize: 14 }}>استخدم الروابط أدناه لإدارة صلاحيات الوصول وعرض السجلات:</p>
               
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -766,10 +757,8 @@ const DocumentDetailPage = () => {
                   </a>
                 </li>
               </ul>
-            </div>
-          )}
-
         </div>
+      </div>
       </div>
 
       {/* النوافذ المنبثقة */}

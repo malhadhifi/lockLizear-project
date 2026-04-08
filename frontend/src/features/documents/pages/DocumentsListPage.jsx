@@ -48,8 +48,8 @@ const DocumentsListPage = () => {
   const actionMutation = useDocumentAction()
   const exportMutation = useDocumentExport()
 
-  // جلب كل المستندات (Client-side pagination filtering)
-  const { data, isLoading, isError, error, isFetching } = useDocuments({ limit: 1000 })
+  // جلب المستندات مع تحديد بـ 50 مستند للمحافظة على موارد المتصفح وتفعيل البحث من جانب الخادم
+  const { data, isLoading, isError, error, isFetching } = useDocuments({ limit: 50, search: searchInput })
 
   // ─── استخراج البيانات ──────────────────────────────────────────────────────
   const rawDocuments = Array.isArray(data?.items) ? data.items
@@ -61,10 +61,11 @@ const DocumentsListPage = () => {
   const filtered = useMemo(() => {
     let result = [...rawDocuments]
 
-    if (searchInput.trim()) {
-      const s = searchInput.toLowerCase()
-      result = result.filter(d => (d.title || '').toLowerCase().includes(s) || (d.id?.toString().includes(s)))
-    }
+    // تم إيقاف البحث من طرف المتصفح حيث أصبح السيرفر يتولى ذلك لتقليل الضغط
+    // if (searchInput.trim()) {
+    //   const s = searchInput.toLowerCase()
+    //   result = result.filter(d => (d.title || '').toLowerCase().includes(s) || (d.id?.toString().includes(s)))
+    // }
 
     if (showFilter === 'valid')     result = result.filter(d => d.status === 'valid')
     if (showFilter === 'suspended') result = result.filter(d => d.status === 'suspended')

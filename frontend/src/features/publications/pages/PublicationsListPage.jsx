@@ -34,42 +34,33 @@ const fieldValueStyle = { color: '#333', verticalAlign: 'top' }
 const PublicationsListPage = () => {
   // دالة تُستخدم للتحويل البرمجي بين روابط التطبيق
   const navigate = useNavigate()
-  // تفعيل خطافات جلب المنشورات والعمليات المجمعة من React Query
-  const { data: publicationsResponse, isLoading, isError } = usePublications({ limit: 1000 })
+  // نقلنا تعريف الحالات (States) إلى أعلى لمنع خطأ الوصول قبل التهيئة
+  const [filter, setFilter] = useState('')
+  const [sortBy, setSortBy] = useState('name')
+  const [showAtLeast, setShowAtLeast] = useState(2)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [showFilter, setShowFilter] = useState('all')
+  const [selected, setSelected] = useState([])
+  const [bulkAction, setBulkAction] = useState('')
+  const [activeSideNav, setActiveSideNav] = useState('manage')
+
+  // تفعيل خطافات جلب المنشورات من React Query مع جعل الحد 50 وإضافة البحث في الخادم
+  const { data: publicationsResponse, isLoading, isError } = usePublications({ limit: 50, search: filter })
   const bulkMutation = usePublicationBulkAction()
   
   // استخراج قائمة المنشورات الحقيقية من كائن البيانات (Items)
   const publications = publicationsResponse?.items || publicationsResponse?.data?.items || []
 
-  // حالة (State) للبحث النصي الحر
-  const [filter, setFilter] = useState('')
-  // حالة (State) لتحديد بناءً على أي حقل يتم الفرز
-  const [sortBy, setSortBy] = useState('name')
-  // حالة (State) لعدد السجلات المعروضة بحد أدنى كصفحات
-  const [showAtLeast, setShowAtLeast] = useState(2)
-  // رقم الصفحة الحالية
-  const [currentPage, setCurrentPage] = useState(1)
-  // حالة (State) للفلترة حسب نوع المنشور (الكل، ملتزم بالتاريخ، لا يلتزم)
-  const [showFilter, setShowFilter] = useState('all')
-  // حالة (State) لتخزين معرفات (IDs) المنشورات المحددة عبر مربعات الاختيار
-  const [selected, setSelected] = useState([])
-  // حالة (State) لتخزين الخيار المجمع (Bulk Action) المراد تنفيذه
-  const [bulkAction, setBulkAction] = useState('')
-  // حالة (State) لمعرفة أي تبويبة من القائمة الجانبية هي النشطة حالياً
-  const [activeSideNav, setActiveSideNav] = useState('manage')
-
   // حساب القائمة المصفاة والمفرزة (Filtered & Sorted) لتحديثها تلقائياً عند تغير أي فلتر
   const filtered = useMemo(() => {
     // أخذ نسخة من قائمة المنشورات الأصلية
     let result = [...publications]
-    
+    // تم نقل فلترة البحث النصي إلى السيرفر، لذلك نعطلها من هنا لتجنب التعارض
     // إذا كان هناك نص في حقل البحث
-    if (filter) {
-      // تحويل النص إلى حروف صغيرة للمقارنة الدقيقة
-      const s = filter.toLowerCase()
-      // تصفية المنشورات التي يحتوي اسمها أو مسماها على النص المدخل
-      result = result.filter(p => p.name.toLowerCase().includes(s) || (p.description && p.description.toLowerCase().includes(s)))
-    }
+    // if (filter) {
+    //   const s = filter.toLowerCase()
+    //   result = result.filter(p => p.name.toLowerCase().includes(s) || (p.description && p.description.toLowerCase().includes(s)))
+    // }
     
     // التصفية حسب حالة "الالتزام بتاريخ البدء"
     if (showFilter === 'obey') {

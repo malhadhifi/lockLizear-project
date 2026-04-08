@@ -8,11 +8,18 @@ import toast from 'react-hot-toast'
 const TEAL = '#009cad'
 
 export default function SelectDocumentModal({ isOpen, onClose, onSelect, initialSelectedIds = [] }) {
-  const { data: docData, isLoading } = useDocuments({ limit: 1000 })
+  // تعريف حالة الفلتر لكي نربطها مع طلب الباك إند
+  const [filterText, setFilterText] = useState('')
+
+  // جلب البيانات من الباك إند مع حد منطقي (limit: 50) بدلاً من 1000 لتجنب التجمد (Freeze)
+  // وتمرير نص البحث مباشرة للباك إند للحصول على النتائج فوراً بدلاً من الكلينت
+  const { data: docData, isLoading } = useDocuments({ limit: 50, search: filterText })
+  
+  // استخراج المصفوفة بشكل آمن
   const documents = Array.isArray(docData?.items) ? docData.items : Array.isArray(docData?.data?.items) ? docData.data.items : Array.isArray(docData) ? docData : []
 
   const [selectedIds, setSelectedIds] = useState(initialSelectedIds)
-  const [filterText, setFilterText] = useState('')
+  // const [filterText, setFilterText] = useState('') // تم نقله للأعلى
   const [sortBy, setSortBy] = useState('title')
   const [showAtLeast, setShowAtLeast] = useState(25)
   const [docFilter, setDocFilter] = useState('all')

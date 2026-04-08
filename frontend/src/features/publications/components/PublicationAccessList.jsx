@@ -8,19 +8,6 @@ import api from '../../../lib/axios'
 const TEAL = '#009cad'
 
 const PublicationAccessList = ({ publicationId }) => {
-  const { data: subsRes, isLoading } = usePublicationSubscribers(publicationId)
-  const customers = Array.isArray(subsRes?.data) ? subsRes.data : Array.isArray(subsRes) ? subsRes : []
-  
-  // جلب كل العملاء من النظام (لعرض Without Access)
-  const { data: allCustomersRes } = useQuery({
-    queryKey: ['all-customers-for-pub', publicationId],
-    queryFn: () => api.get('/customer-management/customer-licenses', { params: { limit: 1000 } }),
-  })
-  const allCustomers = allCustomersRes?.data?.items || allCustomersRes?.items || []
-  
-  const revokeMutation = useRevokeSubscriberAccess()
-  const pubAccessMutation = useUpdatePublicationAccess()
-
   const [selected, setSelected] = useState([])
   const [filter, setFilter] = useState('')
   const [sortBy, setSortBy] = useState('name')
@@ -29,6 +16,22 @@ const PublicationAccessList = ({ publicationId }) => {
   const [bulkAction, setBulkAction] = useState('')
   const [validFrom, setValidFrom] = useState('')
   const [validUntil, setValidUntil] = useState('')
+  const [isLimited, setIsLimited] = useState(false)
+  const [grantAll, setGrantAll] = useState(false)
+
+  const { data: subsRes, isLoading } = usePublicationSubscribers(publicationId)
+  const customers = Array.isArray(subsRes?.data) ? subsRes.data : Array.isArray(subsRes) ? subsRes : []
+  
+  // جلب كل العملاء من النظام بحد 50 مع تفعيل البحث في السيرفر لمنع ثقل المتصفح
+  const { data: allCustomersRes } = useQuery({
+    queryKey: ['all-customers-for-pub', publicationId, filter],
+    queryFn: () => api.get('/customer-management/customer-licenses', { params: { limit: 50, search: filter } }),
+  })
+  const allCustomers = allCustomersRes?.data?.items || allCustomersRes?.items || []
+  
+  const revokeMutation = useRevokeSubscriberAccess()
+  const pubAccessMutation = useUpdatePublicationAccess()
+
 
   // بناء القائمة النهائية بناءً على فلتر Show
   const displayList = useMemo(() => {

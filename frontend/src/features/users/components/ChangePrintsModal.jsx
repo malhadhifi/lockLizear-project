@@ -7,11 +7,15 @@ import { useDocuments } from '../../documents/hooks/useDocuments'
 const TEAL = '#009cad'
 
 export default function ChangePrintsModal({ isOpen, onClose, userName = '' }) {
-  const { data: docData, isLoading } = useDocuments({ limit: 1000 })
+  // تعريف حالة الفلتر نصياً لربطها بالاستدعاء من الباك إند
+  const [filterText, setFilterText] = useState('')
+
+  // جلب المستندات بحد أقصى للسرعة (50) وتفعيل ميزة البحث عبر الباك إند مباشرة بدلا من 1000
+  const { data: docData, isLoading } = useDocuments({ limit: 50, search: filterText })
   const documents = Array.isArray(docData?.items) ? docData.items : Array.isArray(docData?.data?.items) ? docData.data.items : Array.isArray(docData) ? docData : []
 
   const [selectedIds, setSelectedIds] = useState([])
-  const [filterText, setFilterText] = useState('')
+  // const [filterText, setFilterText] = useState('') // تم نقله للأعلى
   const [sortBy, setSortBy] = useState('title')
   const [showAtLeast, setShowAtLeast] = useState(25)
   const [withChecked, setWithChecked] = useState('')

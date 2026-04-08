@@ -3,7 +3,8 @@
  * يشمل نوافذ فرعية (view) لعرض عملاء ومستندات كل منشور
  */
 import { useState, useEffect, useMemo } from 'react'
-import { usePublications } from '../../publications/hooks/usePublications'
+// استيراد خطافات ريأكت كويري الخاصة بالمنشورات والتي تشمل التخزين المؤقت وحسن الأداء
+import { usePublications, usePublicationSubscribers, usePublicationDocuments } from '../../publications/hooks/usePublications'
 import api from '../../../lib/axios'
 import toast from 'react-hot-toast'
 
@@ -11,20 +12,12 @@ const TEAL = '#009cad'
 
 // ========== نافذة فرعية: عرض عملاء المنشور ==========
 function ViewCustomersPopup({ pubId, pubName, onClose }) {
-  const [customers, setCustomers] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (!pubId) return
-    setLoading(true)
-    api.get(`/library/publications/${pubId}/subscribers`)
-      .then(res => {
-        const data = res?.data || res || []
-        setCustomers(Array.isArray(data) ? data : data?.items || [])
-      })
-      .catch(() => setCustomers([]))
-      .finally(() => setLoading(false))
-  }, [pubId])
+  // استخدام خطاف ريأكت كويري (usePublicationSubscribers) بدلاً من useEffect
+  // هذا الخطاف يضمن أننا إذا فتحنا النافذة مرتين، ستأتي البيانات من الكاش (الذاكرة المؤقتة) فوراً!
+  const { data: responseData, isLoading: loading } = usePublicationSubscribers(pubId);
+  
+  // استخراج مصفوفة العملاء (Items) بطريقة آمنة
+  const customers = Array.isArray(responseData) ? responseData : responseData?.items || responseData?.data?.items || [];
 
   return (
     <div style={subOverlay}>
@@ -75,20 +68,11 @@ function ViewCustomersPopup({ pubId, pubName, onClose }) {
 
 // ========== نافذة فرعية: عرض مستندات المنشور ==========
 function ViewDocumentsPopup({ pubId, pubName, onClose }) {
-  const [documents, setDocuments] = useState([])
-  const [loading, setLoading] = useState(true)
+  // نفس الفكرة: استبدال الجلب المباشر المكرر باستخدام خطاف التخزين المؤقت
+  const { data: responseData, isLoading: loading } = usePublicationDocuments(pubId);
 
-  useEffect(() => {
-    if (!pubId) return
-    setLoading(true)
-    api.get(`/library/publications/${pubId}/documents`)
-      .then(res => {
-        const data = res?.data || res || []
-        setDocuments(Array.isArray(data) ? data : data?.items || [])
-      })
-      .catch(() => setDocuments([]))
-      .finally(() => setLoading(false))
-  }, [pubId])
+  // استخراج مصفوفة المستندات بطريقة آمنة 
+  const documents = Array.isArray(responseData) ? responseData : responseData?.items || responseData?.data?.items || [];
 
   return (
     <div style={subOverlay}>
@@ -137,11 +121,19 @@ function ViewDocumentsPopup({ pubId, pubName, onClose }) {
 
 // ========== المودال الرئيسي ==========
 export default function SelectPublicationModal({ isOpen, onClose, onSelect, initialSelectedIds = [] }) {
-  const { data: pubData, isLoading } = usePublications({ limit: 1000 })
+  // حالة (State) لحفظ نص البحث المباشر
+  const [filterText, setFilterText] = useState('')
+
+  // استبدال (limit: 1000) الذي كان يُجمّد المتصفح بـ limit منطقي (مثلاً 50 أو 100)
+  // ونمرر أيضاً نص البحث للباك إند مباشرة لجلب فقط ما نبحث عنه سريعاً
+  const { data: pubData, isLoading } = usePublications({ limit: 50, search: filterText })
+  
+  // استخراج المصفوفة بشكل آمن
   const publications = Array.isArray(pubData?.items) ? pubData.items : Array.isArray(pubData?.data?.items) ? pubData.data.items : Array.isArray(pubData) ? pubData : []
 
   const [selectedIds, setSelectedIds] = useState(initialSelectedIds)
-  const [filterText, setFilterText] = useState('')
+  // تم نقل filterText للأعلى لكي يُستخدم مع usePublications مباشرة
+  // const [filterText, setFilterText] = useState('') 
   const [sortBy, setSortBy] = useState('title')
   const [showAtLeast, setShowAtLeast] = useState(25)
   const [pubFilter, setPubFilter] = useState('all')

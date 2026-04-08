@@ -152,8 +152,7 @@ const EditPublicationPage = () => {
         <div style={{ background: '#fff', minHeight: 400 }}>
 
           {/* التبويبة 1: التفاصيل الأساسية للمنشور (تفصيل طولي للبيانات) */}
-          {activeTab === 'details' && (
-            <div style={{ padding: '24px 30px' }}>
+          <div style={{ display: activeTab === 'details' ? 'block' : 'none', padding: '24px 30px' }}>
               
               {/* شريط رمادي كلاسيكي يفصل العنوان عن الحقول */}
               <div style={{ background: '#f5f5f5', color: '#333', padding: '8px 16px', fontWeight: 700, fontSize: 13, border: '1px solid #ddd', marginBottom: 20 }}>
@@ -235,23 +234,18 @@ const EditPublicationPage = () => {
                 </table>
               </div>
             </div>
-          )}
 
           {/* التبويبة 2: شاشة المستندات المدرجة المربوطة بمكونات (Components) خارجية */}
-          {activeTab === 'documents' && (
-            <div style={{ padding: '20px' }}>
+          <div style={{ display: activeTab === 'documents' ? 'block' : 'none', padding: '20px' }}>
               {/* استدعاء مكون لائحة المستندات الخاصة بالمنشور وتمرير دالة فتح نافذة إضافة مستند جديد */}
               <PublicationDocumentsList publicationId={id} />
             </div>
-          )}
 
           {/* التبويبة 3: شاشة العملاء المعرفين بالوصول للمنشور */}
-          {activeTab === 'customers' && (
-            <div style={{ padding: '20px' }}>
+          <div style={{ display: activeTab === 'customers' ? 'block' : 'none', padding: '20px' }}>
                {/* استدعاء مكون قائمة عملاء الاستحقاق الخاص بالمنشور بالذات */}
                <PublicationAccessList publicationId={id} />
             </div>
-          )}
         </div>
       </div>
     </div>

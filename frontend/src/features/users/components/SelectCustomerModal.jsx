@@ -1,26 +1,26 @@
 import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import api from '../../../lib/axios'
 
 const TEAL = '#009cad'
 
 export default function SelectCustomerModal({ isOpen, onClose, onSelect, multiple = false }) {
-  const [customers, setCustomers] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [filter, setFilter] = useState('')
   const [selectedIds, setSelectedIds] = useState([])
 
+  // تفريغ التحديدات عند إغلاق النافذة
   useEffect(() => {
-    if (isOpen) {
-      setIsLoading(true)
-      api.get('/customer-management/customer-licenses', { params: { limit: 1000 } })
-        .then(res => {
-          const items = Array.isArray(res?.items) ? res.items : Array.isArray(res?.data?.items) ? res.data.items : Array.isArray(res) ? res : []
-          setCustomers(items)
-        })
-        .finally(() => setIsLoading(false))
-    } else {
-      setSelectedIds([])
-    }
+    if (!isOpen) setSelectedIds([])
   }, [isOpen])
+
+  // جلب العملاء مع استخدام حد 50 وبحث السيرفر لتخفيف العبء
+  const { data: customerData, isLoading } = useQuery({
+    queryKey: ['select-customers', filter],
+    queryFn: () => api.get('/customer-management/customer-licenses', { params: { limit: 50, search: filter } }),
+    enabled: isOpen
+  })
+  
+  const customers = Array.isArray(customerData?.items) ? customerData.items : Array.isArray(customerData?.data?.items) ? customerData.data.items : Array.isArray(customerData?.data) ? customerData.data : []
 
   if (!isOpen) return null
 
@@ -70,7 +70,7 @@ export default function SelectCustomerModal({ isOpen, onClose, onSelect, multipl
             <div style={{ display: 'flex', marginBottom: 10, alignItems: 'center' }}>
               <span style={{ width: 80, fontWeight: 'bold', fontSize: 13, color: '#333' }}>Filter</span>
               <div style={{ flex: 1, position: 'relative' }}>
-                <input type="text" style={inputStyle} />
+                <input type="text" value={filter} onChange={e => setFilter(e.target.value)} style={inputStyle} />
                 <i className="bi bi-search" style={{ position: 'absolute', right: 8, top: 4, color: '#999' }} />
               </div>
             </div>

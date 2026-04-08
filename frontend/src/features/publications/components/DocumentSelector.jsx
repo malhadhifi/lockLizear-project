@@ -1,24 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
-import api from '../../../lib/axios'
+// استيراد خطاف المستندات لدعم الذاكرة المؤقتة (Caching) بدلاً من axios المباشر
+import { useDocuments } from '../../documents/hooks/useDocuments'
 
 const DocumentSelector = ({ isOpen, onClose, existingDocIds = [], onDocumentsAdded }) => {
   const [filter, setFilter] = useState('')
   const [selected, setSelected] = useState([])
-  const [documents, setDocuments] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
-
-  useEffect(() => {
-    if (isOpen) {
-      setIsLoading(true)
-      api.get('/library/documents', { params: { limit: 1000 } })
-        .then(res => {
-          const docs = res?.items || res?.data?.items || res?.data?.data?.items || res?.data || []
-          setDocuments(docs)
-        })
-        .finally(() => setIsLoading(false))
-    }
-  }, [isOpen])
+  // جلب المستندات بحد 50 استجابة لطلب المستخدم ومع تفعيل البحث من السيرفر
+  const { data: docData, isLoading } = useDocuments({ limit: 50, search: filter })
+  const documents = Array.isArray(docData?.items) ? docData.items : Array.isArray(docData?.data?.items) ? docData.data.items : Array.isArray(docData) ? docData : []
 
   if (!isOpen) return null
 
