@@ -1,7 +1,8 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate }  from 'react-router-dom'
 import MainLayout            from './components/layout/MainLayout'
 import AuthLayout            from './components/layout/AuthLayout'
 import PrivateRoute          from './routes/PrivateRoute'
+import LandingPage           from './features/landing/pages/LandingPage'
 import LoginPage             from './features/auth/pages/LoginPage'
 import DashboardPage         from './features/dashboard/pages/DashboardPage'
 import UsersListPage         from './features/users/pages/UsersListPage'
@@ -21,12 +22,17 @@ import SettingsPage          from './features/settings/pages/SettingsPage'
 function App() {
   return (
     <Routes>
+
+      {/* ✅ الصفحة الرئيسية العامة — لا تحتاج تسجيل دخول */}
+      <Route path="/" element={<LandingPage />} />
+
+      {/* صفحات Auth */}
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
       </Route>
 
+      {/* الصفحات المحمية */}
       <Route element={<PrivateRoute><MainLayout /></PrivateRoute>}>
-        <Route path="/"                       element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard"              element={<DashboardPage />} />
         <Route path="/users"                  element={<UsersListPage />} />
         <Route path="/users/create"           element={<CreateUserPage />} />
@@ -43,6 +49,7 @@ function App() {
         <Route path="/settings"               element={<SettingsPage />} />
         <Route path="*"                       element={<Navigate to="/dashboard" replace />} />
       </Route>
+
     </Routes>
   )
 }
