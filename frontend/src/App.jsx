@@ -3,6 +3,7 @@ import MainLayout            from './components/layout/MainLayout'
 import AuthLayout            from './components/layout/AuthLayout'
 import PrivateRoute          from './routes/PrivateRoute'
 import LandingPage           from './features/landing/pages/LandingPage'
+import RegisterPublisherPage from './features/landing/pages/RegisterPublisherPage'
 import LoginPage             from './features/auth/pages/LoginPage'
 import DashboardPage         from './features/dashboard/pages/DashboardPage'
 import UsersListPage         from './features/users/pages/UsersListPage'
@@ -23,8 +24,9 @@ function App() {
   return (
     <Routes>
 
-      {/* ✅ الصفحة الرئيسية العامة — لا تحتاج تسجيل دخول */}
-      <Route path="/" element={<LandingPage />} />
+      {/* ✅ صفحات عامة — لا تحتاج تسجيل دخول */}
+      <Route path="/"                    element={<LandingPage />} />
+      <Route path="/publisher/register" element={<RegisterPublisherPage />} />
 
       {/* صفحات Auth */}
       <Route element={<AuthLayout />}>
