@@ -24,16 +24,16 @@ function App() {
   return (
     <Routes>
 
-      {/* ✅ صفحات عامة — لا تحتاج تسجيل دخول */}
-      <Route path="/"                    element={<LandingPage />} />
-      <Route path="/publisher/register" element={<RegisterPublisherPage />} />
+      {/* ✅ الصفحة الرئيسية العامة — Landing */}
+      <Route path="/" element={<LandingPage />} />
 
-      {/* صفحات Auth */}
+      {/* ✅ صفحات Auth — تسجيل الدخول + إنشاء الحساب */}
       <Route element={<AuthLayout />}>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login"               element={<LoginPage />} />
+        <Route path="/publisher/register" element={<RegisterPublisherPage />} />
       </Route>
 
-      {/* الصفحات المحمية */}
+      {/* ✅ الصفحات المحمية — تحتاج تسجيل دخول */}
       <Route element={<PrivateRoute><MainLayout /></PrivateRoute>}>
         <Route path="/dashboard"              element={<DashboardPage />} />
         <Route path="/users"                  element={<UsersListPage />} />
