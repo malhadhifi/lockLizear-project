@@ -67,12 +67,12 @@ class LicenseController extends Controller
 
             // استدعاء الخدمة (ترجع مصفوفة بها الكود، والبيانات إن وجدت)
             $result = $this->pingService->pingDocument($reader, $request->validated());
-            Log::error($result['data']);
+
             return $this->sendResponse(true, $result['code'], $result['data'], 200);
 
         } catch (\Exception $e) {
             $errorCode = $e->getCode();
-                 Log::error('حدث خطأ أثناء تنفيذ العملية: ' . $e->getMessage().$e->getLine().$e->getFile());
+                //  Log::error('حدث خطأ أثناء تنفيذ العملية: ' . $e->getMessage().$e->getLine().$e->getFile());
             if ($errorCode >= 2000 && $errorCode < 5000) {
                 return $this->sendResponse(false, $errorCode, null, 403);
             }

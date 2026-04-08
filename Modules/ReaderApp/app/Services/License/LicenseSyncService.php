@@ -43,7 +43,7 @@ class LicenseSyncService
             $pivot = $pub->pivot;
             $publicationIds[$pub->id] = $pivot;
 
-            $createdAt = Carbon::parse($pub->created_at);
+            $createdAt = Carbon::parse($pivot->created_at);
             $pubUpdated = Carbon::parse($pub->updated_at);
             $pivotUpdated = Carbon::parse($pivot->updated_at);
             $updatedAt = $pubUpdated->max($pivotUpdated);
@@ -92,11 +92,16 @@ class LicenseSyncService
     private function distributeDocuments($documents, $lastSync, $license, $sourceType, $pubPivots, &$payloadRaw)
     {
         foreach ($documents as $doc) {
+            $createdAt = Carbon::parse($doc->created_at);
             $pivot = null;
             if ($sourceType === 'publication')
                 $pivot = $pubPivots[$doc->publication_id];
+            
             elseif ($sourceType === 'selected_customers')
-                $pivot = $doc->pivot;
+                {
+               $pivot = $doc->pivot;
+                $createdAt = Carbon::parse( $pivot->created_at);
+                }
 
             // قاعدة Obey
             if ($sourceType === 'publication' && $doc->publication && $doc->publication->obey && $license->valid_from) {
@@ -105,7 +110,6 @@ class LicenseSyncService
                 }
             }
 
-            $createdAt = Carbon::parse($doc->created_at);
             $deletedAt = $doc->deleted_at ? Carbon::parse($doc->deleted_at) : null;
 
             $docUpdated = Carbon::parse($doc->updated_at);

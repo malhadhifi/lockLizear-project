@@ -24,7 +24,7 @@ class DocumentPingService
         }
 
         // 2. إذا كان الملف محذوفاً أو معلقاً من الجذور، نرفض فوراً
-        if ($document->status === 'suspend') {
+        if ($document->status == 'suspend') {
             throw new Exception('suspend', 4002);
         }
 

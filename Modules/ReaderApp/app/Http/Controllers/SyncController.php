@@ -10,6 +10,7 @@ use Modules\ReaderApp\Http\Requests\PingDeviceRequest;
 use Modules\ReaderApp\Http\Requests\SyncLicenseRequest;
 use Modules\ReaderApp\Services\License\LicenseSyncService;
 use App\Traits\ApiResponseTrait;
+use Illuminate\Support\Facades\Log;
 
 class SyncController extends Controller
 {
@@ -29,7 +30,7 @@ class SyncController extends Controller
 
             // استدعاء الخدمة المذهلة
             $result = $this->syncService->sync($reader, $request->validated());
-
+              Log::info('البيانات كـ JSON: ' . json_encode( $result, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
             return $this->sendResponse(true, $result['code'], $result['data'], 200);
 
         } catch (\Exception $e) {
