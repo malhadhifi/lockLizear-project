@@ -18,8 +18,31 @@ class PublisherRegistrationController extends Controller
     public function register(RegisterPublisherRequest $request, CreatePublisherAndLicenseAction $action)
     {
         try {
-            // 1. تحديد الباقة الافتراضية
-            $package = Package::where('is_default_registration', true)->firstOrFail();
+            // 1. تحديد الباقة الافتراضية، وإذا لم تكن موجودة في السيرفر الحي نقوم بإنشائها تلقائياً
+            $package = Package::where('is_default_registration', true)->first();
+            
+            if (!$package) {
+                $package = Package::create([
+                    'name' => 'الباقة المجانية',
+                    'base_price' => 0,
+                    'duration_days' => 30,
+                    'trial_days' => 0,
+                    'is_default_registration' => true,
+                    'base_max_documents' => 10,
+                    'base_max_file_size_mb' => 50,
+                    'base_max_total_storage_mb' => 500,
+                    'base_batch_size' => 5,
+                    'base_devices_allowed' => 3,
+                    'is_active' => true,
+                    'allowed_extensions' => ['pdf'],
+                    'features' => [
+                        'can_use_guest_link' => true,
+                        'can_use_dynamic_watermark' => false,
+                        'allow_custom_splash_screen' => false,
+                        'remove_vendor_watermark' => false,
+                    ]
+                ]);
+            }
 
             // 2. تنفيذ الأكشن
             $result = $action->execute(
