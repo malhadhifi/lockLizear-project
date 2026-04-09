@@ -56,8 +56,8 @@ class LicenseFactoryService
         $publisher = $license->publisher;
         $package = $license->package;
 
-        // جلب الميزات من JSON الباقة
-        $features = is_array($package->features) ? $package->features : json_decode($package->features, true) ?? [];
+        // جلب الميزات من JSON الباقة وتفادي خطأ تمرير null لدالة json_decode
+        $features = is_array($package->features) ? $package->features : (!empty($package->features) ? json_decode($package->features, true) : []);
 
         $dnData = [
             'company' => $publisher->company ?? $publisher->name,
