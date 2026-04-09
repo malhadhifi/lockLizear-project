@@ -37,6 +37,7 @@ class PublisherRegistrationController extends Controller
             return $this->sendResponse(true, 1050, $payloadData, 201);
 
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Registration Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
             // التعامل مع أي خطأ برمجي غير متوقع (5000 => خطأ داخلي في الخادم)
             return $this->sendResponse(false, 5000, null, 500);
         }

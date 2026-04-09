@@ -297,183 +297,7 @@ const GrantRevokeModal = ({ open, onClose, docId, allCustomers, accessList, onBu
   )
 }
 
-/* ═══════════════════════════════════════════════════════
-   3+4. سجل المستند بالكامل وبشكل شغال
-   ═══════════════════════════════════════════════════════ */
-const HistoryModal = ({ open, onClose, doc, allCustomers, type = 'open' }) => {
-  const [custId, setCustId] = useState('')
-  const [fromDate, setFromDate] = useState('')
-  const [untilDate, setUntilDate] = useState('')
-  
-  const [showSelectCustomer, setShowSelectCustomer] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [results, setResults] = useState(null) // null يعني لم يتم البحث بعد
-  const [lastRecord, setLastRecord] = useState(null)
 
-  const isTypeOpen = type === 'open'
-  const title = isTypeOpen ? 'سجل فتح المستند (Document open history)' : 'سجل طباعة المستند (Document print history)'
-  const btnLabel = isTypeOpen ? 'عرض سجل فتح المستند' : 'عرض سجل طباعة المستند'
-  const icon = isTypeOpen ? 'bi-file-earmark-text' : 'bi-printer'
-
-  // جلب آخر سجل وهمي عند الفتح أو لو كان فيه API (بشكل أولي)
-  useEffect(() => {
-    if (open && allCustomers.length > 0) {
-      const randCust = allCustomers[Math.floor(Math.random() * allCustomers.length)]
-      if (randCust) {
-        setLastRecord({
-          date: new Date().toLocaleDateString('en-GB') + ' ' + new Date().toLocaleTimeString('en-GB'),
-          customerName: randCust.name,
-          customerId: randCust.id
-        })
-      }
-    } else if (!open) {
-      setResults(null)
-    }
-  }, [open, allCustomers])
-
-  const handleSearch = () => {
-    setIsLoading(true)
-    // محاكاة جلب السجلات من الـ API (طالما لا يوجد Endpoint حقيقي)
-    setTimeout(() => {
-      let mockLogs = []
-      const cId = parseInt(custId, 10)
-      
-      const targets = cId && allCustomers.find(c => c.id === cId) 
-        ? [allCustomers.find(c => c.id === cId)] 
-        : allCustomers.slice(0, 5) // افتراضي أول 5
-
-      targets.forEach((c) => {
-        if (!c) return
-        const count = Math.floor(Math.random() * 5) + 1
-        for (let i = 0; i < count; i++) {
-          mockLogs.push({
-            id: Math.floor(Math.random() * 9000) + 1000,
-            customerName: c.name,
-            customerCompany: c.company || '—',
-            customerId: c.id,
-            dateTime: new Date(Date.now() - Math.random() * 10000000000).toLocaleString('en-GB')
-          })
-        }
-      })
-      
-      setResults(mockLogs)
-      setIsLoading(false)
-    }, 800)
-  }
-
-  if (!doc) return null
-
-  return (
-    <Modal open={open} onClose={onClose} title={title} icon={icon} width={800}>
-      <div style={{ padding: 16 }}>
-        {/* معلومات المستند العلوية */}
-        <table style={{ width: '100%', fontSize: 13, marginBottom: 16 }}>
-          <tbody>
-            <tr><td style={{ fontWeight: 'bold', width: 140 }}>العنوان (Title):</td><td>{doc.title}</td></tr>
-            <tr><td style={{ fontWeight: 'bold' }}>المعرف (ID):</td><td>{doc.id}</td></tr>
-            <tr><td style={{ fontWeight: 'bold' }}>تاريخ النشر:</td><td>{doc.published || '—'}</td></tr>
-            <tr><td style={{ fontWeight: 'bold' }}>الانتهاء (Expires):</td><td>{doc.security_controls?.expiry_date?.slice(0, 10) || 'never'}</td></tr>
-            <tr>
-              <td style={{ fontWeight: 'bold' }}>{isTypeOpen ? 'آخر فتح (Last Open):' : 'آخر طباعة (Last Print):'}</td>
-              <td>
-                {lastRecord ? (
-                  <span style={{ fontWeight: 600 }}>
-                    {lastRecord.date} <a href="#" style={{ color: LINK_COLOR }}>by {lastRecord.customerName} / ID: {lastRecord.customerId}</a>
-                  </span>
-                ) : '—'}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        {/* الفلاتر */}
-        <div style={{ border: `1px solid ${TEAL}`, padding: 16, marginBottom: 16, fontSize: 13 }}>
-          <div style={{ background: '#f9f9f9', padding: '8px 12px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #ddd' }}>
-            <i className={`bi ${icon}`} style={{ color: TEAL }} />
-            <span style={{ color: '#333', fontWeight: 'bold' }}>{btnLabel}</span>
-            <i className="bi bi-caret-down-fill" style={{ marginRight: 'auto', color: '#888' }} />
-          </div>
-
-          <div className="mobile-filter-row" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-            <label style={{ color: '#333' }}>معرف العميل (Customers ID):</label>
-            <input type="text" value={custId} onChange={e => setCustId(e.target.value)} placeholder="مثال: 1" style={{ padding: '6px 8px', border: '1px solid #ccc', width: '100%', maxWidth: 250, borderRadius: 2 }} />
-            <a href="#" onClick={(e) => { e.preventDefault(); setShowSelectCustomer(!showSelectCustomer) }} style={{ color: LINK_COLOR, textDecoration: 'underline', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-              <i className="bi bi-box-arrow-up-right" style={{ marginLeft: 4 }}/> 
-              تحديد العملاء (Select customers...)
-            </a>
-          </div>
-
-          {/* نافذة تحديد العميل المصغرة Toggle */}
-          {showSelectCustomer && (
-            <div style={{ background: '#fff', border: '1px solid #337ab7', padding: 12, marginBottom: 16, borderRadius: 4 }}>
-               <h5 style={{ margin: '0 0 8px 0', fontSize: 13, color: '#337ab7' }}>حدد العميل من القائمة:</h5>
-               <select size="5" style={{ width: '100%', padding: 8, border: '1px solid #ccc', fontSize: 13 }} onChange={(e) => {
-                 setCustId(e.target.value)
-                 setShowSelectCustomer(false)
-               }}>
-                 {allCustomers.map(c => (
-                   <option key={c.id} value={c.id}>{c.id} - {c.name} ({c.email})</option>
-                 ))}
-               </select>
-               <div style={{ marginTop: 8, textAlign: 'left' }}>
-                  <button onClick={() => setShowSelectCustomer(false)} style={{ background: '#eee', padding: '4px 12px', border: '1px solid #ccc', cursor: 'pointer' }}>إغلاق</button>
-               </div>
-            </div>
-          )}
-
-          <div className="mobile-filter-row" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <label style={{ color: '#333' }}>بين (Between):</label>
-            <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} style={{ padding: '6px', border: '1px solid #ccc', borderRadius: 2, flex: 1, maxWidth: 180 }} />
-            <label style={{ color: '#333' }}>و (And):</label>
-            <input type="date" value={untilDate} onChange={e => setUntilDate(e.target.value)} style={{ padding: '6px', border: '1px solid #ccc', borderRadius: 2, flex: 1, maxWidth: 180 }} />
-            <i className="bi bi-info-circle text-primary" title="اترك التواريخ فارغة لعرض السجل بالكامل" />
-            
-            <button onClick={handleSearch} disabled={isLoading} style={{ background: '#337ab7', color: '#fff', border: 'none', padding: '8px 30px', borderRadius: 2, fontSize: 13, cursor: isLoading ? 'wait' : 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-              {isLoading ? 'جاري البحث...' : 'موافق OK'}
-            </button>
-          </div>
-        </div>
-        
-        {/* الجدول (نتيجة البحث) */}
-        {results !== null && (
-          <div style={{ border: '1px solid #ddd', overflowX: 'auto' }}>
-            <div className="mobile-filter-row" style={{ background: TEAL, color: '#fff', padding: '6px 12px', fontSize: 13, fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
-               <span>نتائج السجل ({results.length} عملية)</span>
-               {results.length > 0 && <span>وقت آخر عملية: {results[0].dateTime}</span>}
-            </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 450 }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid #ddd', background: '#f5f5f5' }}>
-                  <th style={{ padding: '10px 8px', textAlign: 'right' }}>المعرف (ID)</th>
-                  <th style={{ padding: '10px 8px', textAlign: 'right' }}>العميل (Customer)</th>
-                  <th style={{ padding: '10px 8px', textAlign: 'right' }}>الشركة (Company)</th>
-                  <th style={{ padding: '10px 8px', textAlign: 'right' }}>التاريخ / الوقت (Date/Time)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.map((r, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: '8px' }}>{r.id}</td>
-                    <td style={{ padding: '8px' }}>{r.customerName} (ID: {r.customerId})</td>
-                    <td style={{ padding: '8px' }}>{r.customerCompany}</td>
-                    <td style={{ padding: '8px' }} dir="ltr" align="right">{r.dateTime}</td>
-                  </tr>
-                ))}
-                {results.length === 0 && (
-                  <tr><td colSpan="4" style={{ padding: 24, textAlign: 'center', color: '#888', fontSize: 13 }}>لا توجد سجلات مطابقة للبحث.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-        
-        <div style={{ marginTop: 16 }}>
-          <button style={{ background: '#337ab7', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 2, fontSize: 13, cursor: 'pointer', opacity: results && results.length > 0 ? 1 : 0.5 }}>تصدير CSV Export</button>
-        </div>
-      </div>
-    </Modal>
-  )
-}
 
 /* ═══════════════════════════════════════════════════════
    المكون الرئيسي — DocumentDetailPage مع التبويبات الثلاثة
@@ -501,8 +325,6 @@ const DocumentDetailPage = () => {
   // Modals state
   const [showCustomersModal, setShowCustomersModal] = useState(false)
   const [showGrantModal, setShowGrantModal] = useState(false)
-  const [showOpenHistory, setShowOpenHistory] = useState(false)
-  const [showPrintHistory, setShowPrintHistory] = useState(false)
 
   const { data, isLoading, refetch } = useDocumentDetail(idParam)
   const document = data?.data ?? data ?? null
@@ -744,18 +566,7 @@ const DocumentDetailPage = () => {
                     منح أو سحب حق الوصول
                   </a>
                 </li>
-                <li>
-                  <a href="#" onClick={e => { e.preventDefault(); setShowOpenHistory(true) }} style={{ color: LINK_COLOR, textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 'bold' }}>
-                    <i className="bi bi-file-earmark-text" style={{ fontSize: 18, color: '#5bc0de' }} /> 
-                    عرض سجل فتح المستند
-                  </a>
-                </li>
-                <li>
-                  <a href="#" onClick={e => { e.preventDefault(); setShowPrintHistory(true) }} style={{ color: LINK_COLOR, textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 'bold' }}>
-                    <i className="bi bi-printer" style={{ fontSize: 18, color: '#5bc0de' }} /> 
-                    عرض سجل طباعة المستند
-                  </a>
-                </li>
+
               </ul>
         </div>
       </div>
@@ -765,9 +576,7 @@ const DocumentDetailPage = () => {
       <ViewCustomersModal open={showCustomersModal} onClose={() => setShowCustomersModal(false)} docId={document.id} accessList={accessList} />
       <GrantRevokeModal open={showGrantModal} onClose={() => setShowGrantModal(false)} docId={document.id} allCustomers={allCustomers} accessList={accessList} onBulkAction={handleBulkAccess} />
       
-      {/* نوافذ السجلات ممُكّنة وتعرض بيانات */}
-      <HistoryModal open={showOpenHistory} onClose={() => setShowOpenHistory(false)} doc={document} allCustomers={allCustomers} type="open" />
-      <HistoryModal open={showPrintHistory} onClose={() => setShowPrintHistory(false)} doc={document} allCustomers={allCustomers} type="print" />
+
 
     </div>
   )

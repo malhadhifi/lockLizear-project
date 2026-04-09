@@ -23,7 +23,6 @@ import ConfirmAccessModal from '../components/ConfirmAccessModal'
 import SuspendActivateDeviceModal from '../components/SuspendActivateDeviceModal'
 import ChangeViewsModal from '../components/ChangeViewsModal'
 import ChangePrintsModal from '../components/ChangePrintsModal'
-import WebViewerLoginHistoryModal from '../components/WebViewerLoginHistoryModal'
 import EmailDeliveryStatusModal from '../components/EmailDeliveryStatusModal'
 
 import CustomerAccountDetails from '../components/UserDetailSections/CustomerAccountDetails'
@@ -64,7 +63,6 @@ export default function UserDetailPage() {
   const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false)
   const [isViewsModalOpen, setIsViewsModalOpen] = useState(false)
   const [isPrintsModalOpen, setIsPrintsModalOpen] = useState(false)
-  const [isWebLoginOpen, setIsWebLoginOpen] = useState(false)
   const [isEmailStatusOpen, setIsEmailStatusOpen] = useState(false)
   const [selectedResource, setSelectedResource] = useState(null)
   const [accessActionType, setAccessActionType] = useState('')
@@ -275,7 +273,6 @@ export default function UserDetailPage() {
         <CustomerHistoryLogs 
           onOpenViewsModal={() => setIsViewsModalOpen(true)}
           onOpenPrintsModal={() => setIsPrintsModalOpen(true)}
-          onOpenWebLoginModal={() => setIsWebLoginOpen(true)}
           onOpenEmailStatusModal={() => setIsEmailStatusOpen(true)}
         />
 
@@ -352,10 +349,7 @@ export default function UserDetailPage() {
         onClose={() => setIsPrintsModalOpen(false)}
       />
 
-      <WebViewerLoginHistoryModal
-        isOpen={isWebLoginOpen}
-        onClose={() => setIsWebLoginOpen(false)}
-      />
+
 
       <EmailDeliveryStatusModal
         isOpen={isEmailStatusOpen}

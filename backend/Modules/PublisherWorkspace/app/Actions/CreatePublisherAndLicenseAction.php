@@ -33,7 +33,7 @@ class CreatePublisherAndLicenseAction
             $publisher = Publisher::create([
                 'name' => $publisherData['name'],
                 'email' => $publisherData['email'],
-                'password' => isset($publisherData['password']) ? $publisherData['password'] : null, // 👈 التشفير هنا
+                'password' => isset($publisherData['password']) ? Hash::make($publisherData['password']) : null, // 👈 التشفير الآن مفعل
                 'company' => $publisherData['company'] ?? null,
                 'phone' => $publisherData['phone'] ?? null,
                 'created_by' => $adminId,

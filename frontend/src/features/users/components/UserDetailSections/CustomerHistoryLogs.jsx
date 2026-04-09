@@ -7,9 +7,8 @@ import styles from '../../pages/UserDetailPage.module.css';
 // يستقبل 4 دوال من الصفحة الرئيسية كخصائص (props) لفتح النوافذ المنبثقة:
 // 1. onOpenViewsModal: دالة لفتح سجلات مشاهدات المستندات
 // 2. onOpenPrintsModal: دالة لفتح سجلات أوامر الطباعة لهذا العميل
-// 3. onOpenWebLoginModal: دالة لفتح سجل دخول العميل للويب 
-// 4. onOpenEmailStatusModal: دالة لعرض سجلات وصول رسائل البريد الإلكتروني (الإيميلات)
-export default function CustomerHistoryLogs({ onOpenViewsModal, onOpenPrintsModal, onOpenWebLoginModal, onOpenEmailStatusModal }) {
+// 3. onOpenEmailStatusModal: دالة لعرض سجلات وصول رسائل البريد الإلكتروني (الإيميلات)
+export default function CustomerHistoryLogs({ onOpenViewsModal, onOpenPrintsModal, onOpenEmailStatusModal }) {
   return (
     <>
       {/* ============================================================== */}
@@ -45,17 +44,7 @@ export default function CustomerHistoryLogs({ onOpenViewsModal, onOpenPrintsModa
           <i className="bi bi-printer" /> عرض سجلات الطباعة (View print history)
         </button>
 
-        {/* ========================================= */}
-        {/* زر 3: مشاهدة سجلات الدخول لعارض الويب (Web Viewer Logins) */}
-        {/* ========================================= */}
-        <button 
-          onClick={onOpenWebLoginModal} // استدعاء دالة فتح مودال سجلات الويب (للأجهزة ونوع المتصفح)
-          className={`btn btn-link ${styles.historyButton} ${styles.actionLinkStyle}`} 
-          style={{ padding: 0 }}
-        >
-          {/* أيقونة اللابتوب أو الشاشة للدلالة على المتصفح */}
-          <i className="bi bi-laptop" /> مشاهدة سجلات الدخول للويب (View Web Viewer logins)
-        </button>
+
 
         {/* ========================================= */}
         {/* زر 4: سجلات توصيل ونقل أيميلات النظام للمستخدم */}
