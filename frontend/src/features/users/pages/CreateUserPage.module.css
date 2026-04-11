@@ -1,0 +1,192 @@
+/* الألوان الأساسية */
+/* TEAL = #009cad, GRAY_BG = #e6e6e6 */
+
+.pageContainer {
+  padding-bottom: 40px;
+}
+
+.spacer {
+  margin-bottom: 15px;
+}
+
+.mainWrapper {
+  max-width: 600px;
+  margin: 0 auto;
+  border: 1px solid #009cad;
+  background-color: #fff;
+  font-family: Arial, sans-serif;
+}
+
+.topHeader {
+  background-color: #009cad;
+  color: #fff;
+  padding: 6px 12px;
+  font-weight: bold;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.formPadding {
+  padding: 15px 20px;
+}
+
+.rowStyle {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.labelColStyle {
+  width: 140px;
+  font-weight: bold;
+  font-size: 12px;
+  color: #333;
+  padding-top: 6px;
+}
+
+.inputColStyle {
+  flex: 1;
+}
+
+.inputStyle {
+  width: 100%;
+  max-width: 350px;
+  border: 1px solid #ccc;
+  padding: 6px 8px;
+  font-size: 13px;
+  outline: none;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.neverExpireContainer {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.neverExpireLabel {
+  font-size: 12px;
+  color: #555;
+  cursor: pointer;
+}
+
+.sectionHeaderStyle {
+  background-color: #e6e6e6;
+  color: #555;
+  font-weight: bold;
+  font-size: 12px;
+  padding: 6px 20px;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+}
+
+.accessPadding {
+  padding: 12px 20px;
+}
+
+.accessRow {
+  margin-bottom: 8px;
+}
+
+.accessRowNoMargin {
+  margin-bottom: 0;
+}
+
+.linkStyle {
+  color: #009cad;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: underline;
+}
+
+.badgeStyle {
+  font-size: 11px;
+  background-color: #009cad;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-right: 8px; /* margin-inline-start */
+}
+
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.checkboxLabel {
+  font-size: 13px;
+  cursor: pointer;
+  color: #333;
+}
+
+.divider {
+  margin: 0;
+  border: none;
+  border-top: 1px solid #ccc;
+}
+
+.footerActions {
+  padding: 15px 20px;
+  display: flex;
+  justify-content: flex-end;
+  background-color: #fff;
+}
+
+.submitButton {
+  background-color: #009cad;
+  color: #fff;
+  border: none;
+  padding: 8px 30px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+
+/* ... (الكود الخاص بك في الأعلى كما هو بالضبط) ... */
+
+/* ========================================= */
+/* التجاوب مع شاشات الجوال (Responsive Design) */
+/* ========================================= */
+@media (max-width: 768px) {
+  /* جعل المربع يبتعد قليلاً عن حواف شاشة الجوال */
+  .mainWrapper {
+    margin: 0 10px; 
+  }
+  
+  /* تحويل الصفوف إلى أعمدة (الاسم فوق، حقل الإدخال تحته) */
+  .rowStyle {
+    flex-direction: column; 
+    align-items: flex-start;
+  }
+  
+  /* إعطاء العناوين (Labels) عرضاً كاملاً لترتيب أفضل */
+  .labelColStyle {
+    width: 100%; 
+    padding-top: 0;
+    margin-bottom: 6px; 
+  }
+  
+  /* السماح لحقول الإدخال بالتمدد لتملأ شاشة الجوال */
+  .inputStyle {
+    max-width: 100%; 
+  }
+  
+  /* ضبط المسافات للأزرار السفلية في الجوال */
+  .footerActions {
+    justify-content: center; /* توسيط الزر في الجوال */
+  }
+  
+  .submitButton {
+    width: 100%; /* جعل الزر بعرض الشاشة ليسهل الضغط عليه */
+  }
+}

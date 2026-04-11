@@ -12,12 +12,13 @@ class PublicationResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
-            'obey' => $this->obey ? 'yes' : 'no',
-            // نجلب الإحصائيات (سنجهزها في الكنترولر باستخدام withCount)
-            'customers_count' => $this->customerlicense_count ?? 0,
-            'documents_count' => $this->documents_count ?? 0,
-            // تنسيق التاريخ كما في الصورة الشهر-اليوم-السنة
-            'date_added' => Carbon::parse($this->created_at)->format('m-d-Y'),
+            'obey' => (bool)$this->obey,
+            // المتغيرات الحسابية للكاونتر (تولدها دالة withCount في لارافيل)
+            'customersCount' => $this->customerlicense_count ?? 0,
+            'docsCount' => $this->documents_count ?? 0,
+            'createdAt' => Carbon::parse($this->created_at)->format('Y-m-d'),
+            'status' => $this->status,
+
         ];
     }
 }

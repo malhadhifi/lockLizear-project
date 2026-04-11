@@ -1,0 +1,94 @@
+/* UsersLayout.module.css */
+
+/* حاوية الصفحة الرئيسية */
+.layoutContainer {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  flex-direction: row; /* افتراضياً بجانب بعض على الكمبيوتر */
+}
+
+/* حاوية القائمة الجانبية */
+.sidebarContainer {
+  width: 180px;
+  flex-shrink: 0;
+}
+
+/* قائمة الأزرار */
+.sidebarList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: block;
+}
+
+/* تنسيق الزر الأساسي */
+.sidebarButton {
+  width: 100%;
+  text-align: right;
+  padding: 12px 16px;
+  border: 1px solid #ddd;
+  border-bottom: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.sidebarListItem:last-child .sidebarButton {
+  border-bottom: 1px solid #ddd;
+}
+/* ========================================= */
+/* سحر الجوال (شاشات أصغر من 768 بكسل) */
+/* ========================================= */
+@media (max-width: 768px) {
+  .layoutContainer {
+    flex-direction: column; /* المحتوى تحت القائمة */
+    padding: 10px;
+    gap: 15px;
+  }
+
+  .sidebarContainer {
+    width: 100%; /* القائمة تأخذ عرض الشاشة */
+  }
+
+  /* ✅ صف أفقي واحد متلصق وقابل للتمرير */
+  .sidebarList {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto; /* يسمح بالتمرير يميناً ويساراً إذا زادت الأزرار */
+    white-space: nowrap; /* يمنع نزول الأزرار لسطر جديد */
+    gap: 0; /* الأزرار متلصقة تماماً (بدون أي فراغ) */
+    border-bottom: 2px solid #009cad; /* خط رئيسي سفلي يجمعهم */
+    
+    /* إخفاء شريط التمرير الافتراضي لشكل أنظف */
+    scrollbar-width: none; 
+  }
+  .sidebarList::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sidebarListItem {
+    flex: 1 1 auto; /* يجعل الأزرار تتوزع بشكل متناسق */
+  }
+
+  /* ✅ أزرار مستطيلة وحادة ومتلصقة */
+  .sidebarButton {
+    width: 100%;
+    justify-content: center; /* توسيط النص والأيقونة */
+    padding: 12px 20px;
+    margin: 0;
+    border: 1px solid #ddd !important;
+    border-bottom: none !important; /* لكي تلتصق بالخط الأزرق السفلي */
+    border-radius: 0 !important; /* حواف مستطيلة حادة تماماً */
+  }
+
+  /* ✅ منع تضاعف خط الحدود بين الأزرار المتلصقة (في الاتجاه العربي RTL) */
+  .sidebarListItem + .sidebarListItem .sidebarButton {
+    border-right: none !important; 
+  }
+}

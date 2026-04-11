@@ -17,7 +17,6 @@ return new class extends Migration {
             $table->string('title');
             $table->enum('type', ['pdf', 'video'])->default('pdf');
             $table->text('description')->nullable();
-
             $table->unsignedBigInteger('size')->nullable(); // حجم الملف بالبايت
 
             // بصمة الملف (Hash) لضمان أن العميل يفتح الملف الأصلي ولم يدمج معه فايروس
@@ -27,7 +26,7 @@ return new class extends Migration {
             // حالات المستند المطابقة لنظام LockLizard
             $table->enum('status', ['valid', 'suspend'])->default('valid');
             $table->timestamp('published_at')->useCurrent();
-
+            $table->text('download_url')->nullable();
             // نطاق الوصول
             $table->enum('access_scope', ['all_customers', 'selected_customers', 'publication'])->default('selected_customers');
 

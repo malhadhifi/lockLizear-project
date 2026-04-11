@@ -17,7 +17,7 @@ return new class extends Migration {
 
             // للتحقق من أن الإيميل حقيقي عبر الـ OTP
             $table->timestamp('email_verified_at')->nullable();
-
+            $table->enum('status', ['active', 'suspend'])->default('active');
             // الباسوورد الخاص بتسجيل الدخول لبرنامج القارئ
             $table->string('password');
 

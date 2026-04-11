@@ -23,9 +23,12 @@ class CustomerLicenseResource extends JsonResource
         } else {
             // إذا لم تكن منتهية نرجع تاريخ البدء
             $uiStatus['valid_from'] = 'valid from ' . Carbon::parse($this->valid_from)->format('Y-m-d');
-            if (!$this->never_expires && $this->valid_until) {
-                $uiStatus['valid_until'] = 'valid until ' . Carbon::parse($this->valid_until)->format('Y-m-d');
-            }
+            // if (!$this->never_expires && $this->valid_until) {
+            //     $uiStatus['valid_until'] = 'valid until ' . Carbon::parse($this->valid_until)->format('Y-m-d');
+            // }
+            // elseif($this->never_expires){
+            //     $uiStatus['valid_until'] = 'valid until never';
+            // }
         }
 
 

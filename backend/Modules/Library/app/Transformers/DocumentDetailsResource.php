@@ -10,13 +10,15 @@ class DocumentDetailsResource extends JsonResource
     public function toArray($request)
     {
         $controls = $this->securityControls;
-        $now = Carbon::now();
+        $now      = Carbon::now();
 
-        // 1. معالجة حقل الانتهاء (expires)
+        // 1. معالجة حقل الانتهاء
         $expires = 'never';
         if ($controls) {
             if ($controls->expiry_mode === 'fixed_date') {
-                $expires = $controls->expiry_date ? Carbon::parse($controls->expiry_date)->format('Y-m-d') : 'never';
+                $expires = $controls->expiry_date
+                    ? Carbon::parse($controls->expiry_date)->format('Y-m-d')
+                    : 'never';
             } elseif ($controls->expiry_mode === 'days_from_first_use') {
                 $expires = $controls->expiry_days . ' days';
             }
@@ -53,23 +55,46 @@ class DocumentDetailsResource extends JsonResource
         }
 
         return [
-            'id' => $this->id,
-            'title' => $this->title,
-            'published' => $this->published_at ? Carbon::parse($this->published_at)->format('Y-m-d') : null,
-            'expires' => $expires,
-            'status' => $currentStatus,
-            'access' => $this->access_scope,
-            'note' => $this->description,
+            'id'          => $this->id,
+            'title'       => $this->title,
+            'published'   => $this->published_at
+                ? Carbon::parse($this->published_at)->format('Y-m-d')
+                : null,
+            'expires'     => $expires,
+            'status'      => $currentStatus,
+            'access'      => $this->access_scope,
+            'note'        => $this->description,
+            'customers_count'    => $this->customerlicense_count ?? 0,
+            'publication_count'  => $this->publication_count ?? 0,
 
-            // كائن التفاصيل (Details Object)
+            // تفاصيل إضافية
             'details' => [
-                'views' => $controls ? ($controls->max_views_allowed ?? 'غير محدود') : 'غير محدود',
-                'publisher_name' => $this->publisher ? $this->publisher->name : 'غير معروف', // افترضت أن حقل اسم الناشر هو name
-                'published_at' => $this->published_at ? Carbon::parse($this->published_at)->format('Y-m-d H:i:s') : null,
-                'validation_check' => $validationMsg,
-                'original_name' => $this->original_filename, // أضفت الاسم الأصلي للملف ليكون مفيداً
-            ]
+                'views'           => $controls ? ($controls->max_views_allowed ?? 'غير محدود') : 'غير محدود',
+                'publisher_name'  => $this->publisher ? $this->publisher->name : 'غير معروف',
+                'published_at'    => $this->published_at
+                    ? Carbon::parse($this->published_at)->format('Y-m-d H:i:s')
+                    : null,
+                'validation_check'  => $validationMsg,
+                'original_filename' => $this->original_filename,
+                'file_size'         => $this->size,
+            ],
+
+            // إعدادات الحماية الكاملة (DRM)
+            'security' => [
+                'expiry_mode'           => $controls?->expiry_mode ?? 'never',
+                'expiry_date'           => $controls?->expiry_date
+                    ? Carbon::parse($controls->expiry_date)->format('Y-m-d')
+                    : null,
+                'expiry_days'           => $controls?->expiry_days,
+                'verify_mode'           => $controls?->verify_mode ?? 'never',
+                'verify_frequency_days' => $controls?->verify_frequency_days,
+                'grace_period_days'     => $controls?->grace_period_days,
+                'max_views_allowed'     => $controls?->max_views_allowed,
+                'print_mode'            => $controls?->print_mode ?? 'disabled',
+                'max_prints_allowed'    => $controls?->max_prints_allowed,
+                'log_views'             => (bool) ($controls?->log_views ?? false),
+                'log_prints'            => (bool) ($controls?->log_prints ?? false),
+            ],
         ];
     }
 }
-?>

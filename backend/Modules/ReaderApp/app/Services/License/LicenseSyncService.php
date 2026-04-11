@@ -96,7 +96,7 @@ class LicenseSyncService
             $pivot = null;
             if ($sourceType === 'publication')
                 $pivot = $pubPivots[$doc->publication_id];
-            
+
             elseif ($sourceType === 'selected_customers')
                 {
                $pivot = $doc->pivot;

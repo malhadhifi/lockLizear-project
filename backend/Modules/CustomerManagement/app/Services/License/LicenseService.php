@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Modules\CustomerManagement\Actions\GenerateLicenseExcelAction;
 use Modules\CustomerManagement\Actions\GenerateLicenseFileAction;
+use Modules\CustomerManagement\Actions\ResendLicenseFileAction;
 use Modules\CustomerManagement\Models\CustomerLicense;
 use Modules\CustomerManagement\Models\Voucher;
 use Modules\CustomerManagement\Notifications\SendGroupLicenseEmailNotification;
@@ -107,7 +108,7 @@ class LicenseService
                     Notification::route('mail', $license->email)
                         ->notify(new SendLicenseEmailNotification(
                             $license,
-                            $generatedFileData['encoded_file'],
+                            $generatedFileData['file_path'],
                             $generatedFileData['file_name']
                         ));
                 }
@@ -168,11 +169,22 @@ class LicenseService
         }
 
         // 3. الترتيب
-        // إذا كان الترتيب بالشركة، نجعله تصاعدياً (أبجدياً)، وإلا تنازلياً (أحدث شيء)
-        $sortDirection = $filters['sort_by'] === 'name' || $filters['sort_by'] === 'company' ? 'asc' : 'desc';
-        $query->orderBy($filters['sort_by'], $sortDirection);
 
-        return $query->paginate($filters['show_at_least']);
+      // إذا كان الترتيب بالشركة، نجعله تصاعدياً (أبجدياً)، وإلا تنازلياً (أحدث شيء)
+
+        $sortBy = $filters['sort'] ?? 'id';
+        $sortColumn = match ($sortBy) {
+            'name' => 'name',
+            'company' => 'company',
+            'published_at' => 'published_at',
+            default => 'id',
+        };
+
+        $sortDirection = $sortBy === "company" || $sortColumn === "name" ? 'asc' : 'desc';
+
+        $query->orderBy($sortColumn, $sortDirection);
+
+        return $query->paginate($filters['limit']);
     }
 
     /**
@@ -191,7 +203,7 @@ class LicenseService
                     $query->update(['status' => 'suspend']);
                     break;
 
-                case 'activate':
+                case 'active':
                     $query->update(['status' => 'active']);
                     break;
 
@@ -212,6 +224,17 @@ class LicenseService
                         'access_mode' => 'baselimited'
                     ]);
                     break;
+                case 'resend_license':
+                    $licenses = $query->get();
+
+                    // استدعاء الأكشن المخصص لإعادة الإرسال
+                    $resendAction = app(ResendLicenseFileAction::class);
+
+                    foreach ($licenses as $license) {
+                        $resendAction->execute($license);
+                    }
+                    break;
+
             }
             return true;
         });
@@ -241,10 +264,22 @@ class LicenseService
      */
     public function getLicenseDetails(int $id)
     {
-        // نستخدم withCount لجلب عدد الكروت وتجهيزها للـ Resource
-        return CustomerLicense::withCount('vouchers')->findOrFail($id);
-    }
+        return CustomerLicense::with([
+            // 1. جلب المنشورات (الـ ID فقط)
+            'publications' => function ($query) {
+                $query->select('publications.id') // 🚀 جلب الـ ID فقط
+                    ->where('license_publications.status', '!=', 'revoked');
+            },
 
+            // 2. جلب المستندات (الـ ID فقط)
+            'documents' => function ($query) {
+                $query->select('documents.id') // 🚀 جلب الـ ID فقط
+                    ->where('license_documents.status', '!=', 'revoked');
+            }
+        ])
+            ->withCount(['vouchers'])
+            ->findOrFail($id);
+    }
     /**
      * تحديث بيانات رخصة محددة (الحقول المسموحة فقط)
      */

@@ -28,7 +28,8 @@ class CustomerLicense extends Model
         'status',
         'send_via_email',
         'customer_devices_id',
-        'reader_id'
+        'reader_id',
+        'file_path'
     ];
 
     // تحويل التواريخ إلى كائنات Carbon ليسهل التعامل معها

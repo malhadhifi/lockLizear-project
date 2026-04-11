@@ -34,7 +34,7 @@ class PingDocumentRequest extends FormRequest
     {
         throw new HttpResponseException(
             $this->sendResponse(false, 4020, $validator->errors(), 422)
-            
+
         );
     }
 }

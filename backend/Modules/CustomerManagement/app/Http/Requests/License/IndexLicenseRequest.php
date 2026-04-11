@@ -14,8 +14,8 @@ class IndexLicenseRequest extends BaseRequest
     protected function prepareForValidation()
     {
         $this->merge([
-            'sort_by' => $this->sort_by ?? 'id',
-            'show_at_least' => $this->show_at_least ?? 25,
+            'sort' => $this->sort_by ?? 'id',
+            'limit' => $this->show_at_least ?? 25,
             'show' => $this->show ?? 'all',
         ]);
     }
@@ -25,9 +25,9 @@ class IndexLicenseRequest extends BaseRequest
         return [
             'search' => 'nullable|string|max:100',
             // الترتيب مسموح حسب الشركة، تاريخ البدء، أو المعرف
-            'sort_by' => 'in:company,name,valid_from,id',
-            'show_at_least' => 'integer|min:25',
-            // الفلاتر المطلوبة
+            'sort' => 'in:company,name,published_at,id',
+            'limit' => 'integer|min:25',
+
             'show' => 'in:all,registered,not_registered,suspend,expired',
         ];
     }

@@ -8,28 +8,39 @@ class DocumentResource extends JsonResource
 {
     public function toArray($request)
     {
-        $expiredDate = null;
         $controls = $this->securityControls;
 
-        // التحقق ديناميكياً: إذا كان له تاريخ ثابت وهو في الماضي، نرجع التاريخ
+        // حساب تاريخ الانتهاء إذا وجد
+        $expiryDate = null;
         if ($controls && $controls->expiry_mode === 'fixed_date' && $controls->expiry_date) {
-            $date = Carbon::parse($controls->expiry_date);
-            if ($date->isPast()) {
-                $expiredDate = $date->format('Y-m-d');
-            }
+            $expiryDate = Carbon::parse($controls->expiry_date)->format('Y-m-d');
+        }
+
+        // حساب انتهاء الصلاحية للعرض في القائمة
+        $expiredDate = null;
+        if ($expiryDate && Carbon::parse($expiryDate)->isPast()) {
+            $expiredDate = $expiryDate;
         }
 
         return [
-            'id' => $this->id,
-            'type' => $this->type,
-            'title' => $this->title,
-            // تغيير الاسم للواجهة بناءً على طلبك
-            'note' => $this->description,
-            'status' => $this->status,
-            'published' => $this->published_at ? Carbon::parse($this->published_at)->format('Y-m-d') : null,
-            // يرجع التاريخ إذا كان منتهياً، وإلا يرجع null
-            'expired' => $expiredDate,
+            'id'                 => $this->id,
+            'type'               => $this->type,
+            'title'              => $this->title,
+            'note'               => $this->description,
+            'status'             => $this->status,
+            'published'          => $this->published_at
+                ? Carbon::parse($this->published_at)->format('Y-m-d')
+                : null,
+
+            // معلومات الانتهاء
+            'expired'            => $expiredDate,
+            'expiry_date'        => $expiryDate,
+            'expiry_mode'        => $controls?->expiry_mode,
+            'expiry_days'        => $controls?->expiry_days,
+
+            // عداد العملاء والمنشورات (withCount يجب أن يكون في الاستعلام)
+            'customers_count'    => $this->customerlicense_count ?? 0,
+            'publication_count'  => $this->publication_count     ?? 0,
         ];
     }
 }
-?>

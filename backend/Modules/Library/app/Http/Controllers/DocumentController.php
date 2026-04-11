@@ -1,6 +1,7 @@
 <?php
 namespace Modules\Library\Http\Controllers;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Client\Request;
 use Modules\Library\Transformers\DocumentDetailsResource;
 use Modules\Library\Transformers\DocumentResource;
 use Modules\Library\Http\Requests\Documents\DocumentActionRequest;
@@ -49,17 +50,10 @@ class DocumentController extends Controller
     public function show($id)
     {
         try {
-            // جلب البيانات من الخدمة
-            $document = $this->documentService->getDocumentDetails($id);
-
-            // تشكيل البيانات باستخدام الـ Resource
+            $document = $this->documentService->getDocumentDetails((int) $id);
             $responseData = new DocumentDetailsResource($document);
-
-            // 1001 => 'تم جلب البيانات بنجاح.'
             return $this->sendResponse(true, 1001, $responseData, 200);
-
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            // كود 4001: الملف غير موجود في النظام (حسب ملف الـ config الخاص بك)
             return $this->sendResponse(false, 4001, null, 404);
         } catch (\Exception $e) {
             return $this->sendResponse(false, 5000, null, 500);
@@ -86,19 +80,54 @@ class DocumentController extends Controller
         }
     }
 
+    /**
+     * تعديل بيانات ملف (وصف + إعدادات DRM)
+     * PUT /api/library/documents/{id}
+     */
     public function update(UpdateDocumentRequest $request, $id)
     {
         try {
-            $this->documentService->updateDocument($id, $request->validated());
-
-            // 1000 => 'تمت العملية بنجاح.'
+            $this->documentService->updateDocument((int) $id, $request->validated());
             return $this->sendResponse(true, 1000, null, 200);
-
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return $this->sendResponse(false, 4001, null, 404);
         } catch (\Exception $e) {
             return $this->sendResponse(false, 5000, null, 500);
         }
     }
+
+    /**
+     * قائمة العملاء المصرح لهم بالوصول
+     * GET /api/library/documents/{id}/access
+     */
+    public function accessList($id)
+    {
+        try {
+            $data = $this->documentService->getDocumentAccessList((int) $id);
+            return $this->sendResponse(true, 1001, $data, 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->sendResponse(false, 4001, null, 404);
+        } catch (\Exception $e) {
+            \Log::error('DocumentController@accessList: ' . $e->getMessage());
+            return $this->sendResponse(false, 5000, null, 500);
+        }
+    }
+
+    /**
+     * تصدير CSV
+     * GET /api/library/documents/export
+     */
+    public function export(Request $request)
+    {
+        try {
+            $csv = $this->documentService->exportDocuments($request->all());
+            return response($csv, 200, [
+                'Content-Type'        => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="documents-' . now()->format('Y-m-d') . '.csv"',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('DocumentController@export: ' . $e->getMessage());
+            return $this->sendResponse(false, 5000, null, 500);
+        }
+    }
 }
-?>

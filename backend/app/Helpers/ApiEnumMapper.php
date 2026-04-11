@@ -118,5 +118,4 @@ class ApiEnumMapper
             default => 'selected_customers', // القيمة الافتراضية كما حددتها أنت
         };
     }
-
 }

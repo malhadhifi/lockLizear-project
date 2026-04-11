@@ -29,14 +29,13 @@ class GenerateLicenseFileAction
         // 3. تحديث مسار الملف في قاعدة البيانات
         $license->update(['file_path' => $filePath]);
 
-        // 4. تجهيز الملف للحدث (Notification) لإرساله بالإيميل
-        $encodedFile = base64_encode($cryptoResult['binary_file']);
+        // // 4. تجهيز الملف للحدث (Notification) لإرساله بالإيميل
+        // $encodedFile = base64_encode($cryptoResult['binary_file']);
 
         return [
             'file_name' => $fileName,
-            'binary_file' => $cryptoResult['binary_file'],
             'file_path' => $filePath,
-            'encoded_file' => $encodedFile
+            // 'encoded_file' => $encodedFile
         ];
     }
 }

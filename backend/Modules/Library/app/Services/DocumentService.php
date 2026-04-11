@@ -22,96 +22,75 @@ class DocumentService
             });
         }
 
-        // 2. فلتر العرض (الخيارات)
         $now = Carbon::now();
-
-        switch ($filters['show']) {
+        switch ($filters['show'] ?? 'all') {
             case 'suspend':
                 $query->where('status', 'suspend');
                 break;
-
             case 'expired':
-                // الملف منتهي الصلاحية إذا كان fixed_date وتاريخه أقدم من الآن
                 $query->whereHas('securityControls', function ($q) use ($now) {
-                    $q->where('expiry_mode', 'fixed_date')
-                        ->where('expiry_date', '<', $now);
+                    $q->where('expiry_mode', 'fixed_date')->where('expiry_date', '<', $now);
                 });
                 break;
-
             case 'not_yet_expired':
-                // الملف غير منتهي إذا كان fixed_date وتاريخه أكبر من الآن
                 $query->whereHas('securityControls', function ($q) use ($now) {
-                    $q->where('expiry_mode', 'fixed_date')
-                        ->where('expiry_date', '>=', $now);
+                    $q->where('expiry_mode', 'fixed_date')->where('expiry_date', '>=', $now);
                 });
                 break;
-
             case 'expired_on':
-                // البحث عن تاريخ محدد (نتجاهل الوقت ونطابق اليوم فقط)
-                $query->whereHas('securityControls', function ($q) use ($filters) {
-                    $q->where('expiry_mode', 'fixed_date')
-                        ->whereDate('expiry_date', $filters['expired_on_date']);
-                });
+                if (!empty($filters['expired_on_date'])) {
+                    $query->whereHas('securityControls', function ($q) use ($filters) {
+                        $q->where('expiry_mode', 'fixed_date')
+                          ->whereDate('expiry_date', $filters['expired_on_date']);
+                    });
+                }
+                break;
+            case 'valid':
+                $query->where('status', 'valid');
                 break;
         }
 
-        // 3. الترتيب
-        // إذا كان الترتيب بالعنوان نجعله أبجدياً (asc)، وإلا فنجعله تنازلياً (desc)
-        $sortDirection = $filters['sort_by'] === 'title' ? 'asc' : 'desc';
-        $query->orderBy($filters['sort_by'], $sortDirection);
+        $sortBy = $filters['sort_by'] ?? 'id';
+        $sortColumn = match ($sortBy) {
+            'title'     => 'title',
+            'published' => 'published_at',
+            default     => 'id',
+        };
+        $query->orderBy($sortColumn, $sortBy === 'title' ? 'asc' : 'desc');
 
-        return $query->paginate($filters['show_at_least']);
+        $perPage = (int) ($filters['per_page'] ?? $filters['show_at_least'] ?? 25);
+        return $query->paginate($perPage);
     }
 
-
-    /**
-     * تنفيذ الإجراءات على الملفات (حذف، إيقاف، تفعيل)
-     */
-    public function executeAction(array $ids, string $action)
+    // ───────────────────────────────────────────────────────────────────────────
+    // 2. تنفيذ إجراء جماعي
+    // ───────────────────────────────────────────────────────────────────────────
+    public function executeAction(array $ids, string $action): bool
     {
         $query = Document::whereIn('id', $ids);
-
-        switch ($action) {
-            case 'deleted':
-                // حذف آمن (Soft Delete) بناءً على إعدادات جدولك
-                $query->delete();
-                break;
-
-            case 'suspend':
-                $query->update(['status' => 'suspend']);
-                break;
-
-            case 'active':
-                // ملاحظة: قمنا بتغييرها إلى 'valid' لتطابق عمود الـ ENUM في قاعدتك
-                $query->update(['status' => 'valid']);
-                break;
+        switch (strtolower($action)) {
+            case 'deleted': case 'delete':   $query->delete(); break;
+            case 'suspend': case 'suspend': $query->update(['status' => 'suspend']); break;
+            case 'active': case 'activate':   $query->update(['status' => 'valid']); break;
         }
-
         return true;
     }
 
-
-    /**
-     * جلب تفاصيل مستند واحد مع إعدادات الحماية والناشر
-     */
-    public function getDocumentDetails(int $id)
+    // ───────────────────────────────────────────────────────────────────────────
+    // 3. تفاصيل مستند واحد
+    // ───────────────────────────────────────────────────────────────────────────
+    public function getDocumentDetails(int $id): Document
     {
-        // نحمل العلاقات دفعة واحدة باستخدام with
         return Document::with(['securityControls', 'publisher'])->findOrFail($id);
     }
 
-
-    /**
-     * تعديل بيانات الملف (الوصف والتاريخ فقط)
-     */
-    /**
-     * تعديل بيانات الملف (الوصف وتاريخ الانتهاء)
-     */
-    public function updateDocument(int $id, array $data)
+    // ───────────────────────────────────────────────────────────────────────────
+    // 4. تحديث بيانات المستند (وصف + إعدادات DRM كاملة)
+    // ───────────────────────────────────────────────────────────────────────────
+    public function updateDocument(int $id, array $data): bool
     {
         $document = Document::with('securityControls')->findOrFail($id);
 
-        // 1. تحديث الوصف في جدول documents
         if (array_key_exists('note', $data)) {
             $document->description = $data['note'];
             $document->save();
@@ -131,5 +110,67 @@ class DocumentService
 
         return true;
     }
+
+    // ───────────────────────────────────────────────────────────────────────────
+    // 5. قائمة العملاء المصرح لهم بالوصول لمستند معين
+    // ───────────────────────────────────────────────────────────────────────────
+    public function getDocumentAccessList(int $id): array
+    {
+        $document = Document::findOrFail($id);
+        $licenses = $document->customerlicense()
+            ->withPivot(['access_mode', 'valid_from', 'valid_until', 'views_override', 'status'])
+            ->get();
+
+        return $licenses->map(function ($license) {
+            return [
+                'id'             => $license->id,
+                'name'           => $license->name,
+                'email'          => $license->email,
+                'company'        => $license->company,
+                'status'         => $license->pivot->status ?? $license->status,
+                'access_mode'    => $license->pivot->access_mode,
+                'valid_from'     => $license->pivot->valid_from
+                    ? Carbon::parse($license->pivot->valid_from)->format('Y-m-d') : null,
+                'expires_at'     => $license->pivot->valid_until
+                    ? Carbon::parse($license->pivot->valid_until)->format('Y-m-d') : null,
+                'views_override' => $license->pivot->views_override,
+            ];
+        })->toArray();
+    }
+
+    // ───────────────────────────────────────────────────────────────────────────
+    // 6. تصدير CSV
+    // ───────────────────────────────────────────────────────────────────────────
+    public function exportDocuments(array $filters): string
+    {
+        $filters['per_page'] = 10000;
+        $documents = $this->getDocuments($filters)->items();
+
+        $rows   = [];
+        $rows[] = implode(',', ['ID', 'Title', 'Status', 'Published', 'Expiry Mode', 'Expiry Date', 'Customers', 'Publications']);
+
+        foreach ($documents as $doc) {
+            $ctrl   = $doc->securityControls;
+            $expiry = 'never';
+            if ($ctrl) {
+                if ($ctrl->expiry_mode === 'fixed_date' && $ctrl->expiry_date) {
+                    $expiry = Carbon::parse($ctrl->expiry_date)->format('Y-m-d');
+                } elseif ($ctrl->expiry_mode === 'days_from_first_use') {
+                    $expiry = $ctrl->expiry_days . ' days';
+                }
+            }
+            $rows[] = implode(',', [
+                $doc->id,
+                '"' . str_replace('"', '""', $doc->title) . '"',
+                $doc->status,
+                $doc->published_at ? Carbon::parse($doc->published_at)->format('Y-m-d') : '',
+                $ctrl?->expiry_mode ?? 'none',
+                $expiry,
+                $doc->customerlicense_count ?? 0,
+                $doc->publication_count     ?? 0,
+            ]);
+        }
+
+        return implode("\n", $rows);
+    }
 }
-?>

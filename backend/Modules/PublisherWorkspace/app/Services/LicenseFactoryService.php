@@ -21,9 +21,17 @@ class LicenseFactoryService
 
         // إعدادات OpenSSL
         $this->sslConfig = [
-            "config" => "C:/xampp/php/extras/ssl/openssl.cnf", // عدلها حسب بيئتك لو تغيرت
             "digest_alg" => "sha256",
         ];
+
+        $xamppPath = "C:/xampp/php/extras/ssl/openssl.cnf";
+        $linuxPath = "/etc/ssl/openssl.cnf";
+
+        if (file_exists($xamppPath)) {
+            $this->sslConfig["config"] = $xamppPath;
+        } elseif (file_exists($linuxPath)) {
+            $this->sslConfig["config"] = $linuxPath;
+        }
 
         // تهيئة مفتاح السيرفر السيادي
         $keyPath = config('saasadmin.server_private_key_path');
@@ -56,8 +64,8 @@ class LicenseFactoryService
         $publisher = $license->publisher;
         $package = $license->package;
 
-        // جلب الميزات من JSON الباقة
-        $features = is_array($package->features) ? $package->features : json_decode($package->features, true) ?? [];
+        // جلب الميزات من JSON الباقة وتفادي خطأ تمرير null لدالة json_decode
+        $features = is_array($package->features) ? $package->features : (!empty($package->features) ? json_decode($package->features, true) : []);
 
         $dnData = [
             'company' => $publisher->company ?? $publisher->name,

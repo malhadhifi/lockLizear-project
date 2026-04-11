@@ -1,0 +1,216 @@
+/* PublicationsListPage.module.css */
+
+.container {
+  font-family: Arial, sans-serif;
+  border: 1px solid #009cad;
+  background-color: #fff;
+}
+
+.header {
+  background-color: #009cad;
+  color: #fff;
+  padding: 8px 15px;
+  font-weight: bold;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filterSection {
+  background-color: #f5f8fa; /* رمادي فاتح مزرق */
+  padding: 20px 25px;
+  border-bottom: 1px solid #ddd;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.label {
+  width: 90px;
+  color: #555;
+  font-size: 13px;
+  font-weight: normal;
+}
+
+.inputWrapper {
+  flex: 1;
+  position: relative;
+}
+
+.input {
+  width: 100%;
+  border: 1px solid #ccc;
+  padding: 5px 8px 5px 25px;
+  font-size: 13px;
+  outline: none;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 8px;
+  top: 7px;
+  color: #999;
+  font-size: 12px;
+}
+
+.selectInput {
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  font-size: 13px;
+  outline: none;
+  min-width: 100px;
+}
+
+.link {
+  color: #009cad;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.okBtn {
+  background-color: #8aa4b3; 
+  color: #fff;
+  border: none;
+  padding: 6px 40px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.okBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination {
+  text-align: center;
+  padding: 15px 0;
+  font-size: 14px;
+  font-weight: bold;
+  color: #666;
+}
+
+.cardsContainer {
+  padding: 0 20px 20px 20px;
+}
+
+/* --- تصميم بطاقة المنشور --- */
+.card {
+  border: 1px solid #ddd;
+  margin-bottom: 15px;
+  background-color: #fdfdfd;
+  display: flex;
+}
+
+.statusLine {
+  width: 6px;
+  flex-shrink: 0;
+}
+
+.cardContent {
+  flex: 1;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.cardTitle {
+  font-weight: bold;
+  font-size: 13px;
+  color: #555;
+  margin-left: 10px;
+  flex: 1;
+}
+
+.cardIcons {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.iconBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+}
+
+.iconBtn.delete { color: #f56c6c; }
+.iconBtn.email { color: #009cad; } /* أيقونة التعديل */
+.iconBtn.expand { 
+  background-color: #8aa4b3; 
+  color: white; 
+  padding: 2px 8px; 
+  border-radius: 2px;
+  font-size: 12px;
+}
+
+.cardBody {
+  padding: 12px 35px;
+}
+
+.metaTable {
+  border-collapse: collapse;
+  font-size: 12px;
+  color: #555;
+}
+
+.metaTable td {
+  padding: 2px 15px 2px 0;
+  vertical-align: top;
+}
+
+.metaLabel {
+  width: 70px;
+  color: #777;
+}
+
+/* --- أزرار التقليب الجميلة (Pagination) --- */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  padding: 20px 0;
+}
+
+.pageBtn {
+  padding: 4px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s; /* لجعل تأثير التمرير ناعماً */
+}
+
+.pageBtn.active {
+  background-color: #fff;
+  color: #009cad;
+  border: 1px solid #009cad;
+}
+
+.pageBtn.active:hover {
+  background-color: #e6f5f7; /* لون خفيف عند مرور الماوس */
+}
+
+.pageBtn.disabled {
+  background-color: #f5f5f5;
+  color: #bbb;
+  border: 1px solid #ddd;
+  cursor: not-allowed;
+}
+
+.pageText {
+  font-size: 14px;
+  font-weight: bold;
+  color: #009cad;
+}

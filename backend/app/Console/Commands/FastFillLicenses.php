@@ -30,7 +30,7 @@ class FastFillLicenses extends Command
         // ==========================================
         $publisher = Publisher::create([
             'name' => 'الناشر الذهبي',
-            'email' => 'golden_' . Str::random(4) . '@test.com',
+            'email' => 'test@gmail.com',
             'password' => bcrypt('12345678'), // 👈 أضفنا هذا السطر لحل المشكلة
         ]);
         $this->line("✅ تم إنشاء الناشر: {$publisher->name} (ID: {$publisher->id})");
@@ -51,7 +51,7 @@ class FastFillLicenses extends Command
         $document = Document::create([
             'document_uuid' => (string) Str::uuid(),
             'publisher_id' => $publisher->id,
-            'publication_id' => $publication->id,
+            'publication_id' => null,
             'type' => 'pdf',
             'title' => 'كتاب البرمجة المتقدمة',
             'file_hash' => hash('sha256', Str::random(10)),

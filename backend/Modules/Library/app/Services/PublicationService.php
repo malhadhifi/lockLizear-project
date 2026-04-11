@@ -8,10 +8,13 @@ class PublicationService
     /**
      * إنشاء منشور جديد
      */
-    public function createPublication(array $data)
+    public function createPublication(array $data,int $publicationId)
     {
         // إذا لم يتم إرسال obey، نضع قيمته الافتراضية false
         $data['obey'] = $data['obey'] ?? false;
+
+        // الافتراضي للـ publisher_id هو 1 لتجنب أخطاء قاعدة البيانات أثناء التطوير
+        $data['publisher_id'] = $publicationId ;
 
         return Publication::create($data);
     }
@@ -37,9 +40,9 @@ class PublicationService
     /**
      * جلب المنشورات مع الفلترة
      */
-    public function getPublications(array $filters)
+    public function getPublications(array $filters,int $publicationId)
     {
-        $query = Publication::withCount(["documents", "customerlicense"]);
+        $query = Publication::withCount(["documents", "customerlicense"])->where('publisher_id', $publicationId);
 
         // 1. فلتر البحث (في الاسم والوصف)
         if (!empty($filters['search'])) {
@@ -51,7 +54,7 @@ class PublicationService
 
         // 2. فلتر الالتزام بالتاريخ (Show)
         if (!empty($filters['show']) && $filters['show'] !== 'all') {
-            $obeyValue = $filters['show'] === 'obey_yes' ? true : false;
+            $obeyValue = $filters['show'] === 'obey' ? true : false;
             $query->where('obey', $obeyValue);
         }
 
@@ -77,7 +80,7 @@ class PublicationService
         $query = Publication::whereIn('id', $ids);
 
         switch ($action) {
-            case 'deleted':
+            case 'delete':
                 // لارافل سيقوم بتحديث حقل deleted_at تلقائياً (Soft Delete)
                 $query->delete();
                 break;

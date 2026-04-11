@@ -28,7 +28,7 @@ class DocumentPingService
             throw new Exception('suspend', 4002);
         }
 
-  
+
 
         $licenseIdToUse = null;
         $pivotData = null;

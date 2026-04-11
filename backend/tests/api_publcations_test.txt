@@ -44,7 +44,11 @@
 // الرابط: http://127.0.0.1:8000/api/library/publications/bulk-action
 // الـ Body (JSON):
 {
+<<<<<<< HEAD
   "action": "suspend",
+=======
+  "action": "suspend",
+>>>>>>> upstream/main
   "publication_ids": [1, 2, 5]
 }
 

@@ -18,14 +18,37 @@ class PublisherRegistrationController extends Controller
     public function register(RegisterPublisherRequest $request, CreatePublisherAndLicenseAction $action)
     {
         try {
-            // 1. تحديد الباقة الافتراضية
-            $package = Package::where('is_default_registration', true)->firstOrFail();
+            // 1. تحديد الباقة الافتراضية، وإذا لم تكن موجودة في السيرفر الحي نقوم بإنشائها تلقائياً
+            $package = Package::where('is_default_registration', true)->first();
+
+            if (!$package) {
+                $package = Package::create([
+                    'name' => 'الباقة المجانية',
+                    'base_price' => 0,
+                    'duration_days' => 30,
+                    'trial_days' => 0,
+                    'is_default_registration' => true,
+                    'base_max_documents' => 10,
+                    'base_max_file_size_mb' => 50,
+                    'base_max_total_storage_mb' => 500,
+                    'base_batch_size' => 5,
+                    'base_devices_allowed' => 3,
+                    'is_active' => true,
+                    'allowed_extensions' => ['pdf'],
+                    'features' => [
+                        'can_use_guest_link' => true,
+                        'can_use_dynamic_watermark' => false,
+                        'allow_custom_splash_screen' => false,
+                        'remove_vendor_watermark' => false,
+                    ]
+                ]);
+            }
 
             // 2. تنفيذ الأكشن
             $result = $action->execute(
                 $request->validated(),
                 $package->id,
-                null // سيعطي null لو كان تسجيلاً ذاتياً
+                auth()->id() // سيعطي null لو كان تسجيلاً ذاتياً
             );
 
             // 3. تجهيز البيانات
@@ -37,14 +60,9 @@ class PublisherRegistrationController extends Controller
             return $this->sendResponse(true, 1050, $payloadData, 201);
 
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Registration Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
             // التعامل مع أي خطأ برمجي غير متوقع (5000 => خطأ داخلي في الخادم)
-            // return $this->sendResponse(false, 5000, null, 500);
-            return response()->json(
-                [
-                    "data" => $e->getMessage(),
-                    "line" => $e->getLine(),
-                ]
-            );
+            return $this->sendResponse(false, 5000, null, 500);
         }
     }
 

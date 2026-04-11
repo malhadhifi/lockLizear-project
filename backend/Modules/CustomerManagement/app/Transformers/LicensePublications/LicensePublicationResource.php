@@ -9,9 +9,9 @@ class LicensePublicationResource extends JsonResource
     public function toArray($request)
     {
         // استخراج بيانات الرخصة (العميل) من العلاقة
-        $customerLicense = $this->customers->first();
+        $customerLicense = $this->customerlicense->first();
         $access = 'no';
-
+        $date = Carbon::parse($this->created_at)->format('Y-m-d');
         if ($customerLicense && $customerLicense->pivot->status !== 'revoked') {
             if ($customerLicense->pivot->access_mode === 'unlimited') {
                 $access = 'unlimited';
@@ -28,6 +28,7 @@ class LicensePublicationResource extends JsonResource
             'description' => $this->description,
             'obey' => $this->obey ? 'yes' : 'no',
             'access' => $access,
+            'date_at' => $date,
         ];
     }
 }

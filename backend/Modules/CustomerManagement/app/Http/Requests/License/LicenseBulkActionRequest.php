@@ -17,7 +17,7 @@ class LicenseBulkActionRequest extends BaseRequest
             'license_ids.*' => 'integer|exists:customer_licenses,id',
 
             // الإجراءات المطلوبة
-            'action' => 'required|in:suspend,activate,delete,grant_access_to_publication,grant_access_to_documents',
+            'action' => 'required|in:suspend,active,delete,grant_access_to_publication,grant_access_to_documents,resend_license',
 
             // مصفوفة المنشورات مطلوبة فقط في حالة منح وصول للمنشورات
             'publication_ids' => 'required_if:action,grant_access_to_publication|array|min:1',

@@ -3,9 +3,10 @@
 namespace Modules\CustomerManagement\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue; // للإرسال في الخلفية (طابور المهام)
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\Storage;
 use Modules\CustomerManagement\Models\CustomerLicense;
 
 class SendLicenseEmailNotification extends Notification implements ShouldQueue
@@ -13,13 +14,13 @@ class SendLicenseEmailNotification extends Notification implements ShouldQueue
     use Queueable;
 
     protected $license;
-    protected $encodedFileData;
+    protected $filePath; // 👈 نمرر المسار فقط بدلاً من الملف الكامل
     protected $fileName;
 
-    public function __construct(CustomerLicense $license, string $encodedFileData, string $fileName)
+    public function __construct(CustomerLicense $license, string $filePath, string $fileName)
     {
         $this->license = $license;
-        $this->encodedFileData = $encodedFileData;
+        $this->filePath = $filePath;
         $this->fileName = $fileName;
     }
 
@@ -34,14 +35,16 @@ class SendLicenseEmailNotification extends Notification implements ShouldQueue
             ? 'مرفق كروت تفعيل الرخص الخاصة بك'
             : 'مرفق ملف تفعيل الرخصة الخاصة بك';
 
+        // 👈 الطابور هو من يقوم بقراءة الملف من السيرفر أثناء الإرسال وليس قبل
+        $fileContent = Storage::disk('local')->get($this->filePath);
+
         return (new MailMessage)
             ->subject($subject)
-            // مسار قالب الإيميل (HTML) الذي سنقوم بإنشائه لاحقاً
             ->view('customermanagement::emails.customer_license', [
                 'license' => $this->license
             ])
-            // فك تشفير الـ Base64 وإرفاق الملف بالاسم والصيغة الصحيحة
-            ->attachData(base64_decode($this->encodedFileData), $this->fileName, [
+            // نرفق الملف مباشرة (لا نحتاج لفك التشفير لأن get تجلبه كثنائي جاهز)
+            ->attachData($fileContent, $this->fileName, [
                 'mime' => 'application/octet-stream',
             ]);
     }

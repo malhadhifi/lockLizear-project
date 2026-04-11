@@ -7,13 +7,15 @@ use Modules\Library\Models\Document;
 
 class LicenseDocumentService
 {
-    public function getCustomerDocuments(int $customerLicenseId, array $filters)
+    // 🚀 قمنا بإضافة $publisherId هنا كمدخل للدالة
+    public function getCustomerDocuments(int $customerLicenseId, int $publisherId, array $filters)
     {
-        // 1. جلب الملفات المخصصة للعملاء المحددين فقط، وتحميل علاقة الحماية وعلاقة العميل المحدد
+        // 1. جلب الملفات المخصصة للعملاء المحددين + التابعة للناشر المحدد فقط
         $query = Document::where('access_scope', 'selected_customers')
+            ->where('publisher_id', $publisherId) // 👈 🚀 هذا هو الشرط الجديد الذي يفلتر حسب الناشر
             ->with([
                 'securityControls',
-                'customers' => function ($q) use ($customerLicenseId) {
+                'customerlicense' => function ($q) use ($customerLicenseId) {
                     $q->where('customer_licenses.id', $customerLicenseId);
                 }
             ]);
@@ -26,6 +28,7 @@ class LicenseDocumentService
             });
         }
 
+        // ... (باقي الكود كما هو بدون تغيير) ...
         // 3. فلتر العرض المعقد (show)
         $show = $filters['show'];
 
@@ -49,11 +52,17 @@ class LicenseDocumentService
             $query->where('type', 'pdf');
         }
 
-        // 4. الترتيب
-        $sortDirection = $filters['sort_by'] === 'title' ? 'asc' : 'desc';
-        $query->orderBy($filters['sort_by'], $sortDirection);
+        $sortBy = $filters['sort'] ?? 'id';
+        $sortColumn = match ($sortBy) {
+            'title' => 'title',
+            'description' => 'description',
+            'published' => 'published_at',
+            default => 'id',
+        };
+        $decrtion= $sortBy === 'title'|| $sortBy === 'description' ? 'asc' : 'desc';
+        $query->orderBy($sortColumn, $decrtion);
 
-        return $query->paginate($filters['show_at_least']);
+        return $query->paginate($filters['limit']);
     }
 
 
@@ -81,7 +90,7 @@ class LicenseDocumentService
                 'valid_until' => $data['valid_until'],
                 'status' => 'active',
             ];
-        } elseif ($data['action'] === 'baselimited') {
+        } elseif ($data['action'] === 'access') {
             // الوصول العادي (الخيار الرابع الجديد)
             $pivotData = [
                 'access_mode' => 'baselimited',

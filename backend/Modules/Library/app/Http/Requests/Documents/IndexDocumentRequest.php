@@ -3,7 +3,6 @@ namespace Modules\Library\Http\Requests\Documents;
 
 use App\Http\Requests\BaseRequest;
 
-
 class IndexDocumentRequest extends BaseRequest
 {
     public function authorize()
@@ -23,17 +22,13 @@ class IndexDocumentRequest extends BaseRequest
     public function rules()
     {
         return [
-            'search' => 'nullable|string|max:100',
-            // الترتيب مسموح به حسب الـ id، العنوان، أو الوصف
-            'sort_by' => 'in:id,title,description',
-            'show_at_least' => 'integer|min:1',
-
-            // خيارات العرض التي طلبتها
-            'show' => 'in:all,suspend,expired,not_yet_expired,expired_on',
-
-            // هذا الحقل مطلوب فقط إذا اختار المستخدم فلتر 'expired_on'
-            'expired_on_date' => 'required_if:show,expired_on|nullable|date'
+            'search'          => 'nullable|string|max:100',
+            'sort_by'         => 'in:id,title,description,published',
+            'show_at_least'   => 'integer|min:1|max:100',
+            'per_page'        => 'integer|min:1|max:100',
+            'page'            => 'integer|min:1',
+            'show'            => 'nullable|in:all,valid,suspend,expired,not_yet_expired,expired_on',
+            'expired_on_date' => 'required_if:show,expired_on|nullable|date',
         ];
     }
 }
-?>

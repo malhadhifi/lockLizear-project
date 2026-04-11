@@ -60,9 +60,15 @@ class Document extends Model
 
     public function customerlicense()
     {
-        return $this->belongsToMany(CustomerLicense::class, 'license_documents');
+        return $this->belongsToMany(CustomerLicense::class, 'license_documents')
+            // 🚀 يجب إضافة هذا السطر هنا أيضاً لكي يتعرف الـ Resource على نوع الوصول والتواريخ!
+            ->withPivot([
+                'access_mode',
+                'valid_from',
+                'valid_until',
+                'status'
+            ]);
     }
-
     // ==========================================
     // 💡 1. دالة التحقق من الانتهاء (تُستخدم مع الـ Foreach)
     // ==========================================

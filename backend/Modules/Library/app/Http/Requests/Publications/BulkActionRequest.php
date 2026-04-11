@@ -22,7 +22,7 @@ class BulkActionRequest extends BaseRequest
             'publication_ids.*' => 'integer|exists:publications,id',
 
             // الإجراء يجب أن يكون واحداً من هذه الخيارات (أضفت active تحسباً لفك الإيقاف مستقبلاً)
-            'action' => 'required|in:deleted,suspend,active',
+            'action' => 'required|in:delete,suspend,active',
         ];
     }
 }

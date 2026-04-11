@@ -15,12 +15,13 @@ class Publication extends Model
     protected $fillable = [
         'name',
         'description',
-        'obey_customer_start_date',
+        'obey',
+        'status',
         'publisher_id',
     ];
 
     protected $casts = [
-        'obey_customer_start_date' => 'boolean',
+        'obey' => 'boolean',
     ];
 
     // علاقة المنشور بالناشر (من موديول الساس)

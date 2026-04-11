@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 use Modules\Library\Http\Controllers\PublicationController;
 use Modules\Library\Http\Controllers\DocumentController;
 
-
 /*
 |--------------------------------------------------------------------------
 | API Routes for Library Module

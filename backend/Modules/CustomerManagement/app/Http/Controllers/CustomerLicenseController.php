@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 
 
 use App\Traits\ApiResponseTrait;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Modules\CustomerManagement\Http\Requests\License\IndexLicenseRequest;
 use Modules\CustomerManagement\Http\Requests\License\LicenseBulkActionRequest;
@@ -106,8 +107,11 @@ class CustomerLicenseController extends Controller
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             // 4004 (أو أي كود تفضله): الرخصة غير موجودة
+
+
             return $this->sendResponse(false, 4004, null, 404);
         } catch (\Exception $e) {
+            Log::error($e->getMessage() . $e->getLine() . $e->getFile().$e->getCode());
             return $this->sendResponse(false, 5000, null, 500);
         }
     }

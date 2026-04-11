@@ -15,7 +15,7 @@ class UpdateLicenseDocumentsRequest extends BaseRequest
     {
         return [
             // الإجراءات الأربعة المتاحة
-            'action' => 'required|in:unlimited,limited,baselimited,revoke',
+            'action' => 'required|in:access,unlimited,limited,revoke',
 
             'document_ids' => 'required|array|min:1',
             'document_ids.*' => 'integer|exists:documents,id',

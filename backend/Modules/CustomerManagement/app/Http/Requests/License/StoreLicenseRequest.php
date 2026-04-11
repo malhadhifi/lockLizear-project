@@ -9,7 +9,7 @@ class StoreLicenseRequest extends BaseRequest
     public function authorize()
     {
         // يفضل أن تتأكد هنا أن الطلب قادم من مستخدم مسجل دخول فعلاً
-        return $this->user() !== null;
+        return auth('publisher_api')->user() !== null;
     }
 
     /**
@@ -18,11 +18,13 @@ class StoreLicenseRequest extends BaseRequest
      */
     protected function prepareForValidation()
     {
-        $this->merge([
-            // نجبر الطلب على استخدام رقم الناشر من التوكن الحالي
-            // حتى لو حاول المستخدم إرسال رقم ناشر آخر في الـ Payload، سيتم استبداله فوراً
-            'publisher_id' => $this->user()->id,
-        ]);
+        $user = auth('publisher_api')->user();
+        if ($user) {
+            $this->merge([
+                // نجبر الطلب على استخدام رقم الناشر من التوكن الحالي
+                'publisher_id' => $user->id,
+            ]);
+        }
     }
 
     public function rules()

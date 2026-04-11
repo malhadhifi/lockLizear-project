@@ -29,7 +29,8 @@ class LicenseDocumentResource extends JsonResource
         }
 
         // 2. معالجة حقل الوصول المباشر (direct_access)
-        $customerLicense = $this->customers->first();
+// نتحقق أولاً هل العلاقة موجودة، ثم نجلب العنصر الأول منها
+        $customerLicense = $this->customerlicense ? $this->customerlicense->first() : null;
         $directAccess = 'no'; // الافتراضي إذا لم يكن مربوطاً أو تم إلغاؤه
 
         if ($customerLicense && $customerLicense->pivot->status !== 'revoked') {

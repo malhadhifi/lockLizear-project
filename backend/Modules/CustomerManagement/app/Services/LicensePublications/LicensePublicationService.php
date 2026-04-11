@@ -20,23 +20,28 @@ class LicensePublicationService
             });
         }
         if ($filters['show'] === 'with_access') {
-            $query->whereHas('customers', function ($q) use ($customerLicenseId) {
+            $query->whereHas('customerlicense', function ($q) use ($customerLicenseId) {
                 $q->where('customer_licenses.id', $customerLicenseId)
                     ->where('license_publications.status', '!=', 'revoked');
             });
-        } elseif ($filters['show'] === 'without_access') {
-            $query->whereDoesntHave('customers', function ($q) use ($customerLicenseId) {
+        } elseif ($filters['show'] === 'not_access') {
+            $query->whereDoesntHave('customerlicense', function ($q) use ($customerLicenseId) {
                 $q->where('customer_licenses.id', $customerLicenseId)
                     ->where('license_publications.status', '!=', 'revoked');
             });
         }
 
-        $sortDirection = $filters['sort_by'] === 'created_at' ? 'desc' : 'asc';
-        $query->orderBy($filters['sort_by'], $sortDirection);
+        $sortBy = $filters['sort'] ?? 'id';
+        $sortColumn = match ($sortBy) {
+            'name' => 'name',
+            'date' => 'created_at',
+            default => 'id',
+        };
+        $decrtion = $sortBy === 'name' ? 'asc' : 'desc';
+        $query->orderBy($sortColumn, $decrtion);
 
-        return $query->paginate($filters['show_at_least']);
+        return $query->paginate($filters['limit']);
     }
-
 
     /**
      * تحديث صلاحيات وصول عميل محدد لمجموعة منشورات

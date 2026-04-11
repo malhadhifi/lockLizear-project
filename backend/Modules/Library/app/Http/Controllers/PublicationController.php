@@ -33,7 +33,8 @@ class PublicationController extends Controller
     public function store(StorePublicationRequest $request)
     {
         try {
-            $publication = $this->publicationService->createPublication($request->validated());
+            $publicationId= $request->user()->id;
+            $publication = $this->publicationService->createPublication($request->validated(), $publicationId);
 
 
             return $this->sendResponse(true, 1001, $publication, 201);
@@ -67,8 +68,9 @@ class PublicationController extends Controller
     public function index(IndexPublicationRequest $request)
     {
         try {
+            $publicationId=$request->user()->id;
             // 1. جلب البيانات المفلترة من الخدمة (Paginator)
-            $paginator = $this->publicationService->getPublications($request->validated());
+            $paginator = $this->publicationService->getPublications($request->validated(), $publicationId);
 
             // 2. تمرير البيانات إلى الـ Resource لتشكيلها
             $responseData = [
@@ -114,14 +116,29 @@ class PublicationController extends Controller
     public function show($id)
     {
         try {
-            $publication = Publication::findOrFail($id);
+            // نستخدم withCount لجلب الإحصائيات مباشرة من قاعدة البيانات بكفاءة عالية
+            $publication = Publication::withCount([
+                'customerlicense', // أو اسم العلاقة الصحيح لديك للعملاء
+                'documents',        // إجمالي المستندات
+                'documents as pdf_count' => function ($query) {
+                    // عد المستندات التي نوعها PDF فقط
+                    // (تأكد من اسم عمود النوع في جدولك، مثلاً 'type' أو 'extension')
+                    $query->where('type', 'pdf');
+                },
+                'documents as video_count' => function ($query) {
+                    // عد المستندات التي نوعها فيديو فقط
+                    $query->where('type', 'video'); // أو 'mp4' حسب المكتوب في قاعدة بياناتك
+                }
+            ])->findOrFail($id);
+
             $responseData = new PublicationDetailsResource($publication);
+
             return $this->sendResponse(true, 1001, $responseData, 200);
         } catch (\Exception $e) {
-            return $this->sendResponse(false, 5000, null, 404);
+            // return $this->sendResponse(false, 5000, null, 404);
+              Log::error($e->getMessage().$e->getLine());
         }
     }
-
     public function getDocuments($publicationId)
     {
         try {
